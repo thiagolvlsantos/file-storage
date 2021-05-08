@@ -18,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.thiagolvlsantos.gitt.storage.GitAlias;
 import com.thiagolvlsantos.gitt.storage.GitChanged;
 import com.thiagolvlsantos.gitt.storage.GitCreated;
 import com.thiagolvlsantos.gitt.storage.GitEntity;
@@ -44,7 +46,9 @@ public class GitStoreImpl implements IGitStorage {
 
 	@PostConstruct
 	public void configure() {
-		mapper = mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		mapper = mapper//
+				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
+				.enable(SerializationFeature.INDENT_OUTPUT);
 	}
 
 	@Override
@@ -52,13 +56,29 @@ public class GitStoreImpl implements IGitStorage {
 		return exists(dir, type, keys(type, reference));
 	}
 
-	private <T> Object[] keys(Class<T> type, T instance) {
+	private Object[] keys(Class<?> type, Object instance) {
 		PairValue<GitKey>[] keys = get(GitKey.class, type, instance);
 		Arrays.sort(keys, (a, b) -> a.annotation.order() - b.annotation.order());
+		List<Object> path = new LinkedList<>();
+		Stream.of(keys).forEach(v -> {
+			Object value = v.getValue();
+			if (value != null) {
+				Class<?> innerType = value.getClass();
+				GitAlias alias = AnnotationUtils.findAnnotation(innerType, GitAlias.class);
+				if (alias != null) {
+					Object[] in = keys((Class<?>) innerType, value);
+					for (Object o : in) {
+						path.add(o);
+					}
+				} else {
+					path.add(value);
+				}
+			}
+		});
 		if (log.isInfoEnabled()) {
-			log.info("keys: {}", Arrays.toString(keys));
+			log.info("keys: {}", path);
 		}
-		return Stream.of(keys).map(v -> v.getValue()).toArray();
+		return path.toArray(new Object[0]);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -179,6 +199,9 @@ public class GitStoreImpl implements IGitStorage {
 					current = (Number) c.getRead().invoke(old);
 				} else {
 					current = 0L;
+				}
+				if (obj.longValue() < current.longValue()) {
+					throw new RuntimeException("Invalid revision. Reload object and try again.");
 				}
 				c.getWrite().invoke(instance, current.longValue() + 1);
 			}
