@@ -1,4 +1,4 @@
-package com.thiagolvlsantos.gitt.storage;
+package com.thiagolvlsantos.git.storage;
 
 import java.io.File;
 

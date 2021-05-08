@@ -1,4 +1,4 @@
-package com.thiagolvlsantos.gitt.storage.impl;
+package com.thiagolvlsantos.git.storage.impl;
 
 import java.beans.PropertyDescriptor;
 import java.io.File;
@@ -21,14 +21,14 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.thiagolvlsantos.gitt.storage.GitAlias;
-import com.thiagolvlsantos.gitt.storage.GitChanged;
-import com.thiagolvlsantos.gitt.storage.GitCreated;
-import com.thiagolvlsantos.gitt.storage.GitEntity;
-import com.thiagolvlsantos.gitt.storage.GitId;
-import com.thiagolvlsantos.gitt.storage.GitKey;
-import com.thiagolvlsantos.gitt.storage.GitRevision;
-import com.thiagolvlsantos.gitt.storage.IGitStorage;
+import com.thiagolvlsantos.git.storage.GitAlias;
+import com.thiagolvlsantos.git.storage.GitEntity;
+import com.thiagolvlsantos.git.storage.GitId;
+import com.thiagolvlsantos.git.storage.GitKey;
+import com.thiagolvlsantos.git.storage.IGitStorage;
+import com.thiagolvlsantos.git.storage.audit.GitChanged;
+import com.thiagolvlsantos.git.storage.audit.GitCreated;
+import com.thiagolvlsantos.git.storage.concurrency.GitRevision;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

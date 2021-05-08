@@ -1,4 +1,4 @@
-package com.thiagolvlsantos.gitt.storage;
+package com.thiagolvlsantos.git.storage.audit;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;

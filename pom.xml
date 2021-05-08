@@ -10,12 +10,12 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.thiagolvlsantos</groupId>
-	<artifactId>gitt-storage</artifactId>
+	<artifactId>git-storage</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>gitt-storage</name>
-	<description>An object storage in file system.</description>
+	<name>git-storage</name>
+	<description>An file system object storage in Spring.</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>14</java.version>
 	</properties>
 	<dependencies>
 		<dependency>

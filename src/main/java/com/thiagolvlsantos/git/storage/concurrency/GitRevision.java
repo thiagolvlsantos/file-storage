@@ -1,4 +1,4 @@
-package com.thiagolvlsantos.gitt.storage;
+package com.thiagolvlsantos.git.storage.concurrency;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -8,5 +8,5 @@ import java.lang.annotation.Target;
 
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface GitCreated {
+public @interface GitRevision {
 }

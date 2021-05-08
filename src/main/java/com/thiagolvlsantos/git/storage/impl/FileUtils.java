@@ -1,9 +1,10 @@
-package com.thiagolvlsantos.gitt.storage.impl;
+package com.thiagolvlsantos.git.storage.impl;
 
 import java.io.File;
 
 import lombok.experimental.UtilityClass;
 
+//TODO: create a gitt commons
 @UtilityClass
 public class FileUtils {
 
