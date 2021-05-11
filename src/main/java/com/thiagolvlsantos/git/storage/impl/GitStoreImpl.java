@@ -240,20 +240,34 @@ public class GitStoreImpl implements IGitStorage {
 		if (!index.exists() && !index.mkdirs()) {
 			throw new RuntimeException("Could not create index directory: " + index);
 		}
-		File fileRef = fileRef(dir, type, nextId);
+
 		Object[] keys = keys(type, instance);
-		Files.write(fileRef.toPath(),
+
+		File id2Keys = flatName(dir, type, "ids", nextId);
+		File id2KeysParent = id2Keys.getParentFile();
+		if (!id2KeysParent.exists() && !id2KeysParent.mkdirs()) {
+			throw new RuntimeException("Could not create index directory: " + id2KeysParent);
+		}
+		Files.write(id2Keys.toPath(),
 				Stream.of(keys).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+
+		File keys2Id = flatName(dir, type, "keys", keys);
+		File keys2IdParent = keys2Id.getParentFile();
+		if (!keys2IdParent.exists() && !keys2IdParent.mkdirs()) {
+			throw new RuntimeException("Could not create index directory: " + keys2IdParent);
+		}
+		Files.write(keys2Id.toPath(), String.valueOf(nextId).getBytes(), StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
 	private <T> File directoryIndex(File dir, Class<T> type) {
-		return new File(entityRoot(dir, type), ".all");
+		return new File(entityRoot(dir, type), ".index");
 	}
 
-	private <T> File fileRef(File dir, Class<T> type, Object... ids) {
-		return new File(directoryIndex(dir, type),
-				Stream.of(ids).map(k -> String.valueOf(k)).collect(Collectors.joining("_")));
+	private <T> File flatName(File dir, Class<T> type, String kind, Object... objs) {
+		return new File(new File(directoryIndex(dir, type), kind),
+				Stream.of(objs).map(k -> String.valueOf(k)).collect(Collectors.joining("_")));
 	}
 
 	@SneakyThrows
@@ -327,9 +341,13 @@ public class GitStoreImpl implements IGitStorage {
 			if (!FileUtils.delete(file.getParentFile())) {
 				throw new RuntimeException("Entity not deleted. File:" + file);
 			}
-			File ref = fileRef(dir, type, ids(type, old));
-			if (ref.exists() && !ref.delete()) {
-				throw new RuntimeException("Could no delete entity index: " + file);
+			File ids2Keys = flatName(dir, type, "ids", ids(type, old));
+			if (ids2Keys.exists() && !ids2Keys.delete()) {
+				throw new RuntimeException("Could no delete entity id->keys: " + ids2Keys);
+			}
+			File keys2Id = flatName(dir, type, "keys", keys);
+			if (keys2Id.exists() && !keys2Id.delete()) {
+				throw new RuntimeException("Could no delete entity keys->id: " + keys2Id);
 			}
 		}
 		return old;
