@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.thiagolvlsantos.git.commons.file.FileUtils;
 import com.thiagolvlsantos.git.storage.GitEntity;
 import com.thiagolvlsantos.git.storage.IGitStorage;
 import com.thiagolvlsantos.git.storage.IGitIndex;
