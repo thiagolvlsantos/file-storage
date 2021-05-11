@@ -15,7 +15,7 @@ public interface IGitStorage {
 
 	<T> T read(File dir, Class<T> type, Object... keys);
 
-	<T> T delete(File dir, Class<T> type, T instance);
+	<T> T delete(File dir, Class<T> type, T reference);
 
 	<T> T delete(File dir, Class<T> type, Object... keys);
 
