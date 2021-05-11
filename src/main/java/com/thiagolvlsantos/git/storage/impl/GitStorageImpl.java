@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.thiagolvlsantos.git.commons.file.FileUtils;
 import com.thiagolvlsantos.git.storage.GitEntity;
-import com.thiagolvlsantos.git.storage.IGitStorage;
 import com.thiagolvlsantos.git.storage.IGitIndex;
+import com.thiagolvlsantos.git.storage.IGitStorage;
 import com.thiagolvlsantos.git.storage.audit.GitChanged;
 import com.thiagolvlsantos.git.storage.audit.GitCreated;
 import com.thiagolvlsantos.git.storage.concurrency.GitRevision;
@@ -238,5 +238,10 @@ public class GitStorageImpl implements IGitStorage {
 			result.add(mapper.readValue(entityFile(dir, type, keys), type));
 		}
 		return result;
+	}
+
+	@Override
+	public <T> long count(File dir, Class<T> type) {
+		return idManager.directory(entityRoot(dir, type), "ids").listFiles().length;
 	}
 }

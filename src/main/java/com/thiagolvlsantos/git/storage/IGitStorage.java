@@ -20,4 +20,6 @@ public interface IGitStorage {
 	<T> T delete(File dir, Class<T> type, Object... keys);
 
 	<T> List<T> all(File dir, Class<T> type);
+
+	<T> long count(File dir, Class<T> type);
 }
