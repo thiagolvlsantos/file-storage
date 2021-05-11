@@ -1,6 +1,7 @@
 package com.thiagolvlsantos.git.storage;
 
 import java.io.File;
+import java.util.List;
 
 public interface IGitStorage {
 
@@ -17,4 +18,6 @@ public interface IGitStorage {
 	<T> T delete(File dir, Class<T> type, T instance);
 
 	<T> T delete(File dir, Class<T> type, Object... keys);
+
+	<T> List<T> all(File dir, Class<T> type);
 }

@@ -362,6 +362,18 @@ public class GitStoreImpl implements IGitStorage {
 		return result;
 	}
 
+	@Override
+	@SneakyThrows
+	public <T> List<T> all(File dir, Class<T> type) {
+		List<T> result = new LinkedList<>();
+		File[] ids = new File(directoryIndex(dir, type), "ids").listFiles();
+		for (File f : ids) {
+			Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
+			result.add(mapper.readValue(entityFile(dir, type, keys), type));
+		}
+		return result;
+	}
+
 	@Data
 	@AllArgsConstructor
 	@NoArgsConstructor
