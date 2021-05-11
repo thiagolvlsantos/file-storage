@@ -2,7 +2,7 @@ package com.thiagolvlsantos.git.storage;
 
 import java.io.File;
 
-public interface IIndexManager {
+public interface IGitIndex {
 
 	Long next(File dir);
 

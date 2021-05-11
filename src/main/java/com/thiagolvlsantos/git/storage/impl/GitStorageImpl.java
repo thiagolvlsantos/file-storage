@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.thiagolvlsantos.git.storage.GitEntity;
 import com.thiagolvlsantos.git.storage.IGitStorage;
-import com.thiagolvlsantos.git.storage.IIndexManager;
+import com.thiagolvlsantos.git.storage.IGitIndex;
 import com.thiagolvlsantos.git.storage.audit.GitChanged;
 import com.thiagolvlsantos.git.storage.audit.GitCreated;
 import com.thiagolvlsantos.git.storage.concurrency.GitRevision;
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GitStorageImpl implements IGitStorage {
 
 	private @Autowired ObjectMapper mapper;
-	private @Autowired IIndexManager idManager;
+	private @Autowired IGitIndex idManager;
 
 	@PostConstruct
 	public void configure() {

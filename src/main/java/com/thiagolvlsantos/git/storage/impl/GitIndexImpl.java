@@ -8,13 +8,13 @@ import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
-import com.thiagolvlsantos.git.storage.IIndexManager;
+import com.thiagolvlsantos.git.storage.IGitIndex;
 import com.thiagolvlsantos.git.storage.util.annotations.UtilAnnotations;
 
 import lombok.SneakyThrows;
 
 @Component
-public class IndexManagerImpl implements IIndexManager {
+public class GitIndexImpl implements IGitIndex {
 
 	@Override
 	@SneakyThrows
