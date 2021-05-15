@@ -28,24 +28,30 @@ public class UtilAnnotations {
 	@SneakyThrows
 	public static <T extends Annotation> PairValue<T>[] getValues(Class<T> annotation, Class<?> type, Object instance) {
 		List<PairValue<T>> result = new LinkedList<>();
-		Field[] fields = type.getDeclaredFields();
-		for (Field f : fields) {
-			Annotation a = AnnotationUtils.findAnnotation(f, annotation);
-			if (a != null) {
-				PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(type, f.getName());
-				Method read = pd.getReadMethod();
-				Method write = pd.getWriteMethod();
-				result.add((PairValue<T>) PairValue.builder().annotation(a).field(f).read(read).write(write)
-						.name(f.getName()).value(read.invoke(instance)).build());
+		Class<?> clazz = type;
+		int index = 0;
+		while (clazz != Object.class) {
+			Field[] fields = clazz.getDeclaredFields();
+			for (Field f : fields) {
+				Annotation a = AnnotationUtils.findAnnotation(f, annotation);
+				if (a != null) {
+					PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, f.getName());
+					Method read = pd.getReadMethod();
+					Method write = pd.getWriteMethod();
+					result.add(index++, (PairValue<T>) PairValue.builder().annotation(a).field(f).read(read)
+							.write(write).name(f.getName()).value(read.invoke(instance)).build());
+				}
 			}
-		}
-		Method[] methods = type.getDeclaredMethods();
-		for (Method m : methods) {
-			Annotation a = AnnotationUtils.findAnnotation(m, annotation);
-			if (a != null) {
-				result.add((PairValue<T>) PairValue.builder().annotation(a).read(m).name(m.getName())
-						.value(m.invoke(instance)).build());
+			Method[] methods = clazz.getDeclaredMethods();
+			for (Method m : methods) {
+				Annotation a = AnnotationUtils.findAnnotation(m, annotation);
+				if (a != null) {
+					result.add(index++, (PairValue<T>) PairValue.builder().annotation(a).read(m).name(m.getName())
+							.value(m.invoke(instance)).build());
+				}
 			}
+			clazz = clazz.getSuperclass();
+			index = 0;
 		}
 		return result.toArray(new PairValue[0]);
 	}
