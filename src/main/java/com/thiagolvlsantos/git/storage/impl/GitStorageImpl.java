@@ -3,7 +3,7 @@ package com.thiagolvlsantos.git.storage.impl;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
+import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -113,7 +113,7 @@ public class GitStorageImpl implements IGitStorage {
 			for (PairValue<GitCreated> c : created) {
 				Object obj = c.getRead().invoke(instance);
 				if (obj == null) {
-					c.getWrite().invoke(instance, LocalDateTime.now());
+					c.getWrite().invoke(instance, currentTime(c.getRead()));
 					if (log.isInfoEnabled()) {
 						log.info("new created: {}", c.getRead().invoke(instance));
 					}
@@ -146,6 +146,18 @@ public class GitStorageImpl implements IGitStorage {
 				}
 			}
 		}
+	}
+
+	@SneakyThrows
+	private Object currentTime(Method m) {
+		Object current = null;
+		Class<?> returnType = m.getReturnType();
+		if (Temporal.class.isAssignableFrom(returnType)) {
+			current = returnType.getMethod("now").invoke(null);
+		} else {
+			current = System.currentTimeMillis();
+		}
+		return current;
 	}
 
 	@SneakyThrows
@@ -183,7 +195,7 @@ public class GitStorageImpl implements IGitStorage {
 		}
 		for (PairValue<GitChanged> c : changed) {
 			Method read = c.getRead();
-			c.getWrite().invoke(instance, read.getReturnType().getMethod("now").invoke(null));
+			c.getWrite().invoke(instance, currentTime(read));
 			if (log.isInfoEnabled()) {
 				log.info("new changed: {}", read.invoke(instance));
 			}
