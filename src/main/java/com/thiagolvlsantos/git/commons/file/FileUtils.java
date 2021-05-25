@@ -4,7 +4,7 @@ import java.io.File;
 
 import lombok.experimental.UtilityClass;
 
-//TODO: create a gitt commons
+//TODO: create a git commons
 @UtilityClass
 public class FileUtils {
 
