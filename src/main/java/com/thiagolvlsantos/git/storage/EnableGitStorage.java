@@ -8,11 +8,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
-@ComponentScan("com.thiagolvlsantos.git.storage")
+import com.thiagolvlsantos.git.storage.EnableGitStorage.GitStorage;
+
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
+@Import({ GitStorage.class })
 public @interface EnableGitStorage {
+
+	@Configuration
+	@ComponentScan("com.thiagolvlsantos.git.storage")
+	public static class GitStorage {
+	}
 }
