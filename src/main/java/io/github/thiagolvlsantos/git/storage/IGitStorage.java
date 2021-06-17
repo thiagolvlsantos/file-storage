@@ -23,5 +23,5 @@ public interface IGitStorage {
 
 	<T> long count(File dir, Class<T> type);
 
-	// TODO: fluent basic query method
+	// pending: fluent basic query method
 }

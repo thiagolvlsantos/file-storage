@@ -3,6 +3,7 @@ package io.github.thiagolvlsantos.git.storage.annotations;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,7 +18,6 @@ import io.github.thiagolvlsantos.git.storage.GitAlias;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
 import io.github.thiagolvlsantos.git.storage.identity.GitKey;
-import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,41 +26,52 @@ import lombok.extern.slf4j.Slf4j;
 public class UtilAnnotations {
 
 	@SuppressWarnings("unchecked")
-	@SneakyThrows
 	public static <T extends Annotation> PairValue<T>[] getValues(Class<T> annotation, Class<?> type, Object instance) {
-		List<PairValue<?>> result = new LinkedList<>();
-		Class<?> clazz = type;
-		int index = 0;
-		while (clazz != Object.class) {
-			Field[] fields = clazz.getDeclaredFields();
-			for (Field f : fields) {
-				Annotation a = AnnotationUtils.findAnnotation(f, annotation);
-				if (a != null) {
-					PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, f.getName());
-					if (pd == null) {
-						throw new GitStorageException(
-								"Invalid property: " + f.getName() + " for type: " + (clazz != null ? clazz : null),
-								null);
+		try {
+			List<PairValue<?>> result = new LinkedList<>();
+			Class<?> clazz = type;
+			int index = 0;
+			while (clazz != Object.class) {
+				Field[] fields = clazz.getDeclaredFields();
+				for (Field f : fields) {
+					Annotation a = AnnotationUtils.findAnnotation(f, annotation);
+					if (a != null) {
+						result.add(index++, fromField(clazz, instance, a, f));
 					}
-					Method read = pd.getReadMethod();
-					Method write = pd.getWriteMethod();
-					PairValue<Object> build = PairValue.builder().annotation(a).field(f).read(read).write(write)
-							.name(f.getName()).value(read.invoke(instance)).build();
-					result.add(index++, build);
 				}
-			}
-			Method[] methods = clazz.getDeclaredMethods();
-			for (Method m : methods) {
-				Annotation a = AnnotationUtils.findAnnotation(m, annotation);
-				if (a != null) {
-					result.add(index++, PairValue.builder().annotation(a).read(m).name(m.getName())
-							.value(m.invoke(instance)).build());
+				Method[] methods = clazz.getDeclaredMethods();
+				for (Method m : methods) {
+					Annotation a = AnnotationUtils.findAnnotation(m, annotation);
+					if (a != null) {
+						result.add(index++, fromMethod(instance, m, a));
+					}
 				}
+				clazz = clazz.getSuperclass();
+				index = 0;
 			}
-			clazz = clazz.getSuperclass();
-			index = 0;
+			return result.toArray(new PairValue[0]);
+		} catch (SecurityException | IllegalAccessException | InvocationTargetException e) {
+			throw new GitStorageException(e.getMessage(), e);
 		}
-		return result.toArray(new PairValue[0]);
+	}
+
+	private static PairValue<Object> fromField(Class<?> clazz, Object instance, Annotation a, Field f)
+			throws IllegalAccessException, InvocationTargetException {
+		PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, f.getName());
+		if (pd == null) {
+			throw new GitStorageException(
+					"Invalid property: " + f.getName() + " for type: " + (clazz != null ? clazz : null), null);
+		}
+		Method read = pd.getReadMethod();
+		Method write = pd.getWriteMethod();
+		PairValue<Object> build = PairValue.builder().annotation(a).field(f).read(read).write(write).name(f.getName())
+				.value(read.invoke(instance)).build();
+		return build;
+	}
+
+	private static PairValue<Object> fromMethod(Object instance, Method m, Annotation a)
+			throws IllegalAccessException, InvocationTargetException {
+		return PairValue.builder().annotation(a).read(m).name(m.getName()).value(m.invoke(instance)).build();
 	}
 
 	public static Object[] getKeys(Class<?> type, Object instance) {
