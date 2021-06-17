@@ -9,9 +9,11 @@
 [![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 
-## Transactions using Git repositories. 
+## Objects storage in files.
 
-Imagine you reading/writting locally to your file system attached to your Git repository as a transaction in your service class. An abstraction, using Aspects, to read and write files in your file system and automatically have them pulled/commited/pushed to your Git repository.
+Imagine a world without databases (I didn´t said without 'data'), a scenario where you already have object keys to access information straightforward. Yes, you can do it by using a NoSql database, but you already have your file system and navigate/edit your data. 
+
+Why not organize you objects in directories that can be easily accessed, furthermore you can use an API like ``git-transactions`` to automatically pull/commit/push this structure to a Git repository. It`s a perfect match, an object API to write data in files, and a API to automatically have it persisted in your Git repository.
 
 Welcome to ``git-storage``, see bellow how simple it is.
 
