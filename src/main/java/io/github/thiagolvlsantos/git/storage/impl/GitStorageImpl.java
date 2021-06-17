@@ -206,8 +206,12 @@ public class GitStorageImpl implements IGitStorage {
 		}
 	}
 
-	private <T> void write(T instance, File file) throws Exception {
-		mapper.writeValue(file, instance);
+	private <T> void write(T instance, File file) {
+		try {
+			mapper.writeValue(file, instance);
+		} catch (IOException e) {
+			throw new GitStorageException("Could not write object.", e);
+		}
 	}
 
 	@Override
