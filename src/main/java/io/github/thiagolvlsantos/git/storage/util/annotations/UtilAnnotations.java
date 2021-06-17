@@ -26,7 +26,7 @@ public class UtilAnnotations {
 	@SuppressWarnings("unchecked")
 	@SneakyThrows
 	public static <T extends Annotation> PairValue<T>[] getValues(Class<T> annotation, Class<?> type, Object instance) {
-		List<PairValue<T>> result = new LinkedList<>();
+		List<PairValue<?>> result = new LinkedList<>();
 		Class<?> clazz = type;
 		int index = 0;
 		while (clazz != Object.class) {
@@ -37,15 +37,16 @@ public class UtilAnnotations {
 					PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, f.getName());
 					Method read = pd.getReadMethod();
 					Method write = pd.getWriteMethod();
-					result.add(index++, (PairValue<T>) PairValue.builder().annotation(a).field(f).read(read)
-							.write(write).name(f.getName()).value(read.invoke(instance)).build());
+					PairValue<Object> build = PairValue.builder().annotation(a).field(f).read(read).write(write)
+							.name(f.getName()).value(read.invoke(instance)).build();
+					result.add(index++, build);
 				}
 			}
 			Method[] methods = clazz.getDeclaredMethods();
 			for (Method m : methods) {
 				Annotation a = AnnotationUtils.findAnnotation(m, annotation);
 				if (a != null) {
-					result.add(index++, (PairValue<T>) PairValue.builder().annotation(a).read(m).name(m.getName())
+					result.add(index++, PairValue.builder().annotation(a).read(m).name(m.getName())
 							.value(m.invoke(instance)).build());
 				}
 			}
