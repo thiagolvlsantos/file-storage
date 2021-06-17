@@ -66,7 +66,7 @@ public class UtilAnnotations {
 				Class<?> innerType = value.getClass();
 				GitAlias alias = AnnotationUtils.findAnnotation(innerType, GitAlias.class);
 				if (alias != null) {
-					Object[] in = getKeys((Class<?>) innerType, value);
+					Object[] in = getKeys(innerType, value);
 					for (Object o : in) {
 						path.add(o);
 					}
