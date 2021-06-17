@@ -117,41 +117,9 @@ public class GitStorageImpl implements IGitStorage {
 			if (!parent.mkdirs()) {
 				throw new GitStorageException("Could not create object directory: " + parent, null);
 			}
-			for (PairValue<GitCreated> c : created) {
-				Object obj = c.get(instance);
-				if (obj == null) {
-					c.set(instance, currentTime(c.getRead()));
-					if (log.isInfoEnabled()) {
-						log.info("new created: {}", c.get(instance));
-					}
-				}
-			}
-			for (PairValue<GitId> c : ids) {
-				Object obj = c.get(instance);
-				if (obj == null) {
-					Long nextId = idManager.next(entityRoot(dir, type));
-					c.set(instance, nextId);
-					idManager.bind(entityRoot(dir, type), instance);
-					if (log.isInfoEnabled()) {
-						log.info("new id: {}", c.get(instance));
-					}
-				}
-			}
+			initializeFixed(dir, type, instance, ids, created);
 		} else {
-			for (PairValue<GitCreated> c : created) {
-				Object obj = c.get(old);
-				c.set(instance, obj);
-				if (log.isInfoEnabled()) {
-					log.info("keep created: {}", c.get(instance));
-				}
-			}
-			for (PairValue<GitId> c : ids) {
-				Object obj = c.get(old);
-				c.set(instance, obj);
-				if (log.isInfoEnabled()) {
-					log.info("keep ids: {}", c.get(instance));
-				}
-			}
+			keepFixed(old, ids, created, instance);
 		}
 	}
 
@@ -165,6 +133,47 @@ public class GitStorageImpl implements IGitStorage {
 			current = System.currentTimeMillis();
 		}
 		return current;
+	}
+
+	private <T> void initializeFixed(File dir, Class<T> type, T instance, PairValue<GitId>[] ids,
+			PairValue<GitCreated>[] created) {
+		for (PairValue<GitCreated> c : created) {
+			Object obj = c.get(instance);
+			if (obj == null) {
+				c.set(instance, currentTime(c.getRead()));
+				if (log.isInfoEnabled()) {
+					log.info("new created: {}", c.get(instance));
+				}
+			}
+		}
+		for (PairValue<GitId> c : ids) {
+			Object obj = c.get(instance);
+			if (obj == null) {
+				Long nextId = idManager.next(entityRoot(dir, type));
+				c.set(instance, nextId);
+				idManager.bind(entityRoot(dir, type), instance);
+				if (log.isInfoEnabled()) {
+					log.info("new id: {}", c.get(instance));
+				}
+			}
+		}
+	}
+
+	private <T> void keepFixed(T old, PairValue<GitId>[] ids, PairValue<GitCreated>[] created, T instance) {
+		for (PairValue<GitCreated> c : created) {
+			Object obj = c.get(old);
+			c.set(instance, obj);
+			if (log.isInfoEnabled()) {
+				log.info("keep created: {}", c.get(instance));
+			}
+		}
+		for (PairValue<GitId> c : ids) {
+			Object obj = c.get(old);
+			c.set(instance, obj);
+			if (log.isInfoEnabled()) {
+				log.info("keep ids: {}", c.get(instance));
+			}
+		}
 	}
 
 	@SneakyThrows
