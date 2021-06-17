@@ -47,7 +47,7 @@ public class GitIndexImpl implements IGitIndex {
 		File id2Keys = ids(dir, ids);
 		File id2KeysParent = id2Keys.getParentFile();
 		if (!id2KeysParent.exists() && !id2KeysParent.mkdirs()) {
-			throw new GitStorageException("Could not create index directory: " + id2KeysParent, null);
+			throw new GitStorageException("Could not create index keys directory: " + id2KeysParent, null);
 		}
 		Files.write(id2Keys.toPath(),
 				Stream.of(keys).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
@@ -56,7 +56,7 @@ public class GitIndexImpl implements IGitIndex {
 		File keys2Id = keys(dir, keys);
 		File keys2IdParent = keys2Id.getParentFile();
 		if (!keys2IdParent.exists() && !keys2IdParent.mkdirs()) {
-			throw new GitStorageException("Could not create index directory: " + keys2IdParent, null);
+			throw new GitStorageException("Could not create index ids directory: " + keys2IdParent, null);
 		}
 		Files.write(keys2Id.toPath(),
 				Stream.of(ids).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
