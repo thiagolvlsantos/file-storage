@@ -13,6 +13,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import io.github.thiagolvlsantos.git.storage.GitAlias;
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
 import io.github.thiagolvlsantos.git.storage.identity.GitKey;
 import lombok.SneakyThrows;
@@ -35,6 +36,11 @@ public class UtilAnnotations {
 				Annotation a = AnnotationUtils.findAnnotation(f, annotation);
 				if (a != null) {
 					PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, f.getName());
+					if (pd == null) {
+						throw new GitStorageException(
+								"Invalid property: " + f.getName() + " for type: " + (clazz != null ? clazz : null),
+								null);
+					}
 					Method read = pd.getReadMethod();
 					Method write = pd.getWriteMethod();
 					PairValue<Object> build = PairValue.builder().annotation(a).field(f).read(read).write(write)
