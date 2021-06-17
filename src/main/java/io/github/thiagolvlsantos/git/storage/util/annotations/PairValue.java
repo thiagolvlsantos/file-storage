@@ -1,8 +1,10 @@
 package io.github.thiagolvlsantos.git.storage.util.annotations;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,4 +25,20 @@ public class PairValue<T> {
 	private String name;
 	@ToString.Include
 	private Object value;
+
+	public void set(Object instance, Object value) throws GitStorageException {
+		try {
+			this.write.invoke(instance, value);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new GitStorageException(e.getMessage(), e);
+		}
+	}
+
+	public Object get(Object instance) throws GitStorageException {
+		try {
+			return this.read.invoke(instance);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new GitStorageException(e.getMessage(), e);
+		}
+	}
 }

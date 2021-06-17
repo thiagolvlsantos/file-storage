@@ -100,7 +100,7 @@ public class GitStorageImpl implements IGitStorage {
 		return new File(entityDir(dir, type, keys), "meta.json");
 	}
 
-	private <T> void prepareCreated(File dir, Class<T> type, T instance, File target, T old) throws Exception {
+	private <T> void prepareCreated(File dir, Class<T> type, T instance, File target, T old) {
 		PairValue<GitId>[] ids = UtilAnnotations.getValues(GitId.class, type, instance);
 		if (log.isInfoEnabled()) {
 			log.info("ids: {}", Arrays.toString(ids));
@@ -115,38 +115,38 @@ public class GitStorageImpl implements IGitStorage {
 				throw new GitStorageException("Could not create object directory: " + parent, null);
 			}
 			for (PairValue<GitCreated> c : created) {
-				Object obj = c.getRead().invoke(instance);
+				Object obj = c.get(instance);
 				if (obj == null) {
-					c.getWrite().invoke(instance, currentTime(c.getRead()));
+					c.set(instance, currentTime(c.getRead()));
 					if (log.isInfoEnabled()) {
-						log.info("new created: {}", c.getRead().invoke(instance));
+						log.info("new created: {}", c.get(instance));
 					}
 				}
 			}
 			for (PairValue<GitId> c : ids) {
-				Object obj = c.getRead().invoke(instance);
+				Object obj = c.get(instance);
 				if (obj == null) {
 					Long nextId = idManager.next(entityRoot(dir, type));
-					c.getWrite().invoke(instance, nextId);
+					c.set(instance, nextId);
 					idManager.bind(entityRoot(dir, type), instance);
 					if (log.isInfoEnabled()) {
-						log.info("new id: {}", c.getRead().invoke(instance));
+						log.info("new id: {}", c.get(instance));
 					}
 				}
 			}
 		} else {
 			for (PairValue<GitCreated> c : created) {
-				Object obj = c.getRead().invoke(old);
-				c.getWrite().invoke(instance, obj);
+				Object obj = c.get(old);
+				c.set(instance, obj);
 				if (log.isInfoEnabled()) {
-					log.info("keep created: {}", c.getRead().invoke(instance));
+					log.info("keep created: {}", c.get(instance));
 				}
 			}
 			for (PairValue<GitId> c : ids) {
-				Object obj = c.getRead().invoke(old);
-				c.getWrite().invoke(instance, obj);
+				Object obj = c.get(old);
+				c.set(instance, obj);
 				if (log.isInfoEnabled()) {
-					log.info("keep ids: {}", c.getRead().invoke(instance));
+					log.info("keep ids: {}", c.get(instance));
 				}
 			}
 		}
@@ -171,37 +171,37 @@ public class GitStorageImpl implements IGitStorage {
 			log.info("revisions: {}", Arrays.toString(revisions));
 		}
 		for (PairValue<GitRevision> c : revisions) {
-			Number obj = (Number) c.getRead().invoke(instance);
+			Number obj = (Number) c.get(instance);
 			if (obj == null) {
-				c.getWrite().invoke(instance, 0);
+				c.set(instance, 0);
 			} else {
 				Number current = null;
 				if (old != null) {
-					current = (Number) c.getRead().invoke(old);
+					current = (Number) c.get(old);
 				} else {
 					current = 0L;
 				}
 				if (obj.longValue() < current.longValue()) {
 					throw new GitStorageException("Invalid revision. Reload object and try again.", null);
 				}
-				c.getWrite().invoke(instance, current.longValue() + 1);
+				c.set(instance, current.longValue() + 1);
 			}
 			if (log.isInfoEnabled()) {
-				log.info("new revision: {}", c.getRead().invoke(instance));
+				log.info("new revision: {}", c.get(instance));
 			}
 		}
 	}
 
-	private <T> void prepareChanged(File dir, Class<T> type, T instance, File target, T old) throws Exception {
+	private <T> void prepareChanged(File dir, Class<T> type, T instance, File target, T old) {
 		PairValue<GitChanged>[] changed = UtilAnnotations.getValues(GitChanged.class, type, instance);
 		if (log.isInfoEnabled()) {
 			log.info("changed: {}", Arrays.toString(changed));
 		}
 		for (PairValue<GitChanged> c : changed) {
 			Method read = c.getRead();
-			c.getWrite().invoke(instance, currentTime(read));
+			c.set(instance, currentTime(read));
 			if (log.isInfoEnabled()) {
-				log.info("new changed: {}", read.invoke(instance));
+				log.info("new changed: {}", c.get(instance));
 			}
 		}
 	}
@@ -237,11 +237,9 @@ public class GitStorageImpl implements IGitStorage {
 			old = read(dir, type, keys);
 			File file = entityDir(dir, type, keys);
 			try {
-				if (!FileUtils.delete(file)) {
-					throw new GitStorageException("Entity not deleted. File:" + file, null);
-				}
+				FileUtils.delete(file);
 			} catch (IOException e) {
-				throw new GitStorageException(e.getMessage(), e);
+				throw new GitStorageException("Entity not deleted. File:" + file, e);
 			}
 			idManager.unbind(entityRoot(dir, type), old);
 		}
