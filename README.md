@@ -14,8 +14,9 @@
 Imagine a world without databases (I didn`t say without 'data'), a scenario where you already have object keys to access information straightforward. Yes, you can do it by using a NoSql database, but you already have your file system and use it to navigate/edit your data. 
 
 Why not organize you objects in directories that can be easily accessed? Furthermore use an API like ``git-transactions`` to automatically pull/commit/push this structure to a Git repository. It`s a perfect match, an object API to write data into file system in a simple structure, and an API to automatically have it persisted in your Git repository, there is your database with:
-- Resilience
-- History
+- Easy visualization;
+- Resiliency;
+- History.
 
 Just to be clear, I`not saying this is 'database' for massive data, mas most part of applications can use such a simpler structure where objects are stored in file systems as JSON without the majority of restrictions imposed by relational databases.
 
