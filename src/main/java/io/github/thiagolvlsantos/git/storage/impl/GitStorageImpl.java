@@ -112,7 +112,7 @@ public class GitStorageImpl implements IGitStorage {
 		if (!target.exists()) {
 			File parent = target.getParentFile();
 			if (!parent.mkdirs()) {
-				throw new RuntimeException("Could not create object directory: " + parent);
+				throw new GitStorageException("Could not create object directory: " + parent, null);
 			}
 			for (PairValue<GitCreated> c : created) {
 				Object obj = c.getRead().invoke(instance);
@@ -182,7 +182,7 @@ public class GitStorageImpl implements IGitStorage {
 					current = 0L;
 				}
 				if (obj.longValue() < current.longValue()) {
-					throw new RuntimeException("Invalid revision. Reload object and try again.");
+					throw new GitStorageException("Invalid revision. Reload object and try again.", null);
 				}
 				c.getWrite().invoke(instance, current.longValue() + 1);
 			}
@@ -238,7 +238,7 @@ public class GitStorageImpl implements IGitStorage {
 			File file = entityDir(dir, type, keys);
 			try {
 				if (!FileUtils.delete(file)) {
-					throw new RuntimeException("Entity not deleted. File:" + file);
+					throw new GitStorageException("Entity not deleted. File:" + file, null);
 				}
 			} catch (IOException e) {
 				throw new GitStorageException(e.getMessage(), e);

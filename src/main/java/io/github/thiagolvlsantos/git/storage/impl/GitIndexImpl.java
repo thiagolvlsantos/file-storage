@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.util.annotations.UtilAnnotations;
 import lombok.SneakyThrows;
 
@@ -33,11 +34,11 @@ public class GitIndexImpl implements IGitIndex {
 	@SneakyThrows
 	public <T> void bind(File dir, T instance) {
 		if (instance == null) {
-			throw new RuntimeException("Invalid argument: null");
+			throw new GitStorageException("Invalid argument: null", null);
 		}
 		File index = index(dir);
 		if (!index.exists() && !index.mkdirs()) {
-			throw new RuntimeException("Could not create index directory: " + index);
+			throw new GitStorageException("Could not create index directory: " + index, null);
 		}
 
 		Object[] ids = UtilAnnotations.getIds(instance.getClass(), instance);
@@ -46,7 +47,7 @@ public class GitIndexImpl implements IGitIndex {
 		File id2Keys = ids(dir, ids);
 		File id2KeysParent = id2Keys.getParentFile();
 		if (!id2KeysParent.exists() && !id2KeysParent.mkdirs()) {
-			throw new RuntimeException("Could not create index directory: " + id2KeysParent);
+			throw new GitStorageException("Could not create index directory: " + id2KeysParent, null);
 		}
 		Files.write(id2Keys.toPath(),
 				Stream.of(keys).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
@@ -55,7 +56,7 @@ public class GitIndexImpl implements IGitIndex {
 		File keys2Id = keys(dir, keys);
 		File keys2IdParent = keys2Id.getParentFile();
 		if (!keys2IdParent.exists() && !keys2IdParent.mkdirs()) {
-			throw new RuntimeException("Could not create index directory: " + keys2IdParent);
+			throw new GitStorageException("Could not create index directory: " + keys2IdParent, null);
 		}
 		Files.write(keys2Id.toPath(),
 				Stream.of(ids).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
@@ -70,12 +71,12 @@ public class GitIndexImpl implements IGitIndex {
 	public <T> void unbind(File dir, T instance) {
 		File ids2Keys = ids(dir, UtilAnnotations.getIds(instance.getClass(), instance));
 		if (ids2Keys.exists() && !ids2Keys.delete()) {
-			throw new RuntimeException("Could no delete entity id->keys: " + ids2Keys);
+			throw new GitStorageException("Could no delete entity id->keys: " + ids2Keys, null);
 		}
 
 		File keys2Id = keys(dir, UtilAnnotations.getKeys(instance.getClass(), instance));
 		if (keys2Id.exists() && !keys2Id.delete()) {
-			throw new RuntimeException("Could no delete entity keys->id: " + keys2Id);
+			throw new GitStorageException("Could no delete entity keys->id: " + keys2Id, null);
 		}
 	}
 
