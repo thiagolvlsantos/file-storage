@@ -1,4 +1,4 @@
-package io.github.thiagolvlsantos.git.storage.util.annotations;
+package io.github.thiagolvlsantos.git.storage.annotations;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

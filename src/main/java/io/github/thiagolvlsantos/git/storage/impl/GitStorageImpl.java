@@ -24,13 +24,13 @@ import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.GitEntity;
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
+import io.github.thiagolvlsantos.git.storage.annotations.PairValue;
+import io.github.thiagolvlsantos.git.storage.annotations.UtilAnnotations;
 import io.github.thiagolvlsantos.git.storage.audit.GitChanged;
 import io.github.thiagolvlsantos.git.storage.audit.GitCreated;
 import io.github.thiagolvlsantos.git.storage.concurrency.GitRevision;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
-import io.github.thiagolvlsantos.git.storage.util.annotations.PairValue;
-import io.github.thiagolvlsantos.git.storage.util.annotations.UtilAnnotations;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 

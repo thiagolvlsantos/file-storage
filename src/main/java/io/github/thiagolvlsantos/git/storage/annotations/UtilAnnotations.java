@@ -1,4 +1,4 @@
-package io.github.thiagolvlsantos.git.storage.util.annotations;
+package io.github.thiagolvlsantos.git.storage.annotations;
 
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;

@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
+import io.github.thiagolvlsantos.git.storage.annotations.UtilAnnotations;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
-import io.github.thiagolvlsantos.git.storage.util.annotations.UtilAnnotations;
 import lombok.SneakyThrows;
 
 @Component
