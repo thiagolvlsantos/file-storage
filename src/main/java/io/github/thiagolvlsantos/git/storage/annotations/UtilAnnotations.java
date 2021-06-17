@@ -87,7 +87,7 @@ public class UtilAnnotations {
 
 	public static Object[] getIds(Class<?> type, Object instance) {
 		PairValue<GitId>[] ids = UtilAnnotations.getValues(GitId.class, type, instance);
-		Object[] result = Stream.of(ids).map(v -> v.getValue()).toArray();
+		Object[] result = Stream.of(ids).map(PairValue::getValue).toArray();
 		if (log.isInfoEnabled()) {
 			log.info("ids: {}", Arrays.toString(result));
 		}

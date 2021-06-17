@@ -50,8 +50,7 @@ public class GitIndexImpl implements IGitIndex {
 		if (!id2KeysParent.exists() && !id2KeysParent.mkdirs()) {
 			throw new GitStorageException("Could not create index keys directory: " + id2KeysParent, null);
 		}
-		Files.write(id2Keys.toPath(),
-				Stream.of(keys).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
+		Files.write(id2Keys.toPath(), Stream.of(keys).map(String::valueOf).collect(Collectors.joining("\n")).getBytes(),
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 
 		File keys2Id = keys(dir, keys);
@@ -59,8 +58,7 @@ public class GitIndexImpl implements IGitIndex {
 		if (!keys2IdParent.exists() && !keys2IdParent.mkdirs()) {
 			throw new GitStorageException("Could not create index ids directory: " + keys2IdParent, null);
 		}
-		Files.write(keys2Id.toPath(),
-				Stream.of(ids).map(k -> String.valueOf(k)).collect(Collectors.joining("\n")).getBytes(),
+		Files.write(keys2Id.toPath(), Stream.of(ids).map(String::valueOf).collect(Collectors.joining("\n")).getBytes(),
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
@@ -103,6 +101,6 @@ public class GitIndexImpl implements IGitIndex {
 	}
 
 	private File flatName(File dir, Object... objs) {
-		return new File(dir, Stream.of(objs).map(o -> String.valueOf(o)).collect(Collectors.joining("_")));
+		return new File(dir, Stream.of(objs).map(String::valueOf).collect(Collectors.joining("_")));
 	}
 }
