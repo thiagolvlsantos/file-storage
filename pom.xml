@@ -16,6 +16,7 @@
 	<description>An file system object storage in Spring.</description>
 	<properties>
 		<java.version>14</java.version>
+		<git-commons.version>1.0.29</git-commons.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -35,6 +36,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.thiagolvlsantos</groupId>
+			<artifactId>git-commons</artifactId>
+			<version>${git-commons.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -1,6 +1,7 @@
 package com.thiagolvlsantos.git.storage.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.time.temporal.Temporal;
@@ -17,17 +18,18 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.thiagolvlsantos.git.commons.file.FileUtils;
 import com.thiagolvlsantos.git.storage.GitEntity;
 import com.thiagolvlsantos.git.storage.IGitIndex;
 import com.thiagolvlsantos.git.storage.IGitStorage;
 import com.thiagolvlsantos.git.storage.audit.GitChanged;
 import com.thiagolvlsantos.git.storage.audit.GitCreated;
 import com.thiagolvlsantos.git.storage.concurrency.GitRevision;
+import com.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import com.thiagolvlsantos.git.storage.identity.GitId;
 import com.thiagolvlsantos.git.storage.util.annotations.PairValue;
 import com.thiagolvlsantos.git.storage.util.annotations.UtilAnnotations;
 
+import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -232,8 +234,12 @@ public class GitStorageImpl implements IGitStorage {
 		if (exists(dir, type, keys)) {
 			old = read(dir, type, keys);
 			File file = entityDir(dir, type, keys);
-			if (!FileUtils.delete(file)) {
-				throw new RuntimeException("Entity not deleted. File:" + file);
+			try {
+				if (!FileUtils.delete(file)) {
+					throw new RuntimeException("Entity not deleted. File:" + file);
+				}
+			} catch (IOException e) {
+				throw new GitStorageException(e.getMessage(), e);
 			}
 			idManager.unbind(entityRoot(dir, type), old);
 		}
