@@ -75,6 +75,9 @@ public class GitStorageImpl implements IGitStorage {
 		if (log.isDebugEnabled()) {
 			log.debug("entity: {}", entity);
 		}
+		if (entity == null) {
+			throw new GitStorageException("Entity is not annotated with @GitEntity", null);
+		}
 		return new File(dir, entity.value());
 	}
 
