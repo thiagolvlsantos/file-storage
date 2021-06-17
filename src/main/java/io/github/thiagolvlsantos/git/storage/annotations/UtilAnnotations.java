@@ -64,9 +64,8 @@ public class UtilAnnotations {
 		}
 		Method read = pd.getReadMethod();
 		Method write = pd.getWriteMethod();
-		PairValue<Object> build = PairValue.builder().annotation(a).field(f).read(read).write(write).name(f.getName())
+		return PairValue.builder().annotation(a).field(f).read(read).write(write).name(f.getName())
 				.value(read.invoke(instance)).build();
-		return build;
 	}
 
 	private static PairValue<Object> fromMethod(Object instance, Method m, Annotation a)
