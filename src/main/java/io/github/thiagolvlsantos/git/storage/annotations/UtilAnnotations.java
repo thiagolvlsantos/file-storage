@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -72,10 +73,7 @@ public class UtilAnnotations {
 				Class<?> innerType = value.getClass();
 				GitAlias alias = AnnotationUtils.findAnnotation(innerType, GitAlias.class);
 				if (alias != null) {
-					Object[] in = getKeys(innerType, value);
-					for (Object o : in) {
-						path.add(o);
-					}
+					Collections.addAll(path, getKeys(innerType, value));
 				} else {
 					path.add(value);
 				}
