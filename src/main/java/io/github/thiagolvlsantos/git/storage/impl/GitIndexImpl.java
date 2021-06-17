@@ -1,6 +1,7 @@
 package io.github.thiagolvlsantos.git.storage.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.stream.Collectors;
@@ -70,13 +71,21 @@ public class GitIndexImpl implements IGitIndex {
 	@Override
 	public <T> void unbind(File dir, T instance) {
 		File ids2Keys = ids(dir, UtilAnnotations.getIds(instance.getClass(), instance));
-		if (ids2Keys.exists() && !ids2Keys.delete()) {
-			throw new GitStorageException("Could no delete entity id->keys: " + ids2Keys, null);
+		if (ids2Keys.exists()) {
+			try {
+				Files.delete(ids2Keys.toPath());
+			} catch (IOException e) {
+				throw new GitStorageException("Could no delete entity id->keys: " + ids2Keys, e);
+			}
 		}
 
 		File keys2Id = keys(dir, UtilAnnotations.getKeys(instance.getClass(), instance));
-		if (keys2Id.exists() && !keys2Id.delete()) {
-			throw new GitStorageException("Could no delete entity keys->id: " + keys2Id, null);
+		if (keys2Id.exists()) {
+			try {
+				Files.delete(keys2Id.toPath());
+			} catch (IOException e) {
+				throw new GitStorageException("Could no delete entity keys->id: " + keys2Id, e);
+			}
 		}
 	}
 
