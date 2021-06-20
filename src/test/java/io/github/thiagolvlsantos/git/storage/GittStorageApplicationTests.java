@@ -21,53 +21,61 @@ class GittStorageApplicationTests {
 	void contextLoads(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		String name = "projectA";
+		String name1 = "projectA";
+		String name2 = "projectB";
 		try {
 			// write
-			Project project = Project.builder().name(name).build();
-			project = storage.write(dir, Project.class, project);
-			assertThat(project.getId()).isNotNull();
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, Project.class, project1);
+			assertThat(project1.getId()).isNotNull();
+
+			Project project2 = Project.builder().name(name2).build();
+			project2 = storage.write(dir, Project.class, project2);
+			assertThat(project2.getId()).isNotNull();
 
 			// write again
-			Long id = project.getId();
-			LocalDateTime created = project.getCreated();
-			Long revision = project.getRevision();
-			LocalDateTime changed = project.getChanged();
+			Long id = project1.getId();
+			LocalDateTime created = project1.getCreated();
+			Long revision = project1.getRevision();
+			LocalDateTime changed = project1.getChanged();
 
-			project = storage.write(dir, Project.class, project);
-			assertThat(project.getId()).isEqualTo(id);
-			assertThat(project.getCreated()).isEqualTo(created);
-			assertThat(project.getRevision()).isEqualTo(revision + 1);
-			assertThat(project.getChanged()).isAfter(changed);
+			project1 = storage.write(dir, Project.class, project1);
+			assertThat(project1.getId()).isEqualTo(id);
+			assertThat(project1.getCreated()).isEqualTo(created);
+			assertThat(project1.getRevision()).isEqualTo(revision + 1);
+			assertThat(project1.getChanged()).isAfter(changed);
 
 			// all
-			assertThat(storage.all(dir, Project.class)).matches(p -> p.size() == 1);
+			assertThat(storage.all(dir, Project.class)).containsSequence(project1, project2);
 			// count
-			assertThat(storage.count(dir, Project.class)).isEqualTo(1L);
+			assertThat(storage.count(dir, Project.class)).isEqualTo(2L);
 
 			// exists by id
-			assertThat(storage.exists(dir, Project.class, project.getName())).isTrue();
+			assertThat(storage.exists(dir, Project.class, project1.getName())).isTrue();
 			// exists by example
-			assertThat(storage.exists(dir, Project.class, project)).isTrue();
+			assertThat(storage.exists(dir, Project.class, project1)).isTrue();
 
 			// read by id
-			project = storage.read(dir, Project.class, project.getName());
-			assertThat(project.getName()).isEqualTo("projectA");
+			project1 = storage.read(dir, Project.class, project1.getName());
+			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// read by example
-			project = storage.read(dir, Project.class, project);
-			assertThat(project.getName()).isEqualTo("projectA");
+			project1 = storage.read(dir, Project.class, project1);
+			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// delete by id
-			storage.delete(dir, Project.class, project.getName());
-			assertThat(storage.exists(dir, Project.class, project.getName())).isFalse();
+			storage.delete(dir, Project.class, project1.getName());
+			assertThat(storage.exists(dir, Project.class, project1.getName())).isFalse();
 
 			// delete by example
-			project = storage.write(dir, Project.class, project);
-			assertThat(project.getId()).isNotNull();
+			project1 = storage.write(dir, Project.class, project1);
+			assertThat(project1.getId()).isNotNull();
 
-			storage.delete(dir, Project.class, project);
-			assertThat(storage.exists(dir, Project.class, project)).isFalse();
+			storage.delete(dir, Project.class, project1);
+			assertThat(storage.exists(dir, Project.class, project1)).isFalse();
+
+			storage.delete(dir, Project.class, project2);
+			assertThat(storage.exists(dir, Project.class, project2)).isFalse();
 		} finally {
 			try {
 				FileUtils.delete(dir);
