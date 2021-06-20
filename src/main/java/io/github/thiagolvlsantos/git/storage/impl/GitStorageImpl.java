@@ -124,9 +124,9 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@SneakyThrows
-	private Object value(Class<? extends IGitInitializer> initializer, Method m) {
+	private Object value(Object instance, String name, Class<? extends IGitInitializer> initializer, Method m) {
 		IGitInitializer factory = initializer.getConstructor().newInstance();
-		return factory.value(m.getReturnType());
+		return factory.value(instance, name, m.getReturnType());
 	}
 
 	private <T> void initializeFixed(File dir, Class<T> type, T instance, PairValue<GitId>[] ids,
@@ -134,7 +134,7 @@ public class GitStorageImpl implements IGitStorage {
 		for (PairValue<GitCreated> c : created) {
 			Object obj = c.get(instance);
 			if (obj == null) {
-				c.set(instance, value(c.getAnnotation().value(), c.getRead()));
+				c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
 				if (log.isInfoEnabled()) {
 					log.info("new created: {}", c.get(instance));
 				}
@@ -205,7 +205,7 @@ public class GitStorageImpl implements IGitStorage {
 		}
 		for (PairValue<GitChanged> c : changed) {
 			Method read = c.getRead();
-			c.set(instance, value(c.getAnnotation().value(), read));
+			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), read));
 			if (log.isInfoEnabled()) {
 				log.info("new changed: {}", c.get(instance));
 			}

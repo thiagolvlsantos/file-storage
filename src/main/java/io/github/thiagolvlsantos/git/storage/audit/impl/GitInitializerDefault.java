@@ -8,7 +8,7 @@ import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 public class GitInitializerDefault implements IGitInitializer {
 
 	@Override
-	public Object value(Class<?> type) {
+	public Object value(Object instance, String name, Class<?> type) {
 		Object current = null;
 		try {
 			if (Temporal.class.isAssignableFrom(type)) {
