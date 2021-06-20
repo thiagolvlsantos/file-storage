@@ -24,7 +24,7 @@ public class PairValue<T> {
 	@ToString.Include
 	private Object value;
 
-	public void set(Object instance, Object value) throws GitStorageException {
+	public void set(Object instance, Object value) {
 		try {
 			getWrite().invoke(instance, value);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -32,7 +32,7 @@ public class PairValue<T> {
 		}
 	}
 
-	public Object get(Object instance) throws GitStorageException {
+	public Object get(Object instance) {
 		try {
 			return getRead().invoke(instance);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
