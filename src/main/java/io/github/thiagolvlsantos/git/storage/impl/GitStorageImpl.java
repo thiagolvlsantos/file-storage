@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +27,7 @@ import io.github.thiagolvlsantos.git.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.git.storage.annotations.UtilAnnotations;
 import io.github.thiagolvlsantos.git.storage.audit.GitChanged;
 import io.github.thiagolvlsantos.git.storage.audit.GitCreated;
+import io.github.thiagolvlsantos.git.storage.audit.IGitInitializer;
 import io.github.thiagolvlsantos.git.storage.concurrency.GitRevision;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
@@ -124,15 +124,9 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@SneakyThrows
-	private Object currentTime(Method m) {
-		Object current = null;
-		Class<?> returnType = m.getReturnType();
-		if (Temporal.class.isAssignableFrom(returnType)) {
-			current = returnType.getMethod("now").invoke(null);
-		} else {
-			current = System.currentTimeMillis();
-		}
-		return current;
+	private Object value(Class<? extends IGitInitializer> initializer, Method m) {
+		IGitInitializer factory = initializer.getConstructor().newInstance();
+		return factory.value(m.getReturnType());
 	}
 
 	private <T> void initializeFixed(File dir, Class<T> type, T instance, PairValue<GitId>[] ids,
@@ -140,7 +134,7 @@ public class GitStorageImpl implements IGitStorage {
 		for (PairValue<GitCreated> c : created) {
 			Object obj = c.get(instance);
 			if (obj == null) {
-				c.set(instance, currentTime(c.getRead()));
+				c.set(instance, value(c.getAnnotation().value(), c.getRead()));
 				if (log.isInfoEnabled()) {
 					log.info("new created: {}", c.get(instance));
 				}
@@ -211,7 +205,7 @@ public class GitStorageImpl implements IGitStorage {
 		}
 		for (PairValue<GitChanged> c : changed) {
 			Method read = c.getRead();
-			c.set(instance, currentTime(read));
+			c.set(instance, value(c.getAnnotation().value(), read));
 			if (log.isInfoEnabled()) {
 				log.info("new changed: {}", c.get(instance));
 			}
