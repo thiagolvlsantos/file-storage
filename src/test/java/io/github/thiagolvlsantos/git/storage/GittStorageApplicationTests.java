@@ -25,10 +25,6 @@ class GittStorageApplicationTests {
 		try {
 			// write
 			Project project = Project.builder().name(name).build();
-			if (storage.exists(dir, Project.class, project)) {
-				storage.delete(dir, Project.class, project);
-			}
-
 			project = storage.write(dir, Project.class, project);
 			assertThat(project.getId()).isNotNull();
 
