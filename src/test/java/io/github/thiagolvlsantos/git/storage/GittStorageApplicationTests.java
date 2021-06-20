@@ -29,11 +29,12 @@ class GittStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			assertThat(project1.getId()).isNotNull();
 
+			// write other
 			Project project2 = Project.builder().name(name2).build();
 			project2 = storage.write(dir, Project.class, project2);
 			assertThat(project2.getId()).isNotNull();
 
-			// write again
+			// rewrite first
 			Long id = project1.getId();
 			LocalDateTime created = project1.getCreated();
 			Long revision = project1.getRevision();
@@ -45,9 +46,9 @@ class GittStorageApplicationTests {
 			assertThat(project1.getRevision()).isEqualTo(revision + 1);
 			assertThat(project1.getChanged()).isAfter(changed);
 
-			// all
+			// list all
 			assertThat(storage.all(dir, Project.class)).containsSequence(project1, project2);
-			// count
+			// count all
 			assertThat(storage.count(dir, Project.class)).isEqualTo(2L);
 
 			// exists by id
@@ -73,9 +74,6 @@ class GittStorageApplicationTests {
 
 			storage.delete(dir, Project.class, project1);
 			assertThat(storage.exists(dir, Project.class, project1)).isFalse();
-
-			storage.delete(dir, Project.class, project2);
-			assertThat(storage.exists(dir, Project.class, project2)).isFalse();
 		} finally {
 			try {
 				FileUtils.delete(dir);
