@@ -7,13 +7,13 @@ import java.lang.reflect.Method;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
 @ToString(onlyExplicitlyIncluded = true)
 public class PairValue<T> {
