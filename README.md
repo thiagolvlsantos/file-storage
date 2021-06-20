@@ -18,7 +18,7 @@ Why not organizing you objects in directories that can be easily accessed? Furth
 - Resiliency;
 - History.
 
-Just to be clear, I`not saying this is 'database' for massive data, mas most part of applications can use such a simpler structure where objects are stored in file systems as JSON without the majority of restrictions imposed by relational databases.
+Just to be clear, I`not saying that this is a 'database' for massive data, but most part of applications can use such a simpler structure where objects are stored in file systems as JSON without the majority of restrictions imposed by relational databases.
 
 Welcome to ``git-storage``, see bellow how simple it is.
 
