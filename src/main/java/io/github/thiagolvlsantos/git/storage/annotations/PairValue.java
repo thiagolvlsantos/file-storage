@@ -8,11 +8,9 @@ import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @Getter
-@Setter
 @AllArgsConstructor
 @Builder
 @ToString(onlyExplicitlyIncluded = true)
@@ -28,7 +26,7 @@ public class PairValue<T> {
 
 	public void set(Object instance, Object value) throws GitStorageException {
 		try {
-			this.write.invoke(instance, value);
+			getWrite().invoke(instance, value);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new GitStorageException(e.getMessage(), e);
 		}
@@ -36,7 +34,7 @@ public class PairValue<T> {
 
 	public Object get(Object instance) throws GitStorageException {
 		try {
-			return this.read.invoke(instance);
+			return getRead().invoke(instance);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new GitStorageException(e.getMessage(), e);
 		}
