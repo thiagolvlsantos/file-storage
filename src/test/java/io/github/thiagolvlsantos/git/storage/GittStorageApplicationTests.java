@@ -13,12 +13,13 @@ import org.springframework.context.ApplicationContext;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.objects.Project;
+import io.github.thiagolvlsantos.git.storage.objects.SubProject;
 
 @SpringBootTest
 class GittStorageApplicationTests {
 
 	@Test
-	void contextLoads(@Autowired ApplicationContext context) {
+	void testBasicFeatures(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -51,12 +52,12 @@ class GittStorageApplicationTests {
 			// count all
 			assertThat(storage.count(dir, Project.class)).isEqualTo(2L);
 
-			// exists by id
+			// exists by key
 			assertThat(storage.exists(dir, Project.class, project1.getName())).isTrue();
 			// exists by example
 			assertThat(storage.exists(dir, Project.class, project1)).isTrue();
 
-			// read by id
+			// read by key
 			project1 = storage.read(dir, Project.class, project1.getName());
 			assertThat(project1.getName()).isEqualTo("projectA");
 
@@ -64,16 +65,37 @@ class GittStorageApplicationTests {
 			project1 = storage.read(dir, Project.class, project1);
 			assertThat(project1.getName()).isEqualTo("projectA");
 
-			// delete by id
+			// delete by key
 			storage.delete(dir, Project.class, project1.getName());
 			assertThat(storage.exists(dir, Project.class, project1.getName())).isFalse();
 
 			// delete by example
-			project1 = storage.write(dir, Project.class, project1);
-			assertThat(project1.getId()).isNotNull();
+			storage.delete(dir, Project.class, project2);
+			assertThat(storage.exists(dir, Project.class, project2)).isFalse();
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
-			storage.delete(dir, Project.class, project1);
-			assertThat(storage.exists(dir, Project.class, project1)).isFalse();
+	@Test
+	void testInheritance(@Autowired ApplicationContext context) {
+		IGitStorage storage = context.getBean(IGitStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+
+		try {
+			String name1 = "subProjectA";
+			String language = "pt";
+			SubProject sub = SubProject.builder().name(name1).language(language).build();
+
+			sub = storage.write(dir, SubProject.class, sub);
+			assertThat(storage.exists(dir, SubProject.class, sub)).isTrue();
+
+			sub = storage.read(dir, SubProject.class, name1);
+			assertThat(sub.getLanguage()).isEqualTo(language);
 		} finally {
 			try {
 				FileUtils.delete(dir);

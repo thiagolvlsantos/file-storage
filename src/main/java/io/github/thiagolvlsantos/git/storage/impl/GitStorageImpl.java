@@ -8,20 +8,14 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.GitEntity;
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
+import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
 import io.github.thiagolvlsantos.git.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.git.storage.annotations.UtilAnnotations;
@@ -38,16 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GitStorageImpl implements IGitStorage {
 
-	private ObjectMapper mapper;
+	private @Autowired IGitSerializer serializer;
 	private @Autowired IGitIndex idManager;
-
-	@PostConstruct
-	public void configure() {
-		mapper = new ObjectMapper()// specific instance
-				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
-				.enable(SerializationFeature.INDENT_OUTPUT);
-		mapper.registerModule(new JavaTimeModule());
-	}
 
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, T reference) {
@@ -213,11 +199,7 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	private <T> void write(T instance, File file) {
-		try {
-			mapper.writeValue(file, instance);
-		} catch (IOException e) {
-			throw new GitStorageException("Could not write object.", e);
-		}
+		serializer.writeValue(file, instance);
 	}
 
 	@Override
@@ -230,9 +212,8 @@ public class GitStorageImpl implements IGitStorage {
 		return read(entityFile(dir, type, keys), type);
 	}
 
-	@SneakyThrows
 	public <T> T read(File file, Class<T> type) {
-		return mapper.readValue(file, type);
+		return serializer.readValue(file, type);
 	}
 
 	@Override
@@ -263,7 +244,7 @@ public class GitStorageImpl implements IGitStorage {
 		File[] ids = idManager.directory(entityRoot(dir, type), "ids").listFiles();
 		for (File f : ids) {
 			Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-			result.add(mapper.readValue(entityFile(dir, type, keys), type));
+			result.add(serializer.readValue(entityFile(dir, type, keys), type));
 		}
 		return result;
 	}
