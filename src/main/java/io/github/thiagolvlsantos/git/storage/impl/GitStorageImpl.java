@@ -68,7 +68,6 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
-	@SneakyThrows
 	public <T> T write(File dir, Class<T> type, T instance) {
 		File file = entityFile(dir, type, UtilAnnotations.getKeys(type, instance));
 		T old = null;
@@ -156,7 +155,6 @@ public class GitStorageImpl implements IGitStorage {
 		}
 	}
 
-	@SneakyThrows
 	private <T> void prepareRevisions(File dir, Class<T> type, T instance, File target, T old) {
 		PairValue<GitRevision>[] revisions = UtilAnnotations.getValues(GitRevision.class, type, instance);
 		if (log.isInfoEnabled()) {
