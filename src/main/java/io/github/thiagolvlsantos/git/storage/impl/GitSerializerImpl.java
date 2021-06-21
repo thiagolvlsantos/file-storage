@@ -14,6 +14,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Component
 public class GitSerializerImpl implements IGitSerializer {
@@ -25,13 +29,16 @@ public class GitSerializerImpl implements IGitSerializer {
 		mapper = new ObjectMapper()// specific instance
 				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
 				.enable(SerializationFeature.INDENT_OUTPUT);
+		mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
+				ObjectMapper.DefaultTyping.NON_CONCRETE_AND_ARRAYS, "@class");
 		mapper.registerModule(new JavaTimeModule());
 	}
 
 	@Override
 	public <T> T readValue(File file, Class<T> type) {
 		try {
-			return mapper.readValue(file, type);
+			ObjectWrapper wrapper = mapper.readValue(file, ObjectWrapper.class);
+			return type.cast(wrapper.getObject());
 		} catch (IOException e) {
 			throw new GitStorageException("Could not read object.", e);
 		}
@@ -40,9 +47,17 @@ public class GitSerializerImpl implements IGitSerializer {
 	@Override
 	public <T> void writeValue(File file, T instance) {
 		try {
-			mapper.writeValue(file, instance);
+			mapper.writeValue(file, new ObjectWrapper(instance));
 		} catch (IOException e) {
 			throw new GitStorageException("Could not write object.", e);
 		}
+	}
+
+	@Getter
+	@Setter
+	@AllArgsConstructor
+	@NoArgsConstructor
+	public static class ObjectWrapper {
+		private Object object;
 	}
 }

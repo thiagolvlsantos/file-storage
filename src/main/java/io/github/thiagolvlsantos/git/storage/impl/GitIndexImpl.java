@@ -93,11 +93,11 @@ public class GitIndexImpl implements IGitIndex {
 	}
 
 	private File ids(File dir, Object... ids) {
-		return flatName(directory(dir, "ids"), ids);
+		return flatName(directory(dir, IDS), ids);
 	}
 
 	private File keys(File dir, Object... keys) {
-		return flatName(directory(dir, "keys"), keys);
+		return flatName(directory(dir, KEYS), keys);
 	}
 
 	private File flatName(File dir, Object... objs) {

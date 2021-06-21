@@ -40,6 +40,13 @@ public class GitStorageImpl implements IGitStorage {
 		return exists(dir, type, UtilAnnotations.getKeys(type, reference));
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> boolean exists(File dir, T reference) {
+		Class<T> type = (Class<T>) reference.getClass();
+		return exists(dir, type, UtilAnnotations.getKeys(type, reference));
+	}
+
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, Object... keys) {
 		return entityDir(dir, type, keys).exists();
@@ -64,7 +71,7 @@ public class GitStorageImpl implements IGitStorage {
 		if (entity == null) {
 			throw new GitStorageException("Entity is not annotated with @GitEntity", null);
 		}
-		return new File(dir, entity.value());
+		return new File(dir, "@" + entity.value());
 	}
 
 	@Override
@@ -82,6 +89,12 @@ public class GitStorageImpl implements IGitStorage {
 		write(instance, file);
 
 		return instance;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T write(File dir, T instance) {
+		return write(dir, (Class<T>) instance.getClass(), instance);
 	}
 
 	private <T> File entityFile(File dir, Class<T> type, Object... keys) {
@@ -205,6 +218,13 @@ public class GitStorageImpl implements IGitStorage {
 		return read(dir, type, UtilAnnotations.getKeys(type, reference));
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T read(File dir, T reference) {
+		Class<T> type = (Class<T>) reference.getClass();
+		return read(dir, type, UtilAnnotations.getKeys(type, reference));
+	}
+
 	@Override
 	public <T> T read(File dir, Class<T> type, Object... keys) {
 		return read(entityFile(dir, type, keys), type);
@@ -216,6 +236,13 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	public <T> T delete(File dir, Class<T> type, T reference) {
+		return delete(dir, type, UtilAnnotations.getKeys(type, reference));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T delete(File dir, T reference) {
+		Class<T> type = (Class<T>) reference.getClass();
 		return delete(dir, type, UtilAnnotations.getKeys(type, reference));
 	}
 
@@ -239,16 +266,18 @@ public class GitStorageImpl implements IGitStorage {
 	@SneakyThrows
 	public <T> List<T> all(File dir, Class<T> type) {
 		List<T> result = new LinkedList<>();
-		File[] ids = idManager.directory(entityRoot(dir, type), "ids").listFiles();
-		for (File f : ids) {
-			Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-			result.add(serializer.readValue(entityFile(dir, type, keys), type));
+		File[] ids = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
+		if (ids != null) {
+			for (File f : ids) {
+				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
+				result.add(serializer.readValue(entityFile(dir, type, keys), type));
+			}
 		}
 		return result;
 	}
 
 	@Override
 	public <T> long count(File dir, Class<T> type) {
-		return idManager.directory(entityRoot(dir, type), "ids").listFiles().length;
+		return idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles().length;
 	}
 }

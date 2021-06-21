@@ -91,11 +91,14 @@ class GittStorageApplicationTests {
 			String language = "pt";
 			SubProject sub = SubProject.builder().name(name1).language(language).build();
 
-			sub = storage.write(dir, SubProject.class, sub);
-			assertThat(storage.exists(dir, SubProject.class, sub)).isTrue();
+			sub = storage.write(dir, sub);
+			assertThat(storage.exists(dir, sub)).isTrue();
 
-			sub = storage.read(dir, SubProject.class, name1);
+			sub = storage.read(dir, sub);
 			assertThat(sub.getLanguage()).isEqualTo(language);
+
+			sub = storage.delete(dir, sub);
+			assertThat(storage.exists(dir, sub)).isFalse();
 		} finally {
 			try {
 				FileUtils.delete(dir);
