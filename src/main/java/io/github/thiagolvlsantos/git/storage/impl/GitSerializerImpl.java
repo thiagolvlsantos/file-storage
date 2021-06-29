@@ -30,7 +30,7 @@ public class GitSerializerImpl implements IGitSerializer {
 				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
 				.enable(SerializationFeature.INDENT_OUTPUT);
 		mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
-				ObjectMapper.DefaultTyping.NON_CONCRETE_AND_ARRAYS, "@class");
+				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
 		mapper.registerModule(new JavaTimeModule());
 	}
 
