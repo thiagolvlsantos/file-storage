@@ -15,7 +15,7 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	private Class<T> type;
 	private @Autowired IGitStorage storage;
 
-	public AGitStorageTypedImpl(Class<T> type) {
+	protected AGitStorageTypedImpl(Class<T> type) {
 		this.type = type;
 	}
 
