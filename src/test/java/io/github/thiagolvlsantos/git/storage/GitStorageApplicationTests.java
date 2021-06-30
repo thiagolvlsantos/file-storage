@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import io.github.thiagolvlsantos.git.storage.objects.ProjectStorage;
 import io.github.thiagolvlsantos.git.storage.objects.SubProject;
 
 @SpringBootTest
-class GittStorageApplicationTests {
+class GitStorageApplicationTests {
 
 	@Test
 	void testBasicFeatures(@Autowired ApplicationContext context) {
@@ -65,6 +66,11 @@ class GittStorageApplicationTests {
 			// read by example
 			project1 = storage.read(dir, Project.class, project1);
 			assertThat(project1.getName()).isEqualTo("projectA");
+
+			// search by name
+			List<Project> list = storage.search(dir, Project.class, "{\"name\":{\"$eq\": \"projectB\"}}");
+			assertThat(list).hasSize(1);
+			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
 			// delete by key
 			storage.delete(dir, Project.class, project1.getName());
@@ -128,6 +134,11 @@ class GittStorageApplicationTests {
 			// read by example
 			project1 = storage.read(dir, project1);
 			assertThat(project1.getName()).isEqualTo("projectA");
+
+			// search by name
+			List<Project> list = storage.search(dir, "{\"name\":{\"$eq\": \"projectB\"}}");
+			assertThat(list).hasSize(1);
+			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
 			// delete by key
 			storage.delete(dir, project1.getName());

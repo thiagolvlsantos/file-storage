@@ -49,6 +49,7 @@
 
 		<!-- PROJECT SPECIFIC -->
 		<git-commons.version>1.0.29</git-commons.version>
+		<json-predicate.version>0.0.2</json-predicate.version>
 	</properties>
 
 	<scm>
@@ -115,6 +116,11 @@
 			<groupId>io.github.thiagolvlsantos</groupId>
 			<artifactId>git-commons</artifactId>
 			<version>${git-commons.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.github.thiagolvlsantos</groupId>
+			<artifactId>json-predicate</artifactId>
+			<version>${json-predicate.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -68,4 +68,9 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	public long count(File dir) {
 		return storage.count(dir, type);
 	}
+
+	@Override
+	public List<T> search(File dir, String query) {
+		return storage.search(dir, type, query);
+	}
 }

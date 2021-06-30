@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -25,6 +27,7 @@ import io.github.thiagolvlsantos.git.storage.audit.IGitInitializer;
 import io.github.thiagolvlsantos.git.storage.concurrency.GitRevision;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
+import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,6 +37,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	private @Autowired IGitSerializer serializer;
 	private @Autowired IGitIndex idManager;
+	private @Autowired IPredicateFactory predicateFactory;
 
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, T reference) {
@@ -279,5 +283,12 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	public <T> long count(File dir, Class<T> type) {
 		return idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles().length;
+	}
+
+	@Override
+	public <T> List<T> search(File dir, Class<T> type, String query) {
+		List<T> all = all(dir, type);
+		Predicate<Object> p = predicateFactory.read(query.getBytes());
+		return all.stream().filter(p).collect(Collectors.toList());
 	}
 }
