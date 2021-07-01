@@ -50,7 +50,7 @@ class GitStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.all(dir, Project.class)).containsSequence(project1, project2);
+			assertThat(storage.all(dir, Project.class)).contains(project1, project2);
 			// count all
 			assertThat(storage.count(dir, Project.class)).isEqualTo(2L);
 
@@ -118,7 +118,7 @@ class GitStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.all(dir)).containsSequence(project1, project2);
+			assertThat(storage.all(dir)).contains(project1, project2);
 			// count all
 			assertThat(storage.count(dir)).isEqualTo(2L);
 
