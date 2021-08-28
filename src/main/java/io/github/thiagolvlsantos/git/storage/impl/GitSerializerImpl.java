@@ -36,6 +36,9 @@ public class GitSerializerImpl implements IGitSerializer {
 
 	@Override
 	public <T> T readValue(File file, Class<T> type) {
+		if (!file.exists()) {
+			throw new GitStorageException("Object not found.", null);
+		}
 		try {
 			ObjectWrapper wrapper = mapper.readValue(file, ObjectWrapper.class);
 			return type.cast(wrapper.getObject());
