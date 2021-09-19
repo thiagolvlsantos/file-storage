@@ -1,6 +1,7 @@
 package io.github.thiagolvlsantos.git.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.objects.Project;
 import io.github.thiagolvlsantos.git.storage.objects.ProjectStorage;
 import io.github.thiagolvlsantos.git.storage.objects.SubProject;
@@ -174,6 +176,91 @@ class GitStorageApplicationTests {
 
 			sub = storage.delete(dir, sub);
 			assertThat(storage.exists(dir, sub)).isFalse();
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testUpdate(@Autowired ApplicationContext context) {
+		IGitStorage storage = context.getBean(IGitStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, Project.class, project1);
+			assertThat(project1.getId()).isNotNull();
+
+			// read value that cannot change
+			Long id = project1.getId();
+			LocalDateTime created = project1.getCreated();
+			Long revision = project1.getRevision();
+
+			Project newVersion = Project.builder().name(name1).build();
+			String description = "This is a new description.";
+			newVersion.setDescription(description);
+			project1 = storage.update(dir, Project.class, newVersion, name1);
+
+			// old attributes
+			assertThat(project1.getId()).isEqualTo(id);
+			assertThat(project1.getName()).isEqualTo(name1);
+			assertThat(project1.getCreated()).isEqualTo(created);
+			assertThat(project1.getRevision()).isEqualTo(revision + 1);
+
+			// new attributes
+			assertThat(project1.getDescription()).isEqualTo(description);
+
+			// update valid attribute
+			description = "Final version";
+			project1 = storage.updateAttribute(dir, Project.class, "description", "\"" + description + "\"", name1);
+
+			// changed attribute
+			assertThat(project1.getDescription()).isEqualTo(description);
+			assertThat(project1.getRevision()).isEqualTo(revision + 2);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidUpdate(@Autowired ApplicationContext context) {
+		IGitStorage storage = context.getBean(IGitStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, Project.class, project1);
+			assertThat(project1.getId()).isNotNull();
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "id", "\"10\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitId annotated attribute 'id' is not allowed.");
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "name", "\"newName\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "created", "\"10\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitCreated annotated attribute 'created' is not allowed.");
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "revision", "\"10\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
