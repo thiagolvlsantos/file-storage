@@ -24,6 +24,7 @@ import io.github.thiagolvlsantos.git.storage.GitEntity;
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
+import io.github.thiagolvlsantos.git.storage.annotations.GitKeep;
 import io.github.thiagolvlsantos.git.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.git.storage.annotations.UtilAnnotations;
 import io.github.thiagolvlsantos.git.storage.audit.GitChanged;
@@ -237,6 +238,7 @@ public class GitStorageImpl implements IGitStorage {
 		PairValue<GitKey>[] currentKeys = UtilAnnotations.getValues(GitKey.class, type, current);
 		PairValue<GitCreated>[] currentCreated = UtilAnnotations.getValues(GitCreated.class, type, current);
 		PairValue<GitRevision>[] currentRevision = UtilAnnotations.getValues(GitRevision.class, type, current);
+		PairValue<GitKeep>[] currentKeep = UtilAnnotations.getValues(GitKeep.class, type, current);
 		// new object
 		BeanUtils.copyProperties(current, instance);
 		// return unchangeable attributes
@@ -244,6 +246,7 @@ public class GitStorageImpl implements IGitStorage {
 		returnAttributes(GitKey.class, current, currentKeys);
 		returnAttributes(GitCreated.class, current, currentCreated);
 		returnAttributes(GitRevision.class, current, currentRevision);
+		returnAttributes(GitKeep.class, current, currentKeep);
 		// write resulting object
 		return write(dir, current);
 	}
@@ -267,6 +270,7 @@ public class GitStorageImpl implements IGitStorage {
 		validateAttribute(GitKey.class, type, attribute, current);
 		validateAttribute(GitCreated.class, type, attribute, current);
 		validateAttribute(GitRevision.class, type, attribute, current);
+		validateAttribute(GitKeep.class, type, attribute, current);
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
 		BeanUtils.setProperty(current, attribute, serializer.fromString(data, pd.getReadMethod().getReturnType()));
 		// write resulting object
@@ -303,6 +307,21 @@ public class GitStorageImpl implements IGitStorage {
 
 	public <T> T read(File file, Class<T> type) {
 		return serializer.readValue(file, type);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> Object readAttribute(File dir, Class<T> type, String attribute, Object... keys) {
+		if (!exists(dir, type, keys)) {
+			throw new GitStorageException(
+					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
+		}
+		T obj = read(dir, type, keys);
+		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(obj, attribute);
+		if (pd == null) {
+			throw new GitStorageException("Attribute '" + attribute + "' not found for type: " + obj.getClass(), null);
+		}
+		return pd.getReadMethod().invoke(obj);
 	}
 
 	@Override

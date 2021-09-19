@@ -21,6 +21,8 @@ public interface IGitStorageTyped<T> {
 
 	T read(File dir, Object... keys);
 
+	Object readAttribute(File dir, String attribute, Object... keys);
+
 	T delete(File dir, T example);
 
 	T delete(File dir, Object... keys);

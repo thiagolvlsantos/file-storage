@@ -269,4 +269,26 @@ class GitStorageApplicationTests {
 			}
 		}
 	}
+
+	@Test
+	void testGetAttribute(@Autowired ApplicationContext context) {
+		IGitStorage storage = context.getBean(IGitStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, Project.class, project1);
+
+			// attribute reading
+			Object attribute = storage.readAttribute(dir, Project.class, "name", name1);
+			assertThat(attribute).isEqualTo(name1);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
