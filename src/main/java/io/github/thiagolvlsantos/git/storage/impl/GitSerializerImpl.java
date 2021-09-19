@@ -1,5 +1,6 @@
 package io.github.thiagolvlsantos.git.storage.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
@@ -32,6 +33,26 @@ public class GitSerializerImpl implements IGitSerializer {
 		mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
 				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
 		mapper.registerModule(new JavaTimeModule());
+	}
+
+	@Override
+	public <T> T fromString(String data, Class<T> type) {
+		try {
+			Object obj = mapper.readValue(data, type);
+			return type.cast(obj);
+		} catch (IOException e) {
+			throw new GitStorageException("Could not read value. '" + data + "'", e);
+		}
+	}
+
+	@Override
+	public <T> String asString(T instance) {
+		try (ByteArrayOutputStream bout = new ByteArrayOutputStream()) {
+			mapper.writeValue(bout, instance);
+			return new String(bout.toByteArray());
+		} catch (IOException e) {
+			throw new GitStorageException("Could not write value.", e);
+		}
 	}
 
 	@Override

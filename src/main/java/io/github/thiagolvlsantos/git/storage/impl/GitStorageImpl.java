@@ -1,7 +1,10 @@
 package io.github.thiagolvlsantos.git.storage.impl;
 
+import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -10,6 +13,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
@@ -27,6 +32,7 @@ import io.github.thiagolvlsantos.git.storage.audit.IGitInitializer;
 import io.github.thiagolvlsantos.git.storage.concurrency.GitRevision;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
+import io.github.thiagolvlsantos.git.storage.identity.GitKey;
 import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +44,11 @@ public class GitStorageImpl implements IGitStorage {
 	private @Autowired IGitSerializer serializer;
 	private @Autowired IGitIndex idManager;
 	private @Autowired IPredicateFactory predicateFactory;
+
+	@Override
+	public IGitSerializer getSerializer() {
+		return serializer;
+	}
 
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, T reference) {
@@ -56,7 +67,7 @@ public class GitStorageImpl implements IGitStorage {
 		return entityDir(dir, type, keys).exists();
 	}
 
-	private <T> File entityDir(File dir, Class<T> type, Object... keys) {
+	protected <T> File entityDir(File dir, Class<T> type, Object... keys) {
 		File path = entityRoot(dir, type);
 		for (Object k : keys) {
 			path = new File(path, String.valueOf(k));
@@ -67,7 +78,7 @@ public class GitStorageImpl implements IGitStorage {
 		return path;
 	}
 
-	private <T> File entityRoot(File dir, Class<T> type) {
+	protected <T> File entityRoot(File dir, Class<T> type) {
 		GitEntity entity = AnnotationUtils.findAnnotation(type, GitEntity.class);
 		if (log.isDebugEnabled()) {
 			log.debug("entity: {}", entity);
@@ -101,11 +112,11 @@ public class GitStorageImpl implements IGitStorage {
 		return write(dir, (Class<T>) instance.getClass(), instance);
 	}
 
-	private <T> File entityFile(File dir, Class<T> type, Object... keys) {
+	protected <T> File entityFile(File dir, Class<T> type, Object... keys) {
 		return new File(entityDir(dir, type, keys), "meta.json");
 	}
 
-	private <T> void prepareCreated(File dir, Class<T> type, T instance, File target, T old) {
+	protected <T> void prepareCreated(File dir, Class<T> type, T instance, File target, T old) {
 		PairValue<GitId>[] ids = UtilAnnotations.getValues(GitId.class, type, instance);
 		if (log.isInfoEnabled()) {
 			log.info("ids: {}", Arrays.toString(ids));
@@ -126,12 +137,12 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@SneakyThrows
-	private Object value(Object instance, String name, Class<? extends IGitInitializer> initializer, Method m) {
+	protected Object value(Object instance, String name, Class<? extends IGitInitializer> initializer, Method m) {
 		IGitInitializer factory = initializer.getConstructor().newInstance();
 		return factory.value(instance, name, m.getReturnType());
 	}
 
-	private <T> void initializeFixed(File dir, Class<T> type, T instance, PairValue<GitId>[] ids,
+	protected <T> void initializeFixed(File dir, Class<T> type, T instance, PairValue<GitId>[] ids,
 			PairValue<GitCreated>[] created) {
 		for (PairValue<GitCreated> c : created) {
 			Object obj = c.get(instance);
@@ -155,7 +166,7 @@ public class GitStorageImpl implements IGitStorage {
 		}
 	}
 
-	private <T> void keepFixed(T old, PairValue<GitId>[] ids, PairValue<GitCreated>[] created, T instance) {
+	protected <T> void keepFixed(T old, PairValue<GitId>[] ids, PairValue<GitCreated>[] created, T instance) {
 		for (PairValue<GitCreated> c : created) {
 			Object obj = c.get(old);
 			c.set(instance, obj);
@@ -172,7 +183,7 @@ public class GitStorageImpl implements IGitStorage {
 		}
 	}
 
-	private <T> void prepareRevisions(File dir, Class<T> type, T instance, File target, T old) {
+	protected <T> void prepareRevisions(File dir, Class<T> type, T instance, File target, T old) {
 		PairValue<GitRevision>[] revisions = UtilAnnotations.getValues(GitRevision.class, type, instance);
 		if (log.isInfoEnabled()) {
 			log.info("revisions: {}", Arrays.toString(revisions));
@@ -199,7 +210,7 @@ public class GitStorageImpl implements IGitStorage {
 		}
 	}
 
-	private <T> void prepareChanged(File dir, Class<T> type, T instance, File target, T old) {
+	protected <T> void prepareChanged(File dir, Class<T> type, T instance, File target, T old) {
 		PairValue<GitChanged>[] changed = UtilAnnotations.getValues(GitChanged.class, type, instance);
 		if (log.isInfoEnabled()) {
 			log.info("changed: {}", Arrays.toString(changed));
@@ -213,8 +224,64 @@ public class GitStorageImpl implements IGitStorage {
 		}
 	}
 
-	private <T> void write(T instance, File file) {
+	protected <T> void write(T instance, File file) {
 		serializer.writeValue(file, instance);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> T update(File dir, Class<T> type, T instance, Object... keys) {
+		// old objects
+		T current = read(dir, type, keys);
+		PairValue<GitId>[] currentIds = UtilAnnotations.getValues(GitId.class, type, current);
+		PairValue<GitKey>[] currentKeys = UtilAnnotations.getValues(GitKey.class, type, current);
+		PairValue<GitCreated>[] currentCreated = UtilAnnotations.getValues(GitCreated.class, type, current);
+		PairValue<GitRevision>[] currentRevision = UtilAnnotations.getValues(GitRevision.class, type, current);
+		// new object
+		BeanUtils.copyProperties(current, instance);
+		// return unchangeable attributes
+		returnAttributes(GitId.class, current, currentIds);
+		returnAttributes(GitKey.class, current, currentKeys);
+		returnAttributes(GitCreated.class, current, currentCreated);
+		returnAttributes(GitRevision.class, current, currentRevision);
+		// write resulting object
+		return write(dir, current);
+	}
+
+	protected <A extends Annotation, T> void returnAttributes(Class<A> annotation, T current, PairValue<A>[] pairs)
+			throws IllegalAccessException, InvocationTargetException {
+		for (PairValue<A> c : pairs) {
+			if (log.isInfoEnabled()) {
+				log.info("Return " + annotation.getSimpleName() + ": {}={}", c.getName(), c.getValue());
+			}
+			BeanUtils.setProperty(current, c.getName(), c.getValue());
+		}
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> T updateAttribute(File dir, Class<T> type, String attribute, String data, Object... keys) {
+		T current = read(dir, type, keys);
+		// check unchangeable attributes
+		validateAttribute(GitId.class, type, attribute, current);
+		validateAttribute(GitKey.class, type, attribute, current);
+		validateAttribute(GitCreated.class, type, attribute, current);
+		validateAttribute(GitRevision.class, type, attribute, current);
+		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
+		BeanUtils.setProperty(current, attribute, serializer.fromString(data, pd.getReadMethod().getReturnType()));
+		// write resulting object
+		return write(dir, current);
+	}
+
+	protected <A extends Annotation, T> void validateAttribute(Class<A> annotation, Class<T> type, String attribute,
+			T current) {
+		PairValue<A>[] values = UtilAnnotations.getValues(annotation, type, current);
+		for (PairValue<A> c : values) {
+			if (c.getName().equalsIgnoreCase(attribute)) {
+				throw new GitStorageException("Update of @" + annotation.getSimpleName() + " annotated attribute '"
+						+ c.getName() + "' is not allowed.", null);
+			}
+		}
 	}
 
 	@Override

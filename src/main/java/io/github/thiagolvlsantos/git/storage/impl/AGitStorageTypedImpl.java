@@ -40,6 +40,16 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
+	public T update(File dir, T instance, Object... keys) {
+		return storage.update(dir, type, instance, keys);
+	}
+
+	@Override
+	public T updateAttribute(File dir, String attribute, String data, Object... keys) {
+		return storage.updateAttribute(dir, type, attribute, data, keys);
+	}
+
+	@Override
 	public T read(File dir, T example) {
 		return storage.read(dir, type, example);
 	}
