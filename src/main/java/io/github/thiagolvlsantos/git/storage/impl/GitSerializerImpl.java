@@ -31,20 +31,20 @@ public class GitSerializerImpl implements IGitSerializer {
 
 	@PostConstruct
 	public void configure() {
-		mapperClean = new ObjectMapper()// specific instance
-				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
-				.enable(SerializationFeature.INDENT_OUTPUT);
-		mapperClean.registerModule(new JavaTimeModule());
-
-		mapper = new ObjectMapper()// specific instance
-				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
-				.enable(SerializationFeature.INDENT_OUTPUT);
+		mapperClean = configure(new ObjectMapper());
+		mapper = configure(new ObjectMapper());
 		mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
 				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
-		mapper.registerModule(new JavaTimeModule());
 	}
 
-	@SuppressWarnings("unchecked")
+	private ObjectMapper configure(ObjectMapper mapper) {
+		mapper = mapper// specific instance
+				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
+				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)//
+				.enable(SerializationFeature.INDENT_OUTPUT);
+		return mapper.registerModule(new JavaTimeModule());
+	}
+
 	@Override
 	public Object decode(String data, AnnotatedType type) {
 		try {
