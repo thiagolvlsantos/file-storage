@@ -3,11 +3,14 @@ package io.github.thiagolvlsantos.git.storage.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Type;
 
 import javax.annotation.PostConstruct;
 
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -23,10 +26,16 @@ import lombok.Setter;
 @Component
 public class GitSerializerImpl implements IGitSerializer {
 
+	private ObjectMapper mapperClean;
 	private ObjectMapper mapper;
 
 	@PostConstruct
 	public void configure() {
+		mapperClean = new ObjectMapper()// specific instance
+				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
+				.enable(SerializationFeature.INDENT_OUTPUT);
+		mapperClean.registerModule(new JavaTimeModule());
+
 		mapper = new ObjectMapper()// specific instance
 				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
 				.enable(SerializationFeature.INDENT_OUTPUT);
@@ -35,20 +44,26 @@ public class GitSerializerImpl implements IGitSerializer {
 		mapper.registerModule(new JavaTimeModule());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T fromString(String data, Class<T> type) {
+	public Object decode(String data, AnnotatedType type) {
 		try {
-			Object obj = mapper.readValue(data, type);
-			return type.cast(obj);
+			TypeReference<?> tr = new TypeReference<Object>() {
+				@Override
+				public Type getType() {
+					return type.getType();
+				}
+			};
+			return mapperClean.readValue(data, tr);
 		} catch (IOException e) {
 			throw new GitStorageException("Could not read value. '" + data + "'", e);
 		}
 	}
 
 	@Override
-	public <T> String asString(T instance) {
+	public String encode(Object instance) {
 		try (ByteArrayOutputStream bout = new ByteArrayOutputStream()) {
-			mapper.writeValue(bout, instance);
+			mapperClean.writeValue(bout, instance);
 			return new String(bout.toByteArray());
 		} catch (IOException e) {
 			throw new GitStorageException("Could not write value.", e);

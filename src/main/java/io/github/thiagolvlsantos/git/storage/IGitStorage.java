@@ -17,9 +17,9 @@ public interface IGitStorage {
 
 	<T> T write(File dir, Class<T> type, T instance);
 
-	<T> T update(File dir, Class<T> type, T instance, Object... keys);
+	<T> T merge(File dir, Class<T> type, T instance, Object... keys);
 
-	<T> T updateAttribute(File dir, Class<T> type, String attribute, String data, Object... keys);
+	<T> T setAttribute(File dir, Class<T> type, String attribute, Object data, Object... keys);
 
 	<T> T read(File dir, T example);
 
@@ -27,7 +27,7 @@ public interface IGitStorage {
 
 	<T> T read(File dir, Class<T> type, Object... keys);
 
-	<T> Object readAttribute(File dir, Class<T> type, String attribute, Object... keys);
+	<T> Object getAttribute(File dir, Class<T> type, String attribute, Object... keys);
 
 	<T> T delete(File dir, T example);
 

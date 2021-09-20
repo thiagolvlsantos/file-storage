@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
 import io.github.thiagolvlsantos.git.storage.IGitStorageTyped;
 import lombok.Setter;
@@ -25,6 +26,11 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
+	public IGitSerializer getSerializer() {
+		return storage.getSerializer();
+	}
+
+	@Override
 	public boolean exists(File dir, T example) {
 		return storage.exists(dir, type, example);
 	}
@@ -40,13 +46,13 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public T update(File dir, T instance, Object... keys) {
-		return storage.update(dir, type, instance, keys);
+	public T merge(File dir, T instance, Object... keys) {
+		return storage.merge(dir, type, instance, keys);
 	}
 
 	@Override
 	public T updateAttribute(File dir, String attribute, String data, Object... keys) {
-		return storage.updateAttribute(dir, type, attribute, data, keys);
+		return storage.setAttribute(dir, type, attribute, data, keys);
 	}
 
 	@Override
@@ -61,7 +67,7 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 
 	@Override
 	public Object readAttribute(File dir, String attribute, Object... keys) {
-		return storage.readAttribute(dir, type, attribute, keys);
+		return storage.getAttribute(dir, type, attribute, keys);
 	}
 
 	@Override

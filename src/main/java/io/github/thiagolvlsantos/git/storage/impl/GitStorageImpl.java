@@ -231,7 +231,11 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T update(File dir, Class<T> type, T instance, Object... keys) {
+	public <T> T merge(File dir, Class<T> type, T instance, Object... keys) {
+		if (!exists(dir, type, keys)) {
+			throw new GitStorageException(
+					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
+		}
 		// old objects
 		T current = read(dir, type, keys);
 		PairValue<GitId>[] currentIds = UtilAnnotations.getValues(GitId.class, type, current);
@@ -263,17 +267,24 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T updateAttribute(File dir, Class<T> type, String attribute, String data, Object... keys) {
+	public <T> T setAttribute(File dir, Class<T> type, String attribute, Object data, Object... keys) {
+		if (!exists(dir, type, keys)) {
+			throw new GitStorageException(
+					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
+		}
 		T current = read(dir, type, keys);
+		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
+		if (pd == null) {
+			throw new GitStorageException("Attribute '" + attribute + "' not found for type: " + current.getClass(),
+					null);
+		}
 		// check unchangeable attributes
 		validateAttribute(GitId.class, type, attribute, current);
 		validateAttribute(GitKey.class, type, attribute, current);
 		validateAttribute(GitCreated.class, type, attribute, current);
 		validateAttribute(GitRevision.class, type, attribute, current);
 		validateAttribute(GitKeep.class, type, attribute, current);
-		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
-		BeanUtils.setProperty(current, attribute, serializer.fromString(data, pd.getReadMethod().getReturnType()));
-		// write resulting object
+		BeanUtils.setProperty(current, attribute, data);
 		return write(dir, current);
 	}
 
@@ -311,7 +322,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Object readAttribute(File dir, Class<T> type, String attribute, Object... keys) {
+	public <T> Object getAttribute(File dir, Class<T> type, String attribute, Object... keys) {
 		if (!exists(dir, type, keys)) {
 			throw new GitStorageException(
 					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);

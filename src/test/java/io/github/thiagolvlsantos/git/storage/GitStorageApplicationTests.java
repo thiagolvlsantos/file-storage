@@ -204,7 +204,7 @@ class GitStorageApplicationTests {
 			Project newVersion = Project.builder().name(name1).build();
 			String description = "This is a new description.";
 			newVersion.setDescription(description);
-			project1 = storage.update(dir, Project.class, newVersion, name1);
+			project1 = storage.merge(dir, Project.class, newVersion, name1);
 
 			// old attributes
 			assertThat(project1.getId()).isEqualTo(id);
@@ -217,7 +217,7 @@ class GitStorageApplicationTests {
 
 			// update valid attribute
 			description = "Final version";
-			project1 = storage.updateAttribute(dir, Project.class, "description", "\"" + description + "\"", name1);
+			project1 = storage.setAttribute(dir, Project.class, "description", description, name1);
 
 			// changed attribute
 			assertThat(project1.getDescription()).isEqualTo(description);
@@ -243,22 +243,22 @@ class GitStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "id", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "id", "\"10\"", name1))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitId annotated attribute 'id' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "name", "\"newName\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "name", "\"newName\"", name1))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "created", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "created", "\"10\"", name1))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.updateAttribute(dir, Project.class, "revision", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "revision", "\"10\"", name1))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
 		} finally {
@@ -281,7 +281,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			// attribute reading
-			Object attribute = storage.readAttribute(dir, Project.class, "name", name1);
+			Object attribute = storage.getAttribute(dir, Project.class, "name", name1);
 			assertThat(attribute).isEqualTo(name1);
 		} finally {
 			try {

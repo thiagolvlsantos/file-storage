@@ -1,12 +1,13 @@
 package io.github.thiagolvlsantos.git.storage;
 
 import java.io.File;
+import java.lang.reflect.AnnotatedType;
 
 public interface IGitSerializer {
 
-	<T> T fromString(String data, Class<T> type);
+	Object decode(String data, AnnotatedType type);
 
-	<T> String asString(T instance);
+	String encode(Object instance);
 
 	<T> T readValue(File file, Class<T> type);
 

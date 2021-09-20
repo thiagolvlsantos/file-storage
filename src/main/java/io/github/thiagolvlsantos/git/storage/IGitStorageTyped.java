@@ -7,13 +7,15 @@ public interface IGitStorageTyped<T> {
 
 	Class<T> type();
 
+	IGitSerializer getSerializer();
+
 	boolean exists(File dir, T example);
 
 	boolean exists(File dir, Object... keys);
 
 	T write(File dir, T instance);
 
-	T update(File dir, T instance, Object... keys);
+	T merge(File dir, T instance, Object... keys);
 
 	T updateAttribute(File dir, String attribute, String data, Object... keys);
 
