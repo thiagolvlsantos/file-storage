@@ -31,34 +31,18 @@ class GitStorageApplicationTests {
 	void testInvalidEntity(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		try {
-			assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Entity is not annotated with @GitEntity.");
-		} finally {
-			try {
-				FileUtils.delete(dir);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
+				.isExactlyInstanceOf(GitStorageException.class)//
+				.hasMessage("Entity is not annotated with @GitEntity.");
 	}
 
 	@Test
 	void testInvalidEntityTyped(@Autowired ApplicationContext context) {
 		IGitStorageTyped<Outlier> storage = context.getBean(OutlierStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		try {
-			assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Entity is not annotated with @GitEntity.");
-		} finally {
-			try {
-				FileUtils.delete(dir);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
+				.isExactlyInstanceOf(GitStorageException.class)//
+				.hasMessage("Entity is not annotated with @GitEntity.");
 	}
 
 	@Test
@@ -372,36 +356,20 @@ class GitStorageApplicationTests {
 	void testInvalidMerge(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		try {
-			assertThatThrownBy(() -> storage.merge(dir, Project.class, new Project(), "doNotExist"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
-		} finally {
-			try {
-				FileUtils.delete(dir);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		assertThatThrownBy(() -> storage.merge(dir, Project.class, new Project(), "doNotExist"))//
+				.isExactlyInstanceOf(GitStorageException.class)//
+				.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+						+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
 	}
 
 	@Test
 	void testInvalidMergeTyped(@Autowired ApplicationContext context) {
 		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		try {
-			assertThatThrownBy(() -> storage.merge(dir, new Project(), "doNotExist"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
-		} finally {
-			try {
-				FileUtils.delete(dir);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		assertThatThrownBy(() -> storage.merge(dir, new Project(), "doNotExist"))//
+				.isExactlyInstanceOf(GitStorageException.class)//
+				.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+						+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
 	}
 
 	@Test
