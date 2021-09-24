@@ -46,6 +46,16 @@ public class GitSerializerImpl implements IGitSerializer {
 	}
 
 	@Override
+	public <T> T decode(byte[] data, Class<T> type) {
+		try {
+			T tmp = mapperClean.readValue(data, type);
+			return type.cast(tmp);
+		} catch (IOException e) {
+			throw new GitStorageException("Could not read value. '" + data + "'", e);
+		}
+	}
+
+	@Override
 	public Object decode(String data, AnnotatedType type) {
 		try {
 			TypeReference<?> tr = new TypeReference<Object>() {

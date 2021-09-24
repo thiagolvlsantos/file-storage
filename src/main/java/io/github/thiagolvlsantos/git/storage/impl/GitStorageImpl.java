@@ -6,10 +6,19 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -34,6 +43,9 @@ import io.github.thiagolvlsantos.git.storage.concurrency.GitRevision;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
 import io.github.thiagolvlsantos.git.storage.identity.GitKey;
+import io.github.thiagolvlsantos.git.storage.resource.Resource;
+import io.github.thiagolvlsantos.git.storage.resource.ResourceContent;
+import io.github.thiagolvlsantos.git.storage.resource.ResourceMetadata;
 import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +97,7 @@ public class GitStorageImpl implements IGitStorage {
 			log.debug("entity: {}", entity);
 		}
 		if (entity == null) {
-			throw new GitStorageException("Entity is not annotated with @GitEntity", null);
+			throw new GitStorageException("Entity is not annotated with @GitEntity.", null);
 		}
 		return new File(dir, "@" + entity.value());
 	}
@@ -244,18 +256,19 @@ public class GitStorageImpl implements IGitStorage {
 		PairValue<GitRevision>[] currentRevision = UtilAnnotations.getValues(GitRevision.class, type, current);
 		PairValue<GitKeep>[] currentKeep = UtilAnnotations.getValues(GitKeep.class, type, current);
 		// new object
+		// TODO: create an interface IReplicator as an abstraction of this copy.
 		BeanUtils.copyProperties(current, instance);
 		// return unchangeable attributes
-		returnAttributes(GitId.class, current, currentIds);
-		returnAttributes(GitKey.class, current, currentKeys);
-		returnAttributes(GitCreated.class, current, currentCreated);
-		returnAttributes(GitRevision.class, current, currentRevision);
-		returnAttributes(GitKeep.class, current, currentKeep);
+		reassignAttributes(GitId.class, current, currentIds);
+		reassignAttributes(GitKey.class, current, currentKeys);
+		reassignAttributes(GitCreated.class, current, currentCreated);
+		reassignAttributes(GitRevision.class, current, currentRevision);
+		reassignAttributes(GitKeep.class, current, currentKeep);
 		// write resulting object
 		return write(dir, current);
 	}
 
-	protected <A extends Annotation, T> void returnAttributes(Class<A> annotation, T current, PairValue<A>[] pairs)
+	protected <A extends Annotation, T> void reassignAttributes(Class<A> annotation, T current, PairValue<A>[] pairs)
 			throws IllegalAccessException, InvocationTargetException {
 		for (PairValue<A> c : pairs) {
 			if (log.isInfoEnabled()) {
@@ -284,6 +297,7 @@ public class GitStorageImpl implements IGitStorage {
 		validateAttribute(GitCreated.class, type, attribute, current);
 		validateAttribute(GitRevision.class, type, attribute, current);
 		validateAttribute(GitKeep.class, type, attribute, current);
+		// TODO: create an interface IReplicator as an abstraction of this set.
 		BeanUtils.setProperty(current, attribute, data);
 		return write(dir, current);
 	}
@@ -297,6 +311,48 @@ public class GitStorageImpl implements IGitStorage {
 						+ c.getName() + "' is not allowed.", null);
 			}
 		}
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> T setResource(File dir, Class<T> type, Resource resource, Object... keys) {
+		File root = resourceDir(entityDir(dir, type, keys));
+
+		ResourceMetadata metadata = resource.getMetadata();
+
+		File contentFile = new File(root, metadata.getPath());
+		// SECURITY: avoid attempt to override files in higher locations as /etc
+		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
+			throw new GitStorageException("Cannot save resources in a higher file structure. " + metadata.getPath(),
+					null);
+		}
+		FileUtils.prepare(contentFile);
+		Files.write(contentFile.toPath(), resource.getContent().getData(), StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+
+		File metadataFile = resourceMeta(root, metadata.getPath());
+		FileUtils.prepare(metadataFile);
+		metadata.setTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(contentFile.lastModified()),
+				TimeZone.getDefault().toZoneId()));
+		Files.write(metadataFile.toPath(), serializer.encode(metadata).getBytes(), StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+
+		// force change flags like revision and updated
+		T result = merge(dir, type, read(dir, type, keys), keys);
+
+		if (log.isInfoEnabled()) {
+			log.info("Resource written: " + metadata);
+		}
+
+		return result;
+	}
+
+	protected File resourceDir(File root) {
+		return new File(root, "@resources");
+	}
+
+	protected File resourceMeta(File root, String path) {
+		return new File(root, path + ".meta.json");
 	}
 
 	@Override
@@ -333,6 +389,54 @@ public class GitStorageImpl implements IGitStorage {
 			throw new GitStorageException("Attribute '" + attribute + "' not found for type: " + obj.getClass(), null);
 		}
 		return pd.getReadMethod().invoke(obj);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> Resource getResource(File dir, Class<T> type, String path, Object... keys) {
+		File root = resourceDir(entityDir(dir, type, keys));
+		if (!root.exists()) {
+			throw new GitStorageException("Resources for " + Arrays.toString(keys) + " not found.", null);
+		}
+		File contentFile = new File(root, path);
+		// SECURITY: avoid attempt to override files in higher locations as /etc
+		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
+			throw new GitStorageException("Cannot read resources from a higher file structure. " + path, null);
+		}
+		ResourceContent content = new ResourceContent(Files.readAllBytes(contentFile.toPath()));
+		File metadataFile = resourceMeta(root, path);
+		ResourceMetadata meta = serializer.decode(Files.readAllBytes(metadataFile.toPath()), ResourceMetadata.class);
+		return Resource.builder().metadata(meta).content(content).build();
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> List<Resource> allResources(File dir, Class<T> type, Object... keys) {
+		File root = resourceDir(entityDir(dir, type, keys));
+		if (!root.exists()) {
+			throw new GitStorageException("Resources for " + Arrays.toString(keys) + " not found.", null);
+		}
+		List<Resource> result = new LinkedList<>();
+		Files.walkFileTree(Paths.get(root.toURI()), new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult visitFile(Path contentFile, BasicFileAttributes attrs) throws IOException {
+				File file = contentFile.toFile();
+				String name = file.getName();
+				if (!name.endsWith(".meta.json")) {
+					File metadataFile = resourceMeta(file.getParentFile(), name);
+					if (log.isInfoEnabled()) {
+						log.info("Loading..." + contentFile);
+					}
+					ResourceMetadata metadata = serializer.decode(Files.readAllBytes(metadataFile.toPath()),
+							ResourceMetadata.class);
+					ResourceContent content = ResourceContent.builder().data(Files.readAllBytes(contentFile)).build();
+					result.add(Resource.builder().metadata(metadata).content(content).build());
+				}
+				return FileVisitResult.CONTINUE;
+			}
+		});
+		result.sort((a, b) -> a.getMetadata().getPath().compareTo(b.getMetadata().getPath()));
+		return result;
 	}
 
 	@Override

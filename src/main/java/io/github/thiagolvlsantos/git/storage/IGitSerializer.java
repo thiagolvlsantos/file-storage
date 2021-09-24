@@ -5,6 +5,8 @@ import java.lang.reflect.AnnotatedType;
 
 public interface IGitSerializer {
 
+	<T> T decode(byte[] data, Class<T> type);
+
 	Object decode(String data, AnnotatedType type);
 
 	String encode(Object instance);
