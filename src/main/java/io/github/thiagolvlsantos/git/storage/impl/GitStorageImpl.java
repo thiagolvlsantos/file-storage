@@ -244,10 +244,7 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	@SneakyThrows
 	public <T> T merge(File dir, Class<T> type, T instance, Object... keys) {
-		if (!exists(dir, type, keys)) {
-			throw new GitStorageException(
-					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
-		}
+		verifyExists(dir, type, keys);
 		// old objects
 		T current = read(dir, type, keys);
 		PairValue<GitId>[] currentIds = UtilAnnotations.getValues(GitId.class, type, current);
@@ -268,6 +265,13 @@ public class GitStorageImpl implements IGitStorage {
 		return write(dir, current);
 	}
 
+	private <T> void verifyExists(File dir, Class<T> type, Object... keys) {
+		if (!exists(dir, type, keys)) {
+			throw new GitStorageException(
+					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
+		}
+	}
+
 	protected <A extends Annotation, T> void reassignAttributes(Class<A> annotation, T current, PairValue<A>[] pairs)
 			throws IllegalAccessException, InvocationTargetException {
 		for (PairValue<A> c : pairs) {
@@ -281,10 +285,7 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	@SneakyThrows
 	public <T> T setAttribute(File dir, Class<T> type, String attribute, Object data, Object... keys) {
-		if (!exists(dir, type, keys)) {
-			throw new GitStorageException(
-					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
-		}
+		verifyExists(dir, type, keys);
 		T current = read(dir, type, keys);
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
 		if (pd == null) {
@@ -316,6 +317,8 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	@SneakyThrows
 	public <T> T setResource(File dir, Class<T> type, Resource resource, Object... keys) {
+		verifyExists(dir, type, keys);
+
 		File root = resourceDir(entityDir(dir, type, keys));
 
 		ResourceMetadata metadata = resource.getMetadata();
@@ -379,10 +382,8 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	@SneakyThrows
 	public <T> Object getAttribute(File dir, Class<T> type, String attribute, Object... keys) {
-		if (!exists(dir, type, keys)) {
-			throw new GitStorageException(
-					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
-		}
+		verifyExists(dir, type, keys);
+
 		T obj = read(dir, type, keys);
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(obj, attribute);
 		if (pd == null) {
@@ -394,10 +395,10 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	@SneakyThrows
 	public <T> Resource getResource(File dir, Class<T> type, String path, Object... keys) {
+		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
-		if (!root.exists()) {
-			throw new GitStorageException("Resources for " + Arrays.toString(keys) + " not found.", null);
-		}
+		verifyResources(root, keys);
+
 		File contentFile = new File(root, path);
 		// SECURITY: avoid attempt to override files in higher locations as /etc
 		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
@@ -409,13 +410,19 @@ public class GitStorageImpl implements IGitStorage {
 		return Resource.builder().metadata(meta).content(content).build();
 	}
 
-	@Override
-	@SneakyThrows
-	public <T> List<Resource> allResources(File dir, Class<T> type, Object... keys) {
-		File root = resourceDir(entityDir(dir, type, keys));
+	private void verifyResources(File root, Object... keys) {
 		if (!root.exists()) {
 			throw new GitStorageException("Resources for " + Arrays.toString(keys) + " not found.", null);
 		}
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> List<Resource> allResources(File dir, Class<T> type, Object... keys) {
+		verifyExists(dir, type, keys);
+		File root = resourceDir(entityDir(dir, type, keys));
+		verifyResources(root, keys);
+
 		List<Resource> result = new LinkedList<>();
 		Files.walkFileTree(Paths.get(root.toURI()), new SimpleFileVisitor<Path>() {
 			@Override
@@ -465,6 +472,33 @@ public class GitStorageImpl implements IGitStorage {
 			idManager.unbind(entityRoot(dir, type), old);
 		}
 		return old;
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> T delResource(File dir, Class<T> type, String path, Object... keys) {
+		verifyExists(dir, type, keys);
+		File root = resourceDir(entityDir(dir, type, keys));
+		verifyResources(root, keys);
+
+		File contentFile = new File(root, path);
+		// SECURITY: avoid attempt to override files in higher locations as /etc
+		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
+			throw new GitStorageException("Cannot delete resources from a higher file structure. " + path, null);
+		}
+		File metadataFile = resourceMeta(root, path);
+
+		FileUtils.delete(contentFile);
+		FileUtils.delete(metadataFile);
+
+		// force change flags like revision and updated
+		T result = merge(dir, type, read(dir, type, keys), keys);
+
+		if (log.isInfoEnabled()) {
+			log.info("Resource deleted: " + path);
+		}
+
+		return result;
 	}
 
 	@Override

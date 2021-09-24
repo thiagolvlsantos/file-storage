@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
 import io.github.thiagolvlsantos.git.storage.IGitStorageTyped;
+import io.github.thiagolvlsantos.git.storage.resource.Resource;
 import lombok.Setter;
 
 @Setter
@@ -32,12 +33,12 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 
 	@Override
 	public boolean exists(File dir, T example) {
-		return storage.exists(dir, type, example);
+		return storage.exists(dir, type(), example);
 	}
 
 	@Override
 	public boolean exists(File dir, Object... keys) {
-		return storage.exists(dir, type, keys);
+		return storage.exists(dir, type(), keys);
 	}
 
 	@Override
@@ -56,6 +57,11 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
+	public T setResource(File dir, Resource resource, Object... keys) {
+		return storage.setResource(dir, type, resource, keys);
+	}
+
+	@Override
 	public T read(File dir, T example) {
 		return storage.read(dir, type, example);
 	}
@@ -71,6 +77,16 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
+	public Resource getResource(File dir, String path, Object... keys) {
+		return storage.getResource(dir, type, path, keys);
+	}
+
+	@Override
+	public List<Resource> allResources(File dir, Object... keys) {
+		return storage.allResources(dir, type, keys);
+	}
+
+	@Override
 	public T delete(File dir, T example) {
 		return storage.delete(dir, type, example);
 	}
@@ -78,6 +94,11 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	@Override
 	public T delete(File dir, Object... keys) {
 		return storage.delete(dir, type, keys);
+	}
+
+	@Override
+	public T delResource(File dir, String path, Object... keys) {
+		return storage.delResource(dir, type, path, keys);
 	}
 
 	@Override

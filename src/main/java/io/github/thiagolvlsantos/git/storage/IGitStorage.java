@@ -43,6 +43,8 @@ public interface IGitStorage {
 
 	<T> T delete(File dir, Class<T> type, Object... keys);
 
+	<T> T delResource(File dir, Class<T> type, String path, Object... keys);
+
 	<T> List<T> all(File dir, Class<T> type);
 
 	<T> long count(File dir, Class<T> type);

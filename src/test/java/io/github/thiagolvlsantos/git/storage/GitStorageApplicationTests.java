@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationContext;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
+import io.github.thiagolvlsantos.git.storage.objects.OutlierStorage;
 import io.github.thiagolvlsantos.git.storage.objects.Project;
 import io.github.thiagolvlsantos.git.storage.objects.ProjectStorage;
 import io.github.thiagolvlsantos.git.storage.objects.SubProject;
@@ -30,10 +31,34 @@ class GitStorageApplicationTests {
 	void testInvalidEntity(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		// try update invalid attributes
-		assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
-				.isExactlyInstanceOf(GitStorageException.class)//
-				.hasMessage("Entity is not annotated with @GitEntity.");
+		try {
+			assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Entity is not annotated with @GitEntity.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidEntityTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Outlier> storage = context.getBean(OutlierStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			assertThatThrownBy(() -> storage.write(dir, new Outlier()))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Entity is not annotated with @GitEntity.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Test
@@ -51,6 +76,32 @@ class GitStorageApplicationTests {
 			// try update with old revision
 			project1.setRevision(0L);
 			assertThatThrownBy(() -> storage.write(dir, Project.class, project1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Invalid revision. Reload object and try again.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidRevisionReuseTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).revision(0L).build();
+			Project result = storage.write(dir, project1);
+			assertThat(result.getId()).isNotNull();
+
+			// try update with old revision
+			project1.setRevision(0L);
+			assertThatThrownBy(() -> storage.write(dir, project1))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Invalid revision. Reload object and try again.");
 		} finally {
@@ -272,11 +323,75 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testUpdateTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+			assertThat(project1.getId()).isNotNull();
+
+			// read value that cannot change
+			Long id = project1.getId();
+			LocalDateTime created = project1.getCreated();
+			Long revision = project1.getRevision();
+
+			Project newVersion = Project.builder().name(name1).build();
+			String description = "This is a new description.";
+			newVersion.setDescription(description);
+			project1 = storage.merge(dir, newVersion, name1);
+
+			// old attributes
+			assertThat(project1.getId()).isEqualTo(id);
+			assertThat(project1.getName()).isEqualTo(name1);
+			assertThat(project1.getCreated()).isEqualTo(created);
+			assertThat(project1.getRevision()).isEqualTo(revision + 1);
+
+			// new attributes
+			assertThat(project1.getDescription()).isEqualTo(description);
+
+			// update valid attribute
+			description = "Final version";
+			project1 = storage.setAttribute(dir, "description", description, name1);
+
+			// changed attribute
+			assertThat(project1.getDescription()).isEqualTo(description);
+			assertThat(project1.getRevision()).isEqualTo(revision + 2);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testInvalidMerge(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			assertThatThrownBy(() -> storage.merge(dir, Project.class, new Project(), "doNotExist"))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidMergeTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			assertThatThrownBy(() -> storage.merge(dir, new Project(), "doNotExist"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -312,6 +427,28 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testInvalidSetAttributeNameTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			assertThatThrownBy(() -> storage.setAttribute(dir, "title", "newDescription", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testInvalidGetAttributeName(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
@@ -334,6 +471,28 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testInvalidGetAttributeNameTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			assertThatThrownBy(() -> storage.getAttribute(dir, "title", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testInvalidGetResources(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
@@ -344,6 +503,28 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			assertThatThrownBy(() -> storage.getResource(dir, Project.class, "css/example.css", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidGetResourcesTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			assertThatThrownBy(() -> storage.getResource(dir, "css/example.css", name1))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
 		} finally {
@@ -395,11 +576,68 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testInvalidUpdateTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+			assertThat(project1.getId()).isNotNull();
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.setAttribute(dir, "id", "\"10\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitId annotated attribute 'id' is not allowed.");
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.setAttribute(dir, "name", "\"newName\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.setAttribute(dir, "created", "\"10\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitCreated annotated attribute 'created' is not allowed.");
+
+			// try update invalid attributes
+			assertThatThrownBy(() -> storage.setAttribute(dir, "revision", "\"10\"", name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testInvalidSetUpdate(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "description", "10", "doNotExist"))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidSetUpdateTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			assertThatThrownBy(() -> storage.setAttribute(dir, "description", "10", "doNotExist"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -431,6 +669,24 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testInvalidGetUpdateTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			assertThatThrownBy(() -> storage.getAttribute(dir, "description", "doNotExist"))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testAttributes(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
@@ -446,6 +702,32 @@ class GitStorageApplicationTests {
 
 			// attribute writing
 			Project result = storage.setAttribute(dir, Project.class, "description", "newDescription", name1);
+			assertThat(result.getDescription()).isEqualTo("newDescription");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testAttributesTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			// attribute reading
+			Object attribute = storage.getAttribute(dir, "name", name1);
+			assertThat(attribute).isEqualTo(name1);
+
+			// attribute writing
+			Project result = storage.setAttribute(dir, "description", "newDescription", name1);
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 		} finally {
 			try {
@@ -501,7 +783,51 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
-	void testResourcesList(@Autowired ApplicationContext context) {
+	void testResourcesTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			// attribute reading
+			String path = "css/arquivo.css";
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
+			Resource resource = Resource.builder().metadata(metadata).content(content).build();
+
+			// writing
+			Project result = storage.setResource(dir, resource, name1);
+
+			// reading
+			Resource outcome = storage.getResource(dir, path, name1);
+
+			// object setup
+			assertThat(project1.getRevision()).isEqualTo(result.getRevision() - 1);
+			assertThat(project1.getChanged()).isBefore(result.getChanged());
+
+			// serialization and deserialization
+			assertThat(outcome.getMetadata().getPath()).isEqualTo(outcome.getMetadata().getPath());
+			assertThat(outcome.getMetadata().getKind()).isEqualTo(outcome.getMetadata().getKind());
+			assertThat(new String(outcome.getContent().getData()))
+					.isEqualTo(new String(resource.getContent().getData()));
+
+			// timestamp assigned
+			assertThat(outcome.getMetadata().getTimestamp()).isNotNull();
+
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testResourcesListDelete(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -530,8 +856,7 @@ class GitStorageApplicationTests {
 			storage.setResource(dir, Project.class, resource, name1);
 
 			List<Resource> resources = storage.allResources(dir, Project.class, name1);
-
-			// 2 resources
+			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
 			// sorted by path in the origin
@@ -543,6 +868,83 @@ class GitStorageApplicationTests {
 
 			Resource resource3 = resources.get(2);
 			assertThat(resource3.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
+
+			// delete last resource
+			storage.delResource(dir, Project.class, "component/compB.css", name1);
+			resources = storage.allResources(dir, Project.class, name1);
+			// count resources
+			assertThat(resources.size()).isEqualTo(2);
+
+			// sorted by path in the origin
+			resource1 = resources.get(0);
+			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
+
+			resource2 = resources.get(1);
+			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testResourcesListDeleteTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			// attribute reading
+			String path = "component/compB.css";
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
+			Resource resource = Resource.builder().metadata(metadata).content(content).build();
+			storage.setResource(dir, resource, name1);
+
+			path = "component/compA.html";
+			metadata = ResourceMetadata.builder().path(path).kind("html").build();
+			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
+			resource = Resource.builder().metadata(metadata).content(content).build();
+			storage.setResource(dir, resource, name1);
+
+			path = "component/inner/compC.java";
+			metadata = ResourceMetadata.builder().path(path).kind("java").build();
+			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
+			resource = Resource.builder().metadata(metadata).content(content).build();
+			storage.setResource(dir, resource, name1);
+
+			List<Resource> resources = storage.allResources(dir, name1);
+			// count resources
+			assertThat(resources.size()).isEqualTo(3);
+
+			// sorted by path in the origin
+			Resource resource1 = resources.get(0);
+			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
+
+			Resource resource2 = resources.get(1);
+			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/compB.css");
+
+			Resource resource3 = resources.get(2);
+			assertThat(resource3.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
+
+			// delete last resource
+			storage.delResource(dir, "component/compB.css", name1);
+			resources = storage.allResources(dir, name1);
+			// count resources
+			assertThat(resources.size()).isEqualTo(2);
+
+			// sorted by path in the origin
+			resource1 = resources.get(0);
+			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
+
+			resource2 = resources.get(1);
+			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -591,12 +993,84 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testInvalidResourcesTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			// attribute reading
+			String path = "css/arquivo.css";
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
+			Resource resource = Resource.builder().metadata(metadata).content(content).build();
+
+			// Success save @resources
+			storage.setResource(dir, resource, name1);
+
+			// sabotage
+			final String newPath = "../../css/arquivo.css";
+			metadata.setPath(newPath);
+			assertThatThrownBy(() -> storage.setResource(dir, resource, name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
+
+			assertThatThrownBy(() -> storage.getResource(dir, newPath, name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testInvalidAllResources(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		assertThatThrownBy(() -> storage.allResources(dir, Project.class, "doNotExist"))//
-				.isExactlyInstanceOf(GitStorageException.class)//
-				.hasMessage("Resources for " + Arrays.toString(new String[] { "doNotExist" }) + " not found.");
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, Project.class, project1);
+
+			assertThatThrownBy(() -> storage.allResources(dir, Project.class, name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
+	@Test
+	void testInvalidAllResourcesTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			assertThatThrownBy(() -> storage.allResources(dir, name1))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }

@@ -3,6 +3,8 @@ package io.github.thiagolvlsantos.git.storage;
 import java.io.File;
 import java.util.List;
 
+import io.github.thiagolvlsantos.git.storage.resource.Resource;
+
 public interface IGitStorageTyped<T> {
 
 	Class<T> type();
@@ -19,15 +21,23 @@ public interface IGitStorageTyped<T> {
 
 	T setAttribute(File dir, String attribute, String data, Object... keys);
 
+	T setResource(File dir, Resource resource, Object... keys);
+
 	T read(File dir, T example);
 
 	T read(File dir, Object... keys);
 
 	Object getAttribute(File dir, String attribute, Object... keys);
 
+	Resource getResource(File dir, String path, Object... keys);
+
+	List<Resource> allResources(File dir, Object... keys);
+
 	T delete(File dir, T example);
 
 	T delete(File dir, Object... keys);
+
+	T delResource(File dir, String path, Object... keys);
 
 	List<T> all(File dir);
 
