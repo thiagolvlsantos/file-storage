@@ -17,13 +17,13 @@ public interface IGitStorageTyped<T> {
 
 	T merge(File dir, T instance, Object... keys);
 
-	T updateAttribute(File dir, String attribute, String data, Object... keys);
+	T setAttribute(File dir, String attribute, String data, Object... keys);
 
 	T read(File dir, T example);
 
 	T read(File dir, Object... keys);
 
-	Object readAttribute(File dir, String attribute, Object... keys);
+	Object getAttribute(File dir, String attribute, Object... keys);
 
 	T delete(File dir, T example);
 
