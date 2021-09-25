@@ -318,11 +318,9 @@ public class GitStorageImpl implements IGitStorage {
 	@SneakyThrows
 	public <T> T setResource(File dir, Class<T> type, Resource resource, Object... keys) {
 		verifyExists(dir, type, keys);
-
 		File root = resourceDir(entityDir(dir, type, keys));
 
 		ResourceMetadata metadata = resource.getMetadata();
-
 		File contentFile = new File(root, metadata.getPath());
 		// SECURITY: avoid attempt to override files in higher locations as /etc
 		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
