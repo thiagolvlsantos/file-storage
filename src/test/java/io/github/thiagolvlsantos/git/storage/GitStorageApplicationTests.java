@@ -755,7 +755,7 @@ class GitStorageApplicationTests {
 
 			// attribute reading
 			String path = "css/arquivo.css";
-			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
@@ -771,7 +771,7 @@ class GitStorageApplicationTests {
 
 			// serialization and deserialization
 			assertThat(outcome.getMetadata().getPath()).isEqualTo(outcome.getMetadata().getPath());
-			assertThat(outcome.getMetadata().getKind()).isEqualTo(outcome.getMetadata().getKind());
+			assertThat(outcome.getMetadata().getContentType()).isEqualTo(outcome.getMetadata().getContentType());
 			assertThat(new String(outcome.getContent().getData()))
 					.isEqualTo(new String(resource.getContent().getData()));
 
@@ -799,7 +799,7 @@ class GitStorageApplicationTests {
 
 			// attribute reading
 			String path = "css/arquivo.css";
-			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
@@ -815,7 +815,7 @@ class GitStorageApplicationTests {
 
 			// serialization and deserialization
 			assertThat(outcome.getMetadata().getPath()).isEqualTo(outcome.getMetadata().getPath());
-			assertThat(outcome.getMetadata().getKind()).isEqualTo(outcome.getMetadata().getKind());
+			assertThat(outcome.getMetadata().getContentType()).isEqualTo(outcome.getMetadata().getContentType());
 			assertThat(new String(outcome.getContent().getData()))
 					.isEqualTo(new String(resource.getContent().getData()));
 
@@ -843,19 +843,19 @@ class GitStorageApplicationTests {
 
 			// attribute reading
 			String path = "component/compB.css";
-			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, Project.class, resource, name1);
 
 			path = "component/compA.html";
-			metadata = ResourceMetadata.builder().path(path).kind("html").build();
+			metadata = ResourceMetadata.builder().path(path).contentType("html").build();
 			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, Project.class, resource, name1);
 
 			path = "component/inner/compC.java";
-			metadata = ResourceMetadata.builder().path(path).kind("java").build();
+			metadata = ResourceMetadata.builder().path(path).contentType("java").build();
 			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, Project.class, resource, name1);
@@ -907,19 +907,19 @@ class GitStorageApplicationTests {
 
 			// attribute reading
 			String path = "component/compB.css";
-			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, resource, name1);
 
 			path = "component/compA.html";
-			metadata = ResourceMetadata.builder().path(path).kind("html").build();
+			metadata = ResourceMetadata.builder().path(path).contentType("html").build();
 			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, resource, name1);
 
 			path = "component/inner/compC.java";
-			metadata = ResourceMetadata.builder().path(path).kind("java").build();
+			metadata = ResourceMetadata.builder().path(path).contentType("java").build();
 			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, resource, name1);
@@ -971,7 +971,7 @@ class GitStorageApplicationTests {
 
 			// attribute reading
 			String path = "css/arquivo.css";
-			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
@@ -1009,7 +1009,7 @@ class GitStorageApplicationTests {
 
 			// attribute reading
 			String path = "css/arquivo.css";
-			ResourceMetadata metadata = ResourceMetadata.builder().path(path).kind("css").build();
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
