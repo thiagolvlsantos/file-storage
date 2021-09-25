@@ -19,7 +19,8 @@ import lombok.experimental.SuperBuilder;
 public class ResourceMetadata {
 
 	private String path;
-	private String encoding;
+	@Builder.Default
+	private String encoding = "plain";
 	private String contentType;
 	@Builder.Default
 	private LocalDateTime timestamp = LocalDateTime.now();
