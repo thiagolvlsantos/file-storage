@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationContext;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
+import io.github.thiagolvlsantos.git.storage.objects.Outlier;
 import io.github.thiagolvlsantos.git.storage.objects.OutlierStorage;
 import io.github.thiagolvlsantos.git.storage.objects.Project;
 import io.github.thiagolvlsantos.git.storage.objects.ProjectStorage;
