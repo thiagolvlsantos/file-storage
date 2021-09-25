@@ -9,6 +9,12 @@ public interface IGitStorage {
 
 	IGitSerializer getSerializer();
 
+	<T> File location(File dir, T example);
+
+	<T> File location(File dir, Class<T> type, T example);
+
+	<T> File location(File dir, Class<T> type, Object... keys);
+
 	<T> boolean exists(File dir, T example);
 
 	<T> boolean exists(File dir, Class<T> type, T example);

@@ -1078,4 +1078,52 @@ class GitStorageApplicationTests {
 			}
 		}
 	}
+
+	@Test
+	void testLocation(@Autowired ApplicationContext context) {
+		IGitStorage storage = context.getBean(IGitStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+
+			File location1 = storage.location(dir, project1);
+			File location2 = storage.location(dir, Project.class, project1);
+			File location3 = storage.location(dir, Project.class, name1);
+
+			assertThat(location1).isEqualTo(location2);
+			assertThat(location2).isEqualTo(location3);
+			assertThat(location3).isEqualTo(new File(dir, "@projects/" + name1));
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testLocationTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+
+			File location1 = storage.location(dir, project1);
+			File location2 = storage.location(dir, name1);
+
+			assertThat(location1).isEqualTo(location2);
+			assertThat(location2).isEqualTo(new File(dir, "@projects/" + name1));
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }

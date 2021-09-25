@@ -63,16 +63,33 @@ public class GitStorageImpl implements IGitStorage {
 		return serializer;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T> boolean exists(File dir, Class<T> type, T reference) {
-		return exists(dir, type, UtilAnnotations.getKeys(type, reference));
+	public <T> File location(File dir, T example) {
+		Class<T> type = (Class<T>) example.getClass();
+		return location(dir, type, UtilAnnotations.getKeys(type, example));
+	}
+
+	@Override
+	public <T> File location(File dir, Class<T> type, T example) {
+		return location(dir, type, UtilAnnotations.getKeys(type, example));
+	}
+
+	@Override
+	public <T> File location(File dir, Class<T> type, Object... keys) {
+		return entityDir(dir, type, keys);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> boolean exists(File dir, T reference) {
-		Class<T> type = (Class<T>) reference.getClass();
-		return exists(dir, type, UtilAnnotations.getKeys(type, reference));
+	public <T> boolean exists(File dir, T example) {
+		Class<T> type = (Class<T>) example.getClass();
+		return exists(dir, type, UtilAnnotations.getKeys(type, example));
+	}
+
+	@Override
+	public <T> boolean exists(File dir, Class<T> type, T example) {
+		return exists(dir, type, UtilAnnotations.getKeys(type, example));
 	}
 
 	@Override

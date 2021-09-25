@@ -32,6 +32,16 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
+	public File location(File dir, T example) {
+		return storage.location(dir, type(), example);
+	}
+
+	@Override
+	public File location(File dir, Object... keys) {
+		return storage.location(dir, type(), keys);
+	}
+
+	@Override
 	public boolean exists(File dir, T example) {
 		return storage.exists(dir, type(), example);
 	}

@@ -11,6 +11,10 @@ public interface IGitStorageTyped<T> {
 
 	IGitSerializer getSerializer();
 
+	File location(File dir, T example);
+
+	File location(File dir, Object... keys);
+
 	boolean exists(File dir, T example);
 
 	boolean exists(File dir, Object... keys);
