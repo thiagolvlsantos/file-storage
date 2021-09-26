@@ -146,9 +146,9 @@ class GitStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.all(dir, Project.class)).contains(project1, project2);
+			assertThat(storage.all(dir, Project.class, null)).contains(project1, project2);
 			// count all
-			assertThat(storage.count(dir, Project.class)).isEqualTo(2L);
+			assertThat(storage.count(dir, Project.class, null)).isEqualTo(2L);
 
 			// exists by key
 			assertThat(storage.exists(dir, Project.class, GitParams.of(project1.getName()))).isTrue();
@@ -164,7 +164,8 @@ class GitStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.search(dir, Project.class, "{\"name\":{\"$eq\": \"projectB\"}}");
+			List<Project> list = storage.search(dir, Project.class, new GitQuery("{\"name\":{\"$eq\": \"projectB\"}}"),
+					null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -214,9 +215,9 @@ class GitStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.all(dir)).contains(project1, project2);
-			// count all
-			assertThat(storage.count(dir)).isEqualTo(2L);
+			assertThat(storage.all(dir, GitPaging.builder().skip(0).build())).contains(project1, project2);
+			// count all, skip 1
+			assertThat(storage.count(dir, GitPaging.builder().skip(1).max(1).build())).isEqualTo(1L);
 
 			// exists by key
 			assertThat(storage.exists(dir, GitParams.of(project1.getName()))).isTrue();
@@ -232,7 +233,7 @@ class GitStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.search(dir, "{\"name\":{\"$eq\": \"projectB\"}}");
+			List<Project> list = storage.search(dir, new GitQuery("{\"name\":{\"$eq\": \"projectB\"}}"), null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 

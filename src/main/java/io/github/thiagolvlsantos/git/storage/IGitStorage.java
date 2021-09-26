@@ -51,10 +51,10 @@ public interface IGitStorage {
 
 	<T> T delResource(File dir, Class<T> type, GitParams keys, String path);
 
-	<T> List<T> all(File dir, Class<T> type);
+	<T> List<T> all(File dir, Class<T> type, GitPaging paging);
 
-	<T> long count(File dir, Class<T> type);
+	<T> long count(File dir, Class<T> type, GitPaging paging);
 
-	<T> List<T> search(File dir, Class<T> type, String query);
+	<T> List<T> search(File dir, Class<T> type, GitQuery query, GitPaging paging);
 
 }

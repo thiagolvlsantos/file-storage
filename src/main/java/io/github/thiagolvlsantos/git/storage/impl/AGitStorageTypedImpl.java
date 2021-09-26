@@ -5,7 +5,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import io.github.thiagolvlsantos.git.storage.GitPaging;
 import io.github.thiagolvlsantos.git.storage.GitParams;
+import io.github.thiagolvlsantos.git.storage.GitQuery;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
 import io.github.thiagolvlsantos.git.storage.IGitStorageTyped;
@@ -113,17 +115,17 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public List<T> all(File dir) {
-		return storage.all(dir, type);
+	public List<T> all(File dir, GitPaging paging) {
+		return storage.all(dir, type, paging);
 	}
 
 	@Override
-	public long count(File dir) {
-		return storage.count(dir, type);
+	public long count(File dir, GitPaging paging) {
+		return storage.count(dir, type, paging);
 	}
 
 	@Override
-	public List<T> search(File dir, String query) {
-		return storage.search(dir, type, query);
+	public List<T> search(File dir, GitQuery query, GitPaging paging) {
+		return storage.search(dir, type, query, paging);
 	}
 }

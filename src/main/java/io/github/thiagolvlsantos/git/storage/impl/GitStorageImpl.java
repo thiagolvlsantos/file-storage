@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -30,7 +31,9 @@ import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.GitEntity;
+import io.github.thiagolvlsantos.git.storage.GitPaging;
 import io.github.thiagolvlsantos.git.storage.GitParams;
+import io.github.thiagolvlsantos.git.storage.GitQuery;
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
@@ -519,7 +522,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> List<T> all(File dir, Class<T> type) {
+	public <T> List<T> all(File dir, Class<T> type, GitPaging paging) {
 		List<T> result = new LinkedList<>();
 		File[] ids = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
 		if (ids != null) {
@@ -528,18 +531,23 @@ public class GitStorageImpl implements IGitStorage {
 				result.add(serializer.readValue(entityFile(dir, type, GitParams.of(keys)), type));
 			}
 		}
-		return result;
+		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
+		return result.subList(page.getSkip(), page.getMax(result.size()));
 	}
 
 	@Override
-	public <T> long count(File dir, Class<T> type) {
-		return idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles().length;
+	public <T> long count(File dir, Class<T> type, GitPaging paging) {
+		File[] files = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
+		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
+		return Math.min(files.length - page.getSkip(), page.getMax(files.length));
 	}
 
 	@Override
-	public <T> List<T> search(File dir, Class<T> type, String query) {
-		List<T> all = all(dir, type);
-		Predicate<Object> p = predicateFactory.read(query.getBytes());
-		return all.stream().filter(p).collect(Collectors.toList());
+	public <T> List<T> search(File dir, Class<T> type, GitQuery query, GitPaging paging) {
+		List<T> all = all(dir, type, null);
+		Predicate<Object> p = predicateFactory.read(query.getQuery().getBytes());
+		List<T> result = all.stream().filter(p).collect(Collectors.toList());
+		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
+		return result.subList(page.getSkip(), page.getMax(result.size()));
 	}
 }
