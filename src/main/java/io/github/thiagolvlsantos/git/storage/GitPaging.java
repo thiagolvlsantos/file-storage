@@ -19,11 +19,13 @@ public class GitPaging {
 	private Integer skip;
 	private Integer max;
 
-	public Integer getSkip() {
-		return Objects.isNull(skip) ? 0 : skip;
+	public Integer getStart(Integer limit) {
+		return Objects.isNull(skip) ? 0 : Math.min(skip, limit);
 	}
 
-	public Integer getMax(Integer limit) {
-		return Objects.isNull(max) ? limit : Math.min(max, limit);
+	public Integer getEnd(Integer limit) {
+		Integer start = getStart(limit);
+		Integer gap = limit - start;
+		return Objects.isNull(max) ? gap : start + Math.min(max, gap);
 	}
 }

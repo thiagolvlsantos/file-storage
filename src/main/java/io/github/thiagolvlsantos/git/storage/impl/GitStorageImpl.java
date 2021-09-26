@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -531,15 +532,14 @@ public class GitStorageImpl implements IGitStorage {
 				result.add(serializer.readValue(entityFile(dir, type, GitParams.of(keys)), type));
 			}
 		}
-		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
-		return result.subList(page.getSkip(), page.getMax(result.size()));
+		return filterRange(paging, result);
 	}
 
 	@Override
 	public <T> long count(File dir, Class<T> type, GitPaging paging) {
 		File[] files = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
 		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
-		return Math.min(files.length - page.getSkip(), page.getMax(files.length));
+		return page.getEnd(files.length) - page.getStart(files.length);
 	}
 
 	@Override
@@ -547,7 +547,13 @@ public class GitStorageImpl implements IGitStorage {
 		List<T> all = all(dir, type, null);
 		Predicate<Object> p = predicateFactory.read(query.getQuery().getBytes());
 		List<T> result = all.stream().filter(p).collect(Collectors.toList());
+		return filterRange(paging, result);
+	}
+
+	private <T> List<T> filterRange(GitPaging paging, List<T> result) {
 		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
-		return result.subList(page.getSkip(), page.getMax(result.size()));
+		Integer start = page.getStart(result.size());
+		Integer end = page.getEnd(result.size());
+		return start < end ? result.subList(start, end) : Collections.emptyList();
 	}
 }
