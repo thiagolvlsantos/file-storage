@@ -559,9 +559,10 @@ class GitStorageApplicationTests {
 					.hasMessage("Update of @GitId annotated attribute 'id' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "name", "\"newName\""))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
+			assertThatThrownBy(
+					() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "name", "\"newName\""))//
+							.isExactlyInstanceOf(GitStorageException.class)//
+							.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
 			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "created", "\"10\""))//
@@ -569,9 +570,10 @@ class GitStorageApplicationTests {
 					.hasMessage("Update of @GitCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "revision", "\"10\""))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
+			assertThatThrownBy(
+					() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "revision", "\"10\""))//
+							.isExactlyInstanceOf(GitStorageException.class)//
+							.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -662,10 +664,11 @@ class GitStorageApplicationTests {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, GitParams.of("doNotExist"), "description"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+			assertThatThrownBy(
+					() -> storage.getAttribute(dir, Project.class, GitParams.of("doNotExist"), "description"))//
+							.isExactlyInstanceOf(GitStorageException.class)//
+							.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+									+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -991,6 +994,10 @@ class GitStorageApplicationTests {
 			assertThatThrownBy(() -> storage.getResource(dir, Project.class, GitParams.of(name1), newPath))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
+
+			assertThatThrownBy(() -> storage.delResource(dir, Project.class, GitParams.of(name1), newPath))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Cannot delete resources from a higher file structure. " + newPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);
