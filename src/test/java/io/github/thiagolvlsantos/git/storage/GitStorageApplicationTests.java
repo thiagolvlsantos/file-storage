@@ -151,12 +151,12 @@ class GitStorageApplicationTests {
 			assertThat(storage.count(dir, Project.class)).isEqualTo(2L);
 
 			// exists by key
-			assertThat(storage.exists(dir, Project.class, project1.getName())).isTrue();
+			assertThat(storage.exists(dir, Project.class, GitParams.of(project1.getName()))).isTrue();
 			// exists by example
 			assertThat(storage.exists(dir, Project.class, project1)).isTrue();
 
 			// read by key
-			project1 = storage.read(dir, Project.class, project1.getName());
+			project1 = storage.read(dir, Project.class, GitParams.of(project1.getName()));
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// read by example
@@ -169,8 +169,8 @@ class GitStorageApplicationTests {
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
 			// delete by key
-			storage.delete(dir, Project.class, project1.getName());
-			assertThat(storage.exists(dir, Project.class, project1.getName())).isFalse();
+			storage.delete(dir, Project.class, GitParams.of(project1.getName()));
+			assertThat(storage.exists(dir, Project.class, GitParams.of(project1.getName()))).isFalse();
 
 			// delete by example
 			storage.delete(dir, Project.class, project2);
@@ -219,12 +219,12 @@ class GitStorageApplicationTests {
 			assertThat(storage.count(dir)).isEqualTo(2L);
 
 			// exists by key
-			assertThat(storage.exists(dir, project1.getName())).isTrue();
+			assertThat(storage.exists(dir, GitParams.of(project1.getName()))).isTrue();
 			// exists by example
 			assertThat(storage.exists(dir, project1)).isTrue();
 
 			// read by key
-			project1 = storage.read(dir, project1.getName());
+			project1 = storage.read(dir, GitParams.of(project1.getName()));
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// read by example
@@ -237,12 +237,12 @@ class GitStorageApplicationTests {
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
 			// delete by key
-			storage.delete(dir, project1.getName());
-			assertThat(storage.exists(dir, Project.class, project1.getName())).isFalse();
+			storage.delete(dir, GitParams.of(project1.getName()));
+			assertThat(storage.exists(dir, GitParams.of(project1.getName()))).isFalse();
 
 			// delete by example
 			storage.delete(dir, project2);
-			assertThat(storage.exists(dir, Project.class, project2)).isFalse();
+			assertThat(storage.exists(dir, project2)).isFalse();
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -298,7 +298,7 @@ class GitStorageApplicationTests {
 			Project newVersion = Project.builder().name(name1).build();
 			String description = "This is a new description.";
 			newVersion.setDescription(description);
-			project1 = storage.merge(dir, Project.class, newVersion, name1);
+			project1 = storage.merge(dir, Project.class, GitParams.of(name1), newVersion);
 
 			// old attributes
 			assertThat(project1.getId()).isEqualTo(id);
@@ -311,7 +311,7 @@ class GitStorageApplicationTests {
 
 			// update valid attribute
 			description = "Final version";
-			project1 = storage.setAttribute(dir, Project.class, "description", description, name1);
+			project1 = storage.setAttribute(dir, Project.class, GitParams.of(name1), "description", description);
 
 			// changed attribute
 			assertThat(project1.getDescription()).isEqualTo(description);
@@ -344,7 +344,7 @@ class GitStorageApplicationTests {
 			Project newVersion = Project.builder().name(name1).build();
 			String description = "This is a new description.";
 			newVersion.setDescription(description);
-			project1 = storage.merge(dir, newVersion, name1);
+			project1 = storage.merge(dir, GitParams.of(name1), newVersion);
 
 			// old attributes
 			assertThat(project1.getId()).isEqualTo(id);
@@ -357,7 +357,7 @@ class GitStorageApplicationTests {
 
 			// update valid attribute
 			description = "Final version";
-			project1 = storage.setAttribute(dir, "description", description, name1);
+			project1 = storage.setAttribute(dir, GitParams.of(name1), "description", description);
 
 			// changed attribute
 			assertThat(project1.getDescription()).isEqualTo(description);
@@ -377,7 +377,7 @@ class GitStorageApplicationTests {
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			final Project instance = new Project();
-			assertThatThrownBy(() -> storage.merge(dir, Project.class, instance, "doNotExist"))//
+			assertThatThrownBy(() -> storage.merge(dir, Project.class, GitParams.of("doNotExist"), instance))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -396,7 +396,7 @@ class GitStorageApplicationTests {
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			final Project instance = new Project();
-			assertThatThrownBy(() -> storage.merge(dir, instance, "doNotExist"))//
+			assertThatThrownBy(() -> storage.merge(dir, GitParams.of("doNotExist"), instance))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -419,9 +419,10 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "title", "newDescription", name1))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+			assertThatThrownBy(
+					() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "title", "newDescription"))//
+							.isExactlyInstanceOf(GitStorageException.class)//
+							.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -441,7 +442,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.setAttribute(dir, "title", "newDescription", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of(name1), "title", "newDescription"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
@@ -463,7 +464,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, "title", name1))//
+			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, GitParams.of(name1), "title"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
@@ -485,7 +486,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.getAttribute(dir, "title", name1))//
+			assertThatThrownBy(() -> storage.getAttribute(dir, GitParams.of(name1), "title"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
@@ -507,7 +508,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.getResource(dir, Project.class, "css/example.css", name1))//
+			assertThatThrownBy(() -> storage.getResource(dir, Project.class, GitParams.of(name1), "css/example.css"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
 		} finally {
@@ -529,7 +530,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.getResource(dir, "css/example.css", name1))//
+			assertThatThrownBy(() -> storage.getResource(dir, GitParams.of(name1), "css/example.css"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
 		} finally {
@@ -553,22 +554,22 @@ class GitStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "id", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "id", "\"10\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitId annotated attribute 'id' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "name", "\"newName\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "name", "\"newName\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "created", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "created", "\"10\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "revision", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "revision", "\"10\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
 		} finally {
@@ -592,22 +593,22 @@ class GitStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, "id", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of(name1), "id", "\"10\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitId annotated attribute 'id' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, "name", "\"newName\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of(name1), "name", "\"newName\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, "created", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of(name1), "created", "\"10\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, "revision", "\"10\"", name1))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of(name1), "revision", "\"10\""))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Update of @GitRevision annotated attribute 'revision' is not allowed.");
 		} finally {
@@ -624,10 +625,11 @@ class GitStorageApplicationTests {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, "description", "10", "doNotExist"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+			assertThatThrownBy(
+					() -> storage.setAttribute(dir, Project.class, GitParams.of("doNotExist"), "description", "10"))//
+							.isExactlyInstanceOf(GitStorageException.class)//
+							.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+									+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -642,7 +644,7 @@ class GitStorageApplicationTests {
 		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.setAttribute(dir, "description", "10", "doNotExist"))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of("doNotExist"), "description", "10"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -660,7 +662,7 @@ class GitStorageApplicationTests {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, "description", "doNotExist"))//
+			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, GitParams.of("doNotExist"), "description"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -678,7 +680,7 @@ class GitStorageApplicationTests {
 		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.getAttribute(dir, "description", "doNotExist"))//
+			assertThatThrownBy(() -> storage.getAttribute(dir, GitParams.of("doNotExist"), "description"))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
@@ -702,11 +704,12 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			// attribute reading
-			Object attribute = storage.getAttribute(dir, Project.class, "name", name1);
+			Object attribute = storage.getAttribute(dir, Project.class, GitParams.of(name1), "name");
 			assertThat(attribute).isEqualTo(name1);
 
 			// attribute writing
-			Project result = storage.setAttribute(dir, Project.class, "description", "newDescription", name1);
+			Project result = storage.setAttribute(dir, Project.class, GitParams.of(name1), "description",
+					"newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 		} finally {
 			try {
@@ -728,11 +731,11 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			// attribute reading
-			Object attribute = storage.getAttribute(dir, "name", name1);
+			Object attribute = storage.getAttribute(dir, GitParams.of(name1), "name");
 			assertThat(attribute).isEqualTo(name1);
 
 			// attribute writing
-			Project result = storage.setAttribute(dir, "description", "newDescription", name1);
+			Project result = storage.setAttribute(dir, GitParams.of(name1), "description", "newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 		} finally {
 			try {
@@ -760,10 +763,10 @@ class GitStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// writing
-			Project result = storage.setResource(dir, Project.class, resource, name1);
+			Project result = storage.setResource(dir, Project.class, GitParams.of(name1), resource);
 
 			// reading
-			Resource outcome = storage.getResource(dir, Project.class, path, name1);
+			Resource outcome = storage.getResource(dir, Project.class, GitParams.of(name1), path);
 
 			// object setup
 			assertThat(project1.getRevision()).isEqualTo(result.getRevision() - 1);
@@ -804,10 +807,10 @@ class GitStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// writing
-			Project result = storage.setResource(dir, resource, name1);
+			Project result = storage.setResource(dir, GitParams.of(name1), resource);
 
 			// reading
-			Resource outcome = storage.getResource(dir, path, name1);
+			Resource outcome = storage.getResource(dir, GitParams.of(name1), path);
 
 			// object setup
 			assertThat(project1.getRevision()).isEqualTo(result.getRevision() - 1);
@@ -846,21 +849,21 @@ class GitStorageApplicationTests {
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, resource, name1);
+			storage.setResource(dir, Project.class, GitParams.of(name1), resource);
 
 			path = "component/compA.html";
 			metadata = ResourceMetadata.builder().path(path).contentType("html").build();
 			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, resource, name1);
+			storage.setResource(dir, Project.class, GitParams.of(name1), resource);
 
 			path = "component/inner/compC.java";
 			metadata = ResourceMetadata.builder().path(path).contentType("java").build();
 			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, resource, name1);
+			storage.setResource(dir, Project.class, GitParams.of(name1), resource);
 
-			List<Resource> resources = storage.allResources(dir, Project.class, name1);
+			List<Resource> resources = storage.allResources(dir, Project.class, GitParams.of(name1));
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -875,8 +878,8 @@ class GitStorageApplicationTests {
 			assertThat(resource3.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// delete last resource
-			storage.delResource(dir, Project.class, "component/compB.css", name1);
-			resources = storage.allResources(dir, Project.class, name1);
+			storage.delResource(dir, Project.class, GitParams.of(name1), "component/compB.css");
+			resources = storage.allResources(dir, Project.class, GitParams.of(name1));
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -910,21 +913,21 @@ class GitStorageApplicationTests {
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, resource, name1);
+			storage.setResource(dir, GitParams.of(name1), resource);
 
 			path = "component/compA.html";
 			metadata = ResourceMetadata.builder().path(path).contentType("html").build();
 			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, resource, name1);
+			storage.setResource(dir, GitParams.of(name1), resource);
 
 			path = "component/inner/compC.java";
 			metadata = ResourceMetadata.builder().path(path).contentType("java").build();
 			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, resource, name1);
+			storage.setResource(dir, GitParams.of(name1), resource);
 
-			List<Resource> resources = storage.allResources(dir, name1);
+			List<Resource> resources = storage.allResources(dir, GitParams.of(name1));
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -939,8 +942,8 @@ class GitStorageApplicationTests {
 			assertThat(resource3.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// delete last resource
-			storage.delResource(dir, "component/compB.css", name1);
-			resources = storage.allResources(dir, name1);
+			storage.delResource(dir, GitParams.of(name1), "component/compB.css");
+			resources = storage.allResources(dir, GitParams.of(name1));
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -976,16 +979,16 @@ class GitStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// Success save @resources
-			storage.setResource(dir, Project.class, resource, name1);
+			storage.setResource(dir, Project.class, GitParams.of(name1), resource);
 
 			// sabotage
 			final String newPath = "../../css/arquivo.css";
 			metadata.setPath(newPath);
-			assertThatThrownBy(() -> storage.setResource(dir, Project.class, resource, name1))//
+			assertThatThrownBy(() -> storage.setResource(dir, Project.class, GitParams.of(name1), resource))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
 
-			assertThatThrownBy(() -> storage.getResource(dir, Project.class, newPath, name1))//
+			assertThatThrownBy(() -> storage.getResource(dir, Project.class, GitParams.of(name1), newPath))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
 		} finally {
@@ -1014,16 +1017,16 @@ class GitStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// Success save @resources
-			storage.setResource(dir, resource, name1);
+			storage.setResource(dir, GitParams.of(name1), resource);
 
 			// sabotage
 			final String newPath = "../../css/arquivo.css";
 			metadata.setPath(newPath);
-			assertThatThrownBy(() -> storage.setResource(dir, resource, name1))//
+			assertThatThrownBy(() -> storage.setResource(dir, GitParams.of(name1), resource))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
 
-			assertThatThrownBy(() -> storage.getResource(dir, newPath, name1))//
+			assertThatThrownBy(() -> storage.getResource(dir, GitParams.of(name1), newPath))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
 		} finally {
@@ -1045,9 +1048,9 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.allResources(dir, Project.class, name1))//
+			assertThatThrownBy(() -> storage.allResources(dir, Project.class, GitParams.of(name1)))//
 					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1067,7 +1070,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.allResources(dir, name1))//
+			assertThatThrownBy(() -> storage.allResources(dir, GitParams.of(name1)))//
 					.isExactlyInstanceOf(GitStorageException.class)//
 					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
 		} finally {
@@ -1090,7 +1093,7 @@ class GitStorageApplicationTests {
 
 			File location1 = storage.location(dir, project1);
 			File location2 = storage.location(dir, Project.class, project1);
-			File location3 = storage.location(dir, Project.class, name1);
+			File location3 = storage.location(dir, Project.class, GitParams.of(name1));
 
 			assertThat(location1).isEqualTo(location2);
 			assertThat(location2).isEqualTo(location3);
@@ -1114,7 +1117,7 @@ class GitStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 
 			File location1 = storage.location(dir, project1);
-			File location2 = storage.location(dir, name1);
+			File location2 = storage.location(dir, GitParams.of(name1));
 
 			assertThat(location1).isEqualTo(location2);
 			assertThat(location2).isEqualTo(new File(dir, "@projects/" + name1));

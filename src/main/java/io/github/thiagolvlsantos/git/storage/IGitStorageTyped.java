@@ -13,35 +13,35 @@ public interface IGitStorageTyped<T> {
 
 	File location(File dir, T example);
 
-	File location(File dir, Object... keys);
+	File location(File dir, GitParams keys);
 
 	boolean exists(File dir, T example);
 
-	boolean exists(File dir, Object... keys);
+	boolean exists(File dir, GitParams keys);
 
 	T write(File dir, T instance);
 
-	T merge(File dir, T instance, Object... keys);
+	T merge(File dir, GitParams keys, T instance);
 
-	T setAttribute(File dir, String attribute, String data, Object... keys);
+	T setAttribute(File dir, GitParams keys, String attribute, Object data);
 
-	T setResource(File dir, Resource resource, Object... keys);
+	T setResource(File dir, GitParams keys, Resource resource);
 
 	T read(File dir, T example);
 
-	T read(File dir, Object... keys);
+	T read(File dir, GitParams keys);
 
-	Object getAttribute(File dir, String attribute, Object... keys);
+	Object getAttribute(File dir, GitParams keys, String attribute);
 
-	Resource getResource(File dir, String path, Object... keys);
+	Resource getResource(File dir, GitParams keys, String path);
 
-	List<Resource> allResources(File dir, Object... keys);
+	List<Resource> allResources(File dir, GitParams keys);
 
 	T delete(File dir, T example);
 
-	T delete(File dir, Object... keys);
+	T delete(File dir, GitParams keys);
 
-	T delResource(File dir, String path, Object... keys);
+	T delResource(File dir, GitParams keys, String path);
 
 	List<T> all(File dir);
 

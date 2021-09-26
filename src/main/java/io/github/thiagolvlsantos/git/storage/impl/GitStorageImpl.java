@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.GitEntity;
+import io.github.thiagolvlsantos.git.storage.GitParams;
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
@@ -67,37 +68,37 @@ public class GitStorageImpl implements IGitStorage {
 	@Override
 	public <T> File location(File dir, T example) {
 		Class<T> type = (Class<T>) example.getClass();
-		return location(dir, type, UtilAnnotations.getKeys(type, example));
+		return location(dir, type, GitParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
 	public <T> File location(File dir, Class<T> type, T example) {
-		return location(dir, type, UtilAnnotations.getKeys(type, example));
+		return location(dir, type, GitParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
-	public <T> File location(File dir, Class<T> type, Object... keys) {
-		return entityDir(dir, type, keys);
+	public <T> File location(File dir, Class<T> type, GitParams ref) {
+		return entityDir(dir, type, ref);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> boolean exists(File dir, T example) {
 		Class<T> type = (Class<T>) example.getClass();
-		return exists(dir, type, UtilAnnotations.getKeys(type, example));
+		return exists(dir, type, GitParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, T example) {
-		return exists(dir, type, UtilAnnotations.getKeys(type, example));
+		return exists(dir, type, GitParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
-	public <T> boolean exists(File dir, Class<T> type, Object... keys) {
+	public <T> boolean exists(File dir, Class<T> type, GitParams keys) {
 		return entityDir(dir, type, keys).exists();
 	}
 
-	protected <T> File entityDir(File dir, Class<T> type, Object... keys) {
+	protected <T> File entityDir(File dir, Class<T> type, GitParams keys) {
 		File path = entityRoot(dir, type);
 		for (Object k : keys) {
 			path = new File(path, String.valueOf(k));
@@ -121,7 +122,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	public <T> T write(File dir, Class<T> type, T instance) {
-		File file = entityFile(dir, type, UtilAnnotations.getKeys(type, instance));
+		File file = entityFile(dir, type, GitParams.of(UtilAnnotations.getKeys(type, instance)));
 		T old = null;
 		if (file.exists()) {
 			old = read(file, type);
@@ -142,7 +143,7 @@ public class GitStorageImpl implements IGitStorage {
 		return write(dir, (Class<T>) instance.getClass(), instance);
 	}
 
-	protected <T> File entityFile(File dir, Class<T> type, Object... keys) {
+	protected <T> File entityFile(File dir, Class<T> type, GitParams keys) {
 		return new File(entityDir(dir, type, keys), "meta.json");
 	}
 
@@ -260,7 +261,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T merge(File dir, Class<T> type, T instance, Object... keys) {
+	public <T> T merge(File dir, Class<T> type, GitParams keys, T instance) {
 		verifyExists(dir, type, keys);
 		// old objects
 		T current = read(dir, type, keys);
@@ -282,10 +283,10 @@ public class GitStorageImpl implements IGitStorage {
 		return write(dir, current);
 	}
 
-	private <T> void verifyExists(File dir, Class<T> type, Object... keys) {
+	private <T> void verifyExists(File dir, Class<T> type, GitParams keys) {
 		if (!exists(dir, type, keys)) {
-			throw new GitStorageException(
-					"Object '" + type.getSimpleName() + "' with keys '" + Arrays.toString(keys) + "' not found.", null);
+			throw new GitStorageException("Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.",
+					null);
 		}
 	}
 
@@ -301,7 +302,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T setAttribute(File dir, Class<T> type, String attribute, Object data, Object... keys) {
+	public <T> T setAttribute(File dir, Class<T> type, GitParams keys, String attribute, Object data) {
 		verifyExists(dir, type, keys);
 		T current = read(dir, type, keys);
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
@@ -333,7 +334,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T setResource(File dir, Class<T> type, Resource resource, Object... keys) {
+	public <T> T setResource(File dir, Class<T> type, GitParams keys, Resource resource) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 
@@ -356,7 +357,7 @@ public class GitStorageImpl implements IGitStorage {
 				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 
 		// force change flags like revision and updated
-		T result = merge(dir, type, read(dir, type, keys), keys);
+		T result = merge(dir, type, keys, read(dir, type, keys));
 
 		if (log.isInfoEnabled()) {
 			log.info("Resource written: " + metadata);
@@ -375,18 +376,18 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	public <T> T read(File dir, Class<T> type, T reference) {
-		return read(dir, type, UtilAnnotations.getKeys(type, reference));
+		return read(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T read(File dir, T reference) {
 		Class<T> type = (Class<T>) reference.getClass();
-		return read(dir, type, UtilAnnotations.getKeys(type, reference));
+		return read(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
 	}
 
 	@Override
-	public <T> T read(File dir, Class<T> type, Object... keys) {
+	public <T> T read(File dir, Class<T> type, GitParams keys) {
 		return read(entityFile(dir, type, keys), type);
 	}
 
@@ -396,7 +397,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Object getAttribute(File dir, Class<T> type, String attribute, Object... keys) {
+	public <T> Object getAttribute(File dir, Class<T> type, GitParams keys, String attribute) {
 		verifyExists(dir, type, keys);
 
 		T obj = read(dir, type, keys);
@@ -409,7 +410,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Resource getResource(File dir, Class<T> type, String path, Object... keys) {
+	public <T> Resource getResource(File dir, Class<T> type, GitParams keys, String path) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
@@ -425,15 +426,15 @@ public class GitStorageImpl implements IGitStorage {
 		return Resource.builder().metadata(meta).content(content).build();
 	}
 
-	private void verifyResources(File root, Object... keys) {
+	private void verifyResources(File root, GitParams keys) {
 		if (!root.exists()) {
-			throw new GitStorageException("Resources for " + Arrays.toString(keys) + " not found.", null);
+			throw new GitStorageException("Resources for " + keys + " not found.", null);
 		}
 	}
 
 	@Override
 	@SneakyThrows
-	public <T> List<Resource> allResources(File dir, Class<T> type, Object... keys) {
+	public <T> List<Resource> allResources(File dir, Class<T> type, GitParams keys) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
@@ -463,18 +464,18 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	public <T> T delete(File dir, Class<T> type, T reference) {
-		return delete(dir, type, UtilAnnotations.getKeys(type, reference));
+		return delete(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T delete(File dir, T reference) {
 		Class<T> type = (Class<T>) reference.getClass();
-		return delete(dir, type, UtilAnnotations.getKeys(type, reference));
+		return delete(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
 	}
 
 	@Override
-	public <T> T delete(File dir, Class<T> type, Object... keys) {
+	public <T> T delete(File dir, Class<T> type, GitParams keys) {
 		T old = null;
 		if (exists(dir, type, keys)) {
 			old = read(dir, type, keys);
@@ -491,7 +492,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T delResource(File dir, Class<T> type, String path, Object... keys) {
+	public <T> T delResource(File dir, Class<T> type, GitParams keys, String path) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
@@ -507,7 +508,7 @@ public class GitStorageImpl implements IGitStorage {
 		FileUtils.delete(metadataFile);
 
 		// force change flags like revision and updated
-		T result = merge(dir, type, read(dir, type, keys), keys);
+		T result = merge(dir, type, keys, read(dir, type, keys));
 
 		if (log.isInfoEnabled()) {
 			log.info("Resource deleted: " + path);
@@ -524,7 +525,7 @@ public class GitStorageImpl implements IGitStorage {
 		if (ids != null) {
 			for (File f : ids) {
 				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-				result.add(serializer.readValue(entityFile(dir, type, keys), type));
+				result.add(serializer.readValue(entityFile(dir, type, GitParams.of(keys)), type));
 			}
 		}
 		return result;

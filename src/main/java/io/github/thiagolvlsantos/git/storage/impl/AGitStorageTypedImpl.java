@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import io.github.thiagolvlsantos.git.storage.GitParams;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
 import io.github.thiagolvlsantos.git.storage.IGitStorageTyped;
@@ -37,7 +38,7 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public File location(File dir, Object... keys) {
+	public File location(File dir, GitParams keys) {
 		return storage.location(dir, type(), keys);
 	}
 
@@ -47,7 +48,7 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public boolean exists(File dir, Object... keys) {
+	public boolean exists(File dir, GitParams keys) {
 		return storage.exists(dir, type(), keys);
 	}
 
@@ -57,18 +58,18 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public T merge(File dir, T instance, Object... keys) {
-		return storage.merge(dir, type, instance, keys);
+	public T merge(File dir, GitParams keys, T instance) {
+		return storage.merge(dir, type, keys, instance);
 	}
 
 	@Override
-	public T setAttribute(File dir, String attribute, String data, Object... keys) {
-		return storage.setAttribute(dir, type, attribute, data, keys);
+	public T setAttribute(File dir, GitParams keys, String attribute, Object data) {
+		return storage.setAttribute(dir, type, keys, attribute, data);
 	}
 
 	@Override
-	public T setResource(File dir, Resource resource, Object... keys) {
-		return storage.setResource(dir, type, resource, keys);
+	public T setResource(File dir, GitParams keys, Resource resource) {
+		return storage.setResource(dir, type, keys, resource);
 	}
 
 	@Override
@@ -77,22 +78,22 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public T read(File dir, Object... keys) {
+	public T read(File dir, GitParams keys) {
 		return storage.read(dir, type, keys);
 	}
 
 	@Override
-	public Object getAttribute(File dir, String attribute, Object... keys) {
-		return storage.getAttribute(dir, type, attribute, keys);
+	public Object getAttribute(File dir, GitParams keys, String attribute) {
+		return storage.getAttribute(dir, type, keys, attribute);
 	}
 
 	@Override
-	public Resource getResource(File dir, String path, Object... keys) {
-		return storage.getResource(dir, type, path, keys);
+	public Resource getResource(File dir, GitParams keys, String path) {
+		return storage.getResource(dir, type, keys, path);
 	}
 
 	@Override
-	public List<Resource> allResources(File dir, Object... keys) {
+	public List<Resource> allResources(File dir, GitParams keys) {
 		return storage.allResources(dir, type, keys);
 	}
 
@@ -102,13 +103,13 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public T delete(File dir, Object... keys) {
+	public T delete(File dir, GitParams keys) {
 		return storage.delete(dir, type, keys);
 	}
 
 	@Override
-	public T delResource(File dir, String path, Object... keys) {
-		return storage.delResource(dir, type, path, keys);
+	public T delResource(File dir, GitParams keys, String path) {
+		return storage.delResource(dir, type, keys, path);
 	}
 
 	@Override
