@@ -46,6 +46,7 @@ import io.github.thiagolvlsantos.git.storage.audit.GitCreated;
 import io.github.thiagolvlsantos.git.storage.audit.IGitInitializer;
 import io.github.thiagolvlsantos.git.storage.concurrency.GitRevision;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageNotFoundException;
 import io.github.thiagolvlsantos.git.storage.identity.GitId;
 import io.github.thiagolvlsantos.git.storage.identity.GitKey;
 import io.github.thiagolvlsantos.git.storage.resource.Resource;
@@ -289,8 +290,8 @@ public class GitStorageImpl implements IGitStorage {
 
 	private <T> void verifyExists(File dir, Class<T> type, GitParams keys) {
 		if (!exists(dir, type, keys)) {
-			throw new GitStorageException("Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.",
-					null);
+			throw new GitStorageNotFoundException(
+					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
 		}
 	}
 
@@ -311,8 +312,8 @@ public class GitStorageImpl implements IGitStorage {
 		T current = read(dir, type, keys);
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
 		if (pd == null) {
-			throw new GitStorageException("Attribute '" + attribute + "' not found for type: " + current.getClass(),
-					null);
+			throw new GitStorageNotFoundException(
+					"Attribute '" + attribute + "' not found for type: " + current.getClass(), null);
 		}
 		// check unchangeable attributes
 		validateAttribute(GitId.class, type, attribute, current);
@@ -407,7 +408,8 @@ public class GitStorageImpl implements IGitStorage {
 		T obj = read(dir, type, keys);
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(obj, attribute);
 		if (pd == null) {
-			throw new GitStorageException("Attribute '" + attribute + "' not found for type: " + obj.getClass(), null);
+			throw new GitStorageNotFoundException("Attribute '" + attribute + "' not found for type: " + obj.getClass(),
+					null);
 		}
 		return pd.getReadMethod().invoke(obj);
 	}
@@ -432,7 +434,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	private void verifyResources(File root, GitParams keys) {
 		if (!root.exists()) {
-			throw new GitStorageException("Resources for " + keys + " not found.", null);
+			throw new GitStorageNotFoundException("Resources for " + keys + " not found.", null);
 		}
 	}
 

@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,7 @@ import org.springframework.context.ApplicationContext;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageNotFoundException;
 import io.github.thiagolvlsantos.git.storage.objects.Outlier;
 import io.github.thiagolvlsantos.git.storage.objects.OutlierStorage;
 import io.github.thiagolvlsantos.git.storage.objects.Project;
@@ -379,9 +379,9 @@ class GitStorageApplicationTests {
 		try {
 			final Project instance = new Project();
 			assertThatThrownBy(() -> storage.merge(dir, Project.class, GitParams.of("doNotExist"), instance))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+							+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -398,9 +398,9 @@ class GitStorageApplicationTests {
 		try {
 			final Project instance = new Project();
 			assertThatThrownBy(() -> storage.merge(dir, GitParams.of("doNotExist"), instance))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+							+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -422,7 +422,7 @@ class GitStorageApplicationTests {
 
 			assertThatThrownBy(
 					() -> storage.setAttribute(dir, Project.class, GitParams.of(name1), "title", "newDescription"))//
-							.isExactlyInstanceOf(GitStorageException.class)//
+							.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 							.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
@@ -444,7 +444,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of(name1), "title", "newDescription"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
@@ -466,7 +466,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, GitParams.of(name1), "title"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
@@ -488,7 +488,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.getAttribute(dir, GitParams.of(name1), "title"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
@@ -510,8 +510,8 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			assertThatThrownBy(() -> storage.getResource(dir, Project.class, GitParams.of(name1), "css/example.css"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -532,8 +532,8 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.getResource(dir, GitParams.of(name1), "css/example.css"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -630,7 +630,7 @@ class GitStorageApplicationTests {
 		try {
 			assertThatThrownBy(
 					() -> storage.setAttribute(dir, Project.class, GitParams.of("doNotExist"), "description", "10"))//
-							.isExactlyInstanceOf(GitStorageException.class)//
+							.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 							.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 									+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
@@ -648,9 +648,9 @@ class GitStorageApplicationTests {
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			assertThatThrownBy(() -> storage.setAttribute(dir, GitParams.of("doNotExist"), "description", "10"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+							+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -667,9 +667,9 @@ class GitStorageApplicationTests {
 		try {
 			assertThatThrownBy(
 					() -> storage.getAttribute(dir, Project.class, GitParams.of("doNotExist"), "description"))//
-							.isExactlyInstanceOf(GitStorageException.class)//
+							.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 							.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-									+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+									+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -685,9 +685,9 @@ class GitStorageApplicationTests {
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			assertThatThrownBy(() -> storage.getAttribute(dir, GitParams.of("doNotExist"), "description"))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ Arrays.toString(new String[] { "doNotExist" }) + "' not found.");
+							+ GitParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1057,7 +1057,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			assertThatThrownBy(() -> storage.allResources(dir, Project.class, GitParams.of(name1)))//
-					.isExactlyInstanceOf(GitStorageException.class)//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
 			try {
@@ -1079,8 +1079,8 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.allResources(dir, GitParams.of(name1)))//
-					.isExactlyInstanceOf(GitStorageException.class)//
-					.hasMessage("Resources for " + Arrays.toString(new String[] { name1 }) + " not found.");
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);

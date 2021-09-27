@@ -18,6 +18,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageException;
+import io.github.thiagolvlsantos.git.storage.exceptions.GitStorageNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -83,7 +84,7 @@ public class GitSerializerImpl implements IGitSerializer {
 	@Override
 	public <T> T readValue(File file, Class<T> type) {
 		if (!file.exists()) {
-			throw new GitStorageException("Object not found.", null);
+			throw new GitStorageNotFoundException("Object not found.", null);
 		}
 		try {
 			ObjectWrapper wrapper = mapper.readValue(file, ObjectWrapper.class);
