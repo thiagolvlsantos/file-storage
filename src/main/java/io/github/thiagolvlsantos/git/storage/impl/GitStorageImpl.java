@@ -525,7 +525,7 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> List<T> all(File dir, Class<T> type, GitPaging paging) {
+	public <T> List<T> list(File dir, Class<T> type, GitPaging paging) {
 		List<T> result = new LinkedList<>();
 		File[] ids = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
 		if (ids != null) {
@@ -538,6 +538,16 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
+	public <T> List<T> list(File dir, Class<T> type, GitQuery query, GitPaging paging) {
+		List<T> result = list(dir, type, null);
+		if (query != null) {
+			Predicate<Object> p = predicateFactory.read(query.getQuery().getBytes());
+			result = result.stream().filter(p).collect(Collectors.toList());
+		}
+		return filterRange(paging, result);
+	}
+
+	@Override
 	public <T> long count(File dir, Class<T> type, GitPaging paging) {
 		File[] files = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
 		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
@@ -545,11 +555,8 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
-	public <T> List<T> search(File dir, Class<T> type, GitQuery query, GitPaging paging) {
-		List<T> all = all(dir, type, null);
-		Predicate<Object> p = predicateFactory.read(query.getQuery().getBytes());
-		List<T> result = all.stream().filter(p).collect(Collectors.toList());
-		return filterRange(paging, result);
+	public <T> long count(File dir, Class<T> type, GitQuery query, GitPaging paging) {
+		return list(dir, type, query, paging).size();
 	}
 
 	private <T> List<T> filterRange(GitPaging paging, List<T> result) {

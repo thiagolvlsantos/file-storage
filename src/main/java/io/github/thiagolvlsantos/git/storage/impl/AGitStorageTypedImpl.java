@@ -115,8 +115,13 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public List<T> all(File dir, GitPaging paging) {
-		return storage.all(dir, type, paging);
+	public List<T> list(File dir, GitPaging paging) {
+		return storage.list(dir, type, paging);
+	}
+
+	@Override
+	public List<T> list(File dir, GitQuery query, GitPaging paging) {
+		return storage.list(dir, type, query, paging);
 	}
 
 	@Override
@@ -125,7 +130,7 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public List<T> search(File dir, GitQuery query, GitPaging paging) {
-		return storage.search(dir, type, query, paging);
+	public long count(File dir, GitQuery query, GitPaging paging) {
+		return storage.count(dir, type, query, paging);
 	}
 }
