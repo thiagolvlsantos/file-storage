@@ -131,6 +131,21 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
+	public long countResources(File dir, GitParams keys) {
+		return storage.countResources(dir, type, keys);
+	}
+
+	@Override
+	public long countResources(File dir, GitParams keys, GitPaging paging) {
+		return storage.countResources(dir, type, keys, paging);
+	}
+
+	@Override
+	public long countResources(File dir, GitParams keys, GitQuery query, GitPaging paging) {
+		return storage.countResources(dir, type, keys, query, paging);
+	}
+
+	@Override
 	public List<Resource> listResources(File dir, GitParams keys) {
 		return storage.listResources(dir, type, keys);
 	}

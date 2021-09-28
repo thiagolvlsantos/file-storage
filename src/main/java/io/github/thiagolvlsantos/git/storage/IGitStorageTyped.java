@@ -53,6 +53,12 @@ public interface IGitStorageTyped<T> {
 
 	Resource getResource(File dir, GitParams keys, String path);
 
+	long countResources(File dir, GitParams keys);
+
+	long countResources(File dir, GitParams keys, GitPaging paging);
+
+	long countResources(File dir, GitParams keys, GitQuery query, GitPaging paging);
+
 	List<Resource> listResources(File dir, GitParams keys);
 
 	List<Resource> listResources(File dir, GitParams keys, GitPaging paging);

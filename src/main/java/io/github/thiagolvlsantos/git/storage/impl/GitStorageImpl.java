@@ -525,6 +525,21 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
+	public <T> long countResources(File dir, Class<T> type, GitParams keys) {
+		return listResources(dir, type, keys).size();
+	}
+
+	@Override
+	public <T> long countResources(File dir, Class<T> type, GitParams keys, GitPaging paging) {
+		return listResources(dir, type, keys, paging).size();
+	}
+
+	@Override
+	public <T> long countResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging) {
+		return listResources(dir, type, keys, query, paging).size();
+	}
+
+	@Override
 	@SneakyThrows
 	public <T> List<Resource> listResources(File dir, Class<T> type, GitParams keys) {
 		return listResources(dir, type, keys, null);

@@ -900,6 +900,8 @@ class GitStorageApplicationTests {
 					GitPaging.builder().skip(1).max(1).build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
+			assertThat(storage.countResources(dir, Project.class, GitParams.of(name1),
+					GitPaging.builder().skip(1).max(1).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
@@ -908,6 +910,9 @@ class GitStorageApplicationTests {
 					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
+			assertThat(storage.countResources(dir, Project.class, GitParams.of(name1),
+					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
+							.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -980,6 +985,8 @@ class GitStorageApplicationTests {
 			resources = storage.listResources(dir, GitParams.of(name1), GitPaging.builder().skip(1).max(1).build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
+			assertThat(storage.countResources(dir, GitParams.of(name1), GitPaging.builder().skip(1).max(1).build()))
+					.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
@@ -988,6 +995,9 @@ class GitStorageApplicationTests {
 					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
+			assertThat(storage.countResources(dir, GitParams.of(name1),
+					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
+							.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -1093,6 +1103,10 @@ class GitStorageApplicationTests {
 			assertThatThrownBy(() -> storage.listResources(dir, Project.class, GitParams.of(name1)))//
 					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
+
+			assertThatThrownBy(() -> storage.countResources(dir, Project.class, GitParams.of(name1)))//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1113,6 +1127,10 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.listResources(dir, GitParams.of(name1)))//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
+
+			assertThatThrownBy(() -> storage.countResources(dir, GitParams.of(name1)))//
 					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
 					.hasMessage("Resources for " + GitParams.of(name1) + " not found.");
 		} finally {
