@@ -15,7 +15,17 @@ import lombok.Setter;
 @AllArgsConstructor
 public class GitParams implements Iterable<Object> {
 
+	private static final String SEPARATOR = "_";
+
 	private Object[] keys;
+
+	public static GitParams of(String parts) {
+		return GitParams.of(parts, SEPARATOR);
+	}
+
+	public static GitParams of(String parts, String separator) {
+		return GitParams.of((Object[]) parts.split(separator));
+	}
 
 	public static GitParams of(Object... objs) {
 		return new GitParams(objs);

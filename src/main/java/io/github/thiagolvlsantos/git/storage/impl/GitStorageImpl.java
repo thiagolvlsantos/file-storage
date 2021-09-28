@@ -69,6 +69,8 @@ public class GitStorageImpl implements IGitStorage {
 		return serializer;
 	}
 
+	// +------------- ENTITY METHODS ------------------+
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> File location(File dir, T example) {
@@ -288,7 +290,7 @@ public class GitStorageImpl implements IGitStorage {
 		return write(dir, current);
 	}
 
-	private <T> void verifyExists(File dir, Class<T> type, GitParams keys) {
+	protected <T> void verifyExists(File dir, Class<T> type, GitParams keys) {
 		if (!exists(dir, type, keys)) {
 			throw new GitStorageNotFoundException(
 					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
@@ -304,6 +306,109 @@ public class GitStorageImpl implements IGitStorage {
 			BeanUtils.setProperty(current, c.getName(), c.getValue());
 		}
 	}
+
+	@Override
+	public <T> T read(File dir, Class<T> type, T reference) {
+		return read(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T read(File dir, T reference) {
+		Class<T> type = (Class<T>) reference.getClass();
+		return read(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
+	}
+
+	@Override
+	public <T> T read(File dir, Class<T> type, GitParams keys) {
+		return read(entityFile(dir, type, keys), type);
+	}
+
+	protected <T> T read(File file, Class<T> type) {
+		return serializer.readValue(file, type);
+	}
+
+	@Override
+	public <T> T delete(File dir, Class<T> type, T reference) {
+		return delete(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T delete(File dir, T reference) {
+		Class<T> type = (Class<T>) reference.getClass();
+		return delete(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
+	}
+
+	@Override
+	public <T> T delete(File dir, Class<T> type, GitParams keys) {
+		T old = null;
+		if (exists(dir, type, keys)) {
+			old = read(dir, type, keys);
+			File file = entityDir(dir, type, keys);
+			try {
+				FileUtils.delete(file); // remove all resources also
+			} catch (IOException e) {
+				throw new GitStorageException("Entity not deleted. File:" + file, e);
+			}
+			idManager.unbind(entityRoot(dir, type), old);
+		}
+		return old;
+	}
+
+	@Override
+	public <T> long count(File dir, Class<T> type, GitPaging paging) {
+		File[] files = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
+		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
+		return page.getEnd(files.length) - page.getStart(files.length);
+	}
+
+	@Override
+	public <T> long count(File dir, Class<T> type, GitQuery query, GitPaging paging) {
+		return list(dir, type, query, paging).size();
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> List<T> list(File dir, Class<T> type, GitPaging paging) {
+		List<T> result = new LinkedList<>();
+		File[] ids = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
+		if (ids != null) {
+			for (File f : ids) {
+				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
+				result.add(serializer.readValue(entityFile(dir, type, GitParams.of(keys)), type));
+			}
+		}
+		return selectRange(paging, result);
+	}
+
+	@Override
+	public <T> List<T> list(File dir, Class<T> type, GitQuery query, GitPaging paging) {
+		List<T> result = list(dir, type, null);
+		result = filter(query, result);
+		return selectRange(paging, result);
+	}
+
+	protected <T> List<T> filter(GitQuery query, List<T> result) {
+		Predicate<Object> p = filter(query);
+		if (p != null) {
+			result = result.stream().filter(p).collect(Collectors.toList());
+		}
+		return result;
+	}
+
+	protected Predicate<Object> filter(GitQuery query) {
+		return query == null ? null : predicateFactory.read(query.getQuery().getBytes());
+	}
+
+	protected <T> List<T> selectRange(GitPaging paging, List<T> result) {
+		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
+		Integer start = page.getStart(result.size());
+		Integer end = page.getEnd(result.size());
+		return start < end ? result.subList(start, end) : Collections.emptyList();
+	}
+
+	// +------------- ATTRIBUTE METHODS ------------------+
 
 	@Override
 	@SneakyThrows
@@ -336,6 +441,22 @@ public class GitStorageImpl implements IGitStorage {
 			}
 		}
 	}
+
+	@Override
+	@SneakyThrows
+	public <T> Object getAttribute(File dir, Class<T> type, GitParams keys, String attribute) {
+		verifyExists(dir, type, keys);
+
+		T obj = read(dir, type, keys);
+		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(obj, attribute);
+		if (pd == null) {
+			throw new GitStorageNotFoundException("Attribute '" + attribute + "' not found for type: " + obj.getClass(),
+					null);
+		}
+		return pd.getReadMethod().invoke(obj);
+	}
+
+	// +------------- RESOURCE METHODS ------------------+
 
 	@Override
 	@SneakyThrows
@@ -380,41 +501,6 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
-	public <T> T read(File dir, Class<T> type, T reference) {
-		return read(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T read(File dir, T reference) {
-		Class<T> type = (Class<T>) reference.getClass();
-		return read(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
-	}
-
-	@Override
-	public <T> T read(File dir, Class<T> type, GitParams keys) {
-		return read(entityFile(dir, type, keys), type);
-	}
-
-	public <T> T read(File file, Class<T> type) {
-		return serializer.readValue(file, type);
-	}
-
-	@Override
-	@SneakyThrows
-	public <T> Object getAttribute(File dir, Class<T> type, GitParams keys, String attribute) {
-		verifyExists(dir, type, keys);
-
-		T obj = read(dir, type, keys);
-		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(obj, attribute);
-		if (pd == null) {
-			throw new GitStorageNotFoundException("Attribute '" + attribute + "' not found for type: " + obj.getClass(),
-					null);
-		}
-		return pd.getReadMethod().invoke(obj);
-	}
-
-	@Override
 	@SneakyThrows
 	public <T> Resource getResource(File dir, Class<T> type, GitParams keys, String path) {
 		verifyExists(dir, type, keys);
@@ -432,7 +518,7 @@ public class GitStorageImpl implements IGitStorage {
 		return Resource.builder().metadata(meta).content(content).build();
 	}
 
-	private void verifyResources(File root, GitParams keys) {
+	protected void verifyResources(File root, GitParams keys) {
 		if (!root.exists()) {
 			throw new GitStorageNotFoundException("Resources for " + keys + " not found.", null);
 		}
@@ -440,10 +526,24 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> List<Resource> allResources(File dir, Class<T> type, GitParams keys) {
+	public <T> List<Resource> listResources(File dir, Class<T> type, GitParams keys) {
+		return listResources(dir, type, keys, null);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitPaging paging) {
+		return listResources(dir, type, keys, null, paging);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
+
+		final Predicate<Object> filter = filter(query);
 
 		List<Resource> result = new LinkedList<>();
 		Files.walkFileTree(Paths.get(root.toURI()), new SimpleFileVisitor<Path>() {
@@ -459,46 +559,25 @@ public class GitStorageImpl implements IGitStorage {
 					ResourceMetadata metadata = serializer.decode(Files.readAllBytes(metadataFile.toPath()),
 							ResourceMetadata.class);
 					ResourceContent content = ResourceContent.builder().data(Files.readAllBytes(contentFile)).build();
-					result.add(Resource.builder().metadata(metadata).content(content).build());
+					Resource resource = Resource.builder().metadata(metadata).content(content).build();
+					if (filter != null) {
+						if (filter.test(resource)) {
+							result.add(resource);
+						}
+					} else {
+						result.add(resource);
+					}
 				}
 				return FileVisitResult.CONTINUE;
 			}
 		});
 		result.sort((a, b) -> a.getMetadata().getPath().compareTo(b.getMetadata().getPath()));
-		return result;
-	}
-
-	@Override
-	public <T> T delete(File dir, Class<T> type, T reference) {
-		return delete(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T delete(File dir, T reference) {
-		Class<T> type = (Class<T>) reference.getClass();
-		return delete(dir, type, GitParams.of(UtilAnnotations.getKeys(type, reference)));
-	}
-
-	@Override
-	public <T> T delete(File dir, Class<T> type, GitParams keys) {
-		T old = null;
-		if (exists(dir, type, keys)) {
-			old = read(dir, type, keys);
-			File file = entityDir(dir, type, keys);
-			try {
-				FileUtils.delete(file);
-			} catch (IOException e) {
-				throw new GitStorageException("Entity not deleted. File:" + file, e);
-			}
-			idManager.unbind(entityRoot(dir, type), old);
-		}
-		return old;
+		return selectRange(paging, result);
 	}
 
 	@Override
 	@SneakyThrows
-	public <T> T delResource(File dir, Class<T> type, GitParams keys, String path) {
+	public <T> T deleteResource(File dir, Class<T> type, GitParams keys, String path) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
@@ -521,48 +600,5 @@ public class GitStorageImpl implements IGitStorage {
 		}
 
 		return result;
-	}
-
-	@Override
-	@SneakyThrows
-	public <T> List<T> list(File dir, Class<T> type, GitPaging paging) {
-		List<T> result = new LinkedList<>();
-		File[] ids = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
-		if (ids != null) {
-			for (File f : ids) {
-				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-				result.add(serializer.readValue(entityFile(dir, type, GitParams.of(keys)), type));
-			}
-		}
-		return filterRange(paging, result);
-	}
-
-	@Override
-	public <T> List<T> list(File dir, Class<T> type, GitQuery query, GitPaging paging) {
-		List<T> result = list(dir, type, null);
-		if (query != null) {
-			Predicate<Object> p = predicateFactory.read(query.getQuery().getBytes());
-			result = result.stream().filter(p).collect(Collectors.toList());
-		}
-		return filterRange(paging, result);
-	}
-
-	@Override
-	public <T> long count(File dir, Class<T> type, GitPaging paging) {
-		File[] files = idManager.directory(entityRoot(dir, type), IGitIndex.IDS).listFiles();
-		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
-		return page.getEnd(files.length) - page.getStart(files.length);
-	}
-
-	@Override
-	public <T> long count(File dir, Class<T> type, GitQuery query, GitPaging paging) {
-		return list(dir, type, query, paging).size();
-	}
-
-	private <T> List<T> filterRange(GitPaging paging, List<T> result) {
-		GitPaging page = Optional.ofNullable(paging).orElse(GitPaging.builder().build());
-		Integer start = page.getStart(result.size());
-		Integer end = page.getEnd(result.size());
-		return start < end ? result.subList(start, end) : Collections.emptyList();
 	}
 }

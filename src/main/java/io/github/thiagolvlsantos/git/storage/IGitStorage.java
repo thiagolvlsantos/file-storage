@@ -9,6 +9,8 @@ public interface IGitStorage {
 
 	IGitSerializer getSerializer();
 
+	// +------------- ENTITY METHODS ------------------+
+
 	<T> File location(File dir, T example);
 
 	<T> File location(File dir, Class<T> type, T example);
@@ -27,29 +29,17 @@ public interface IGitStorage {
 
 	<T> T merge(File dir, Class<T> type, GitParams keys, T instance);
 
-	<T> T setAttribute(File dir, Class<T> type, GitParams keys, String attribute, Object data);
-
-	<T> T setResource(File dir, Class<T> type, GitParams keys, Resource resource);
-
 	<T> T read(File dir, T example);
 
 	<T> T read(File dir, Class<T> type, T example);
 
 	<T> T read(File dir, Class<T> type, GitParams keys);
 
-	<T> Object getAttribute(File dir, Class<T> type, GitParams keys, String attribute);
-
-	<T> Resource getResource(File dir, Class<T> type, GitParams keys, String path);
-
-	<T> List<Resource> allResources(File dir, Class<T> type, GitParams keys);
-
 	<T> T delete(File dir, T example);
 
 	<T> T delete(File dir, Class<T> type, T example);
 
 	<T> T delete(File dir, Class<T> type, GitParams keys);
-
-	<T> T delResource(File dir, Class<T> type, GitParams keys, String path);
 
 	<T> long count(File dir, Class<T> type, GitPaging paging);
 
@@ -58,4 +48,24 @@ public interface IGitStorage {
 	<T> List<T> list(File dir, Class<T> type, GitPaging paging);
 
 	<T> List<T> list(File dir, Class<T> type, GitQuery query, GitPaging paging);
+
+	// +------------- ATTRIBUTE METHODS ------------------+
+
+	<T> T setAttribute(File dir, Class<T> type, GitParams keys, String attribute, Object data);
+
+	<T> Object getAttribute(File dir, Class<T> type, GitParams keys, String attribute);
+
+	// +------------- RESOURCE METHODS ------------------+
+
+	<T> T setResource(File dir, Class<T> type, GitParams keys, Resource resource);
+
+	<T> Resource getResource(File dir, Class<T> type, GitParams keys, String path);
+
+	<T> T deleteResource(File dir, Class<T> type, GitParams keys, String path);
+
+	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys);
+
+	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitPaging paging);
+
+	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging);
 }

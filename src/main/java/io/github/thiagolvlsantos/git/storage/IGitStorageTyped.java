@@ -11,6 +11,8 @@ public interface IGitStorageTyped<T> {
 
 	IGitSerializer getSerializer();
 
+	// +------------- ENTITY METHODS ------------------+
+
 	File location(File dir, T example);
 
 	File location(File dir, GitParams keys);
@@ -23,31 +25,39 @@ public interface IGitStorageTyped<T> {
 
 	T merge(File dir, GitParams keys, T instance);
 
-	T setAttribute(File dir, GitParams keys, String attribute, Object data);
-
-	T setResource(File dir, GitParams keys, Resource resource);
-
 	T read(File dir, T example);
 
 	T read(File dir, GitParams keys);
-
-	Object getAttribute(File dir, GitParams keys, String attribute);
-
-	Resource getResource(File dir, GitParams keys, String path);
-
-	List<Resource> allResources(File dir, GitParams keys);
 
 	T delete(File dir, T example);
 
 	T delete(File dir, GitParams keys);
 
-	T delResource(File dir, GitParams keys, String path);
+	long count(File dir, GitPaging paging);
+
+	long count(File dir, GitQuery query, GitPaging paging);
 
 	List<T> list(File dir, GitPaging paging);
 
 	List<T> list(File dir, GitQuery query, GitPaging paging);
 
-	long count(File dir, GitPaging paging);
+	// +------------- ATTRIBUTE METHODS ------------------+
 
-	long count(File dir, GitQuery query, GitPaging paging);
+	T setAttribute(File dir, GitParams keys, String attribute, Object data);
+
+	Object getAttribute(File dir, GitParams keys, String attribute);
+
+	// +------------- RESOURCE METHODS ------------------+
+
+	T setResource(File dir, GitParams keys, Resource resource);
+
+	Resource getResource(File dir, GitParams keys, String path);
+
+	List<Resource> listResources(File dir, GitParams keys);
+
+	List<Resource> listResources(File dir, GitParams keys, GitPaging paging);
+
+	List<Resource> listResources(File dir, GitParams keys, GitQuery query, GitPaging paging);
+
+	T deleteResource(File dir, GitParams keys, String path);
 }
