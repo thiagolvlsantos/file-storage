@@ -49,7 +49,7 @@
 
 		<!-- PROJECT SPECIFIC -->
 		<git-commons.version>1.0.29</git-commons.version>
-		<json-predicate.version>0.0.5</json-predicate.version>
+		<json-predicate.version>0.0.6</json-predicate.version>
 	</properties>
 
 	<scm>
