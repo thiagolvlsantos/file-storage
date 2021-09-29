@@ -763,7 +763,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			// attribute reading
-			String path = "css/arquivo.css";
+			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
@@ -806,7 +806,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			// attribute reading
-			String path = "css/arquivo.css";
+			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
@@ -1021,7 +1021,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			// attribute reading
-			String path = "css/arquivo.css";
+			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
@@ -1030,7 +1030,7 @@ class GitStorageApplicationTests {
 			storage.setResource(dir, Project.class, GitParams.of(name1), resource);
 
 			// sabotage
-			final String newPath = "../../css/arquivo.css";
+			final String newPath = "../../css/style.css";
 			metadata.setPath(newPath);
 			assertThatThrownBy(() -> storage.setResource(dir, Project.class, GitParams.of(name1), resource))//
 					.isExactlyInstanceOf(GitStorageException.class)//
@@ -1063,7 +1063,7 @@ class GitStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			// attribute reading
-			String path = "css/arquivo.css";
+			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
@@ -1072,7 +1072,7 @@ class GitStorageApplicationTests {
 			storage.setResource(dir, GitParams.of(name1), resource);
 
 			// sabotage
-			final String newPath = "../../css/arquivo.css";
+			final String newPath = "../../css/style.css";
 			metadata.setPath(newPath);
 			assertThatThrownBy(() -> storage.setResource(dir, GitParams.of(name1), resource))//
 					.isExactlyInstanceOf(GitStorageException.class)//
@@ -1158,6 +1158,19 @@ class GitStorageApplicationTests {
 			assertThat(location1).isEqualTo(location2);
 			assertThat(location2).isEqualTo(location3);
 			assertThat(location3).isEqualTo(new File(dir, "@projects/" + name1));
+
+			storage.write(dir, project1);
+			String path = "css/style.css";
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
+			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
+			Resource resource = Resource.builder().metadata(metadata).content(content).build();
+			storage.setResource(dir, Project.class, GitParams.of(name1), resource);
+
+			File location4 = storage.locationResource(dir, Project.class, GitParams.of(name1));
+			File location5 = storage.locationResource(dir, Project.class, GitParams.of(name1), "css/style.css");
+
+			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
+			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1181,6 +1194,19 @@ class GitStorageApplicationTests {
 
 			assertThat(location1).isEqualTo(location2);
 			assertThat(location2).isEqualTo(new File(dir, "@projects/" + name1));
+
+			storage.write(dir, project1);
+			String path = "css/style.css";
+			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
+			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
+			Resource resource = Resource.builder().metadata(metadata).content(content).build();
+			storage.setResource(dir, GitParams.of(name1), resource);
+
+			File location4 = storage.locationResource(dir, GitParams.of(name1));
+			File location5 = storage.locationResource(dir, GitParams.of(name1), "css/style.css");
+
+			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
+			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
 		} finally {
 			try {
 				FileUtils.delete(dir);

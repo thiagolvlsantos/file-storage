@@ -459,6 +459,28 @@ public class GitStorageImpl implements IGitStorage {
 	// +------------- RESOURCE METHODS ------------------+
 
 	@Override
+	public <T> File locationResource(File dir, Class<T> type, GitParams keys) {
+		return locationResource(dir, type, keys, null);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> File locationResource(File dir, Class<T> type, GitParams keys, String path) {
+		verifyExists(dir, type, keys);
+		File root = resourceDir(entityDir(dir, type, keys));
+		if (path != null) {
+			File contentFile = new File(root, path);
+			// SECURITY: avoid attempt to override files in higher locations as /etc
+			if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
+				throw new GitStorageException("Cannot read location of resources in a higher file structure. " + path,
+						null);
+			}
+			root = new File(root, path);
+		}
+		return root;
+	}
+
+	@Override
 	@SneakyThrows
 	public <T> T setResource(File dir, Class<T> type, GitParams keys, Resource resource) {
 		verifyExists(dir, type, keys);

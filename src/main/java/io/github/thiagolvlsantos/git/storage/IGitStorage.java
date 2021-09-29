@@ -57,6 +57,10 @@ public interface IGitStorage {
 
 	// +------------- RESOURCE METHODS ------------------+
 
+	<T> File locationResource(File dir, Class<T> type, GitParams keys);
+
+	<T> File locationResource(File dir, Class<T> type, GitParams keys, String path);
+
 	<T> T setResource(File dir, Class<T> type, GitParams keys, Resource resource);
 
 	<T> Resource getResource(File dir, Class<T> type, GitParams keys, String path);

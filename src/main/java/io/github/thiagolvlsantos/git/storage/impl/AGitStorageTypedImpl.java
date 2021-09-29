@@ -121,6 +121,16 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	// +------------- RESOURCE METHODS ------------------+
 
 	@Override
+	public File locationResource(File dir, GitParams keys) {
+		return storage.locationResource(dir, type, keys);
+	}
+
+	@Override
+	public File locationResource(File dir, GitParams keys, String path) {
+		return storage.locationResource(dir, type, keys, path);
+	}
+
+	@Override
 	public T setResource(File dir, GitParams keys, Resource resource) {
 		return storage.setResource(dir, type, keys, resource);
 	}
