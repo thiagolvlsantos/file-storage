@@ -1171,6 +1171,11 @@ class GitStorageApplicationTests {
 
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
 			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
+
+			String invalidPath = "../css/style.css";
+			assertThatThrownBy(() -> storage.locationResource(dir, Project.class, GitParams.of(name1), invalidPath))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1207,6 +1212,11 @@ class GitStorageApplicationTests {
 
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
 			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
+
+			String invalidPath = "../css/style.css";
+			assertThatThrownBy(() -> storage.locationResource(dir, GitParams.of(name1), invalidPath))//
+					.isExactlyInstanceOf(GitStorageException.class)//
+					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);
