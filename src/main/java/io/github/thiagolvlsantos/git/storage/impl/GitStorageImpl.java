@@ -17,12 +17,15 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -414,12 +417,9 @@ public class GitStorageImpl implements IGitStorage {
 	@SneakyThrows
 	public <T> T setAttribute(File dir, Class<T> type, GitParams keys, String attribute, Object data) {
 		verifyExists(dir, type, keys);
+
 		T current = read(dir, type, keys);
-		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(current, attribute);
-		if (pd == null) {
-			throw new GitStorageNotFoundException(
-					"Attribute '" + attribute + "' not found for type: " + current.getClass(), null);
-		}
+
 		// check unchangeable attributes
 		validateAttribute(GitId.class, type, attribute, current);
 		validateAttribute(GitKey.class, type, attribute, current);
@@ -427,7 +427,13 @@ public class GitStorageImpl implements IGitStorage {
 		validateAttribute(GitRevision.class, type, attribute, current);
 		validateAttribute(GitKeep.class, type, attribute, current);
 		// TODO: create an interface IReplicator as an abstraction of this set.
-		BeanUtils.setProperty(current, attribute, data);
+		try {
+			PropertyUtils.setProperty(current, attribute, data);
+		} catch (NoSuchMethodException e) {
+			throw new GitStorageNotFoundException(
+					"Attribute '" + attribute + "' not found for type: " + current.getClass(), e);
+		}
+
 		return write(dir, current);
 	}
 
@@ -447,13 +453,41 @@ public class GitStorageImpl implements IGitStorage {
 	public <T> Object getAttribute(File dir, Class<T> type, GitParams keys, String attribute) {
 		verifyExists(dir, type, keys);
 
-		T obj = read(dir, type, keys);
-		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(obj, attribute);
-		if (pd == null) {
-			throw new GitStorageNotFoundException("Attribute '" + attribute + "' not found for type: " + obj.getClass(),
-					null);
+		T current = read(dir, type, keys);
+
+		try {
+			return PropertyUtils.getProperty(current, attribute);
+		} catch (NoSuchMethodException e) {
+			throw new GitStorageNotFoundException(
+					"Attribute '" + attribute + "' not found for type: " + current.getClass(), e);
 		}
-		return pd.getReadMethod().invoke(obj);
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> Map<String, Object> attributes(File dir, Class<T> type, GitParams keys, GitParams names) {
+		verifyExists(dir, type, keys);
+
+		T current = read(dir, type, keys);
+
+		GitParams selection = names;
+		if (selection == null) {
+			PropertyDescriptor[] pds = PropertyUtils.getPropertyDescriptors(current);
+			selection = GitParams.of(Stream.of(pds).map(p -> p.getName()).collect(Collectors.toList()));
+		}
+
+		Map<String, Object> result = new LinkedHashMap<>();
+		for (Object n : selection) {
+			try {
+				String attribute = String.valueOf(n);
+				Object value = PropertyUtils.getProperty(current, attribute);
+				result.put(attribute, value);
+			} catch (NoSuchMethodException e) {
+				throw new GitStorageNotFoundException("Attribute '" + n + "' not found for type: " + current.getClass(),
+						e);
+			}
+		}
+		return result;
 	}
 
 	// +------------- RESOURCE METHODS ------------------+

@@ -6,7 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -502,6 +504,50 @@ class GitStorageApplicationTests {
 	}
 
 	@Test
+	void testInvalidAllAttributeName(@Autowired ApplicationContext context) {
+		IGitStorage storage = context.getBean(IGitStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, Project.class, project1);
+
+			assertThatThrownBy(() -> storage.attributes(dir, Project.class, GitParams.of(name1), GitParams.of("title")))//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testInvalidAllAttributeNameTyped(@Autowired ApplicationContext context) {
+		IGitStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		String name1 = "projectA";
+		try {
+			// write
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			assertThatThrownBy(() -> storage.attributes(dir, GitParams.of(name1), GitParams.of("title")))//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
 	void testInvalidGetResources(@Autowired ApplicationContext context) {
 		IGitStorage storage = context.getBean(IGitStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
@@ -717,6 +763,20 @@ class GitStorageApplicationTests {
 			Project result = storage.setAttribute(dir, Project.class, GitParams.of(name1), "description",
 					"newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
+
+			// attribute full map
+			Map<String, Object> objs = storage.attributes(dir, Project.class, GitParams.of(name1), null);
+			assertThat(objs.get("description")).isEqualTo("newDescription");
+
+			// attribute map projection
+			objs = storage.attributes(dir, Project.class, GitParams.of(name1),
+					GitParams.of(Arrays.asList("name", "created")));
+			assertThat(objs.size()).isEqualTo(2);
+
+			// invalid attribute
+			assertThatThrownBy(() -> storage.attributes(dir, Project.class, GitParams.of(name1), GitParams.of("title")))//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -743,6 +803,19 @@ class GitStorageApplicationTests {
 			// attribute writing
 			Project result = storage.setAttribute(dir, GitParams.of(name1), "description", "newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
+
+			// attribute full map
+			Map<String, Object> objs = storage.attributes(dir, GitParams.of(name1), null);
+			assertThat(objs.get("description")).isEqualTo("newDescription");
+
+			// attribute map projection
+			objs = storage.attributes(dir, GitParams.of(name1), GitParams.of(Arrays.asList("name", "created")));
+			assertThat(objs.size()).isEqualTo(2);
+
+			// invalid attribute
+			assertThatThrownBy(() -> storage.attributes(dir, GitParams.of(name1), GitParams.of("title")))//
+					.isExactlyInstanceOf(GitStorageNotFoundException.class)//
+					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
 		} finally {
 			try {
 				FileUtils.delete(dir);

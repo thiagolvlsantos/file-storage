@@ -2,6 +2,7 @@ package io.github.thiagolvlsantos.git.storage.impl;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -116,6 +117,11 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	@Override
 	public Object getAttribute(File dir, GitParams keys, String attribute) {
 		return storage.getAttribute(dir, type, keys, attribute);
+	}
+
+	@Override
+	public Map<String, Object> attributes(File dir, GitParams keys, GitParams names) {
+		return storage.attributes(dir, type, keys, names);
 	}
 
 	// +------------- RESOURCE METHODS ------------------+

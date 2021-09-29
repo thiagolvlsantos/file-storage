@@ -2,6 +2,7 @@ package io.github.thiagolvlsantos.git.storage;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import lombok.AllArgsConstructor;
@@ -20,14 +21,30 @@ public class GitParams implements Iterable<Object> {
 	private Object[] keys;
 
 	public static GitParams of(String parts) {
-		return GitParams.of(parts, SEPARATOR);
+		if (parts == null) {
+			return null;
+		}
+		return of(parts, SEPARATOR);
 	}
 
 	public static GitParams of(String parts, String separator) {
-		return GitParams.of((Object[]) parts.split(separator));
+		if (parts == null) {
+			return null;
+		}
+		return of((Object[]) parts.split(separator));
+	}
+
+	public static GitParams of(List<?> objs) {
+		if (objs == null) {
+			return null;
+		}
+		return of(objs.toArray());
 	}
 
 	public static GitParams of(Object... objs) {
+		if (objs == null) {
+			return null;
+		}
 		return new GitParams(objs);
 	}
 

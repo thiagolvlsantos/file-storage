@@ -2,6 +2,7 @@ package io.github.thiagolvlsantos.git.storage;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import io.github.thiagolvlsantos.git.storage.resource.Resource;
 
@@ -46,6 +47,8 @@ public interface IGitStorageTyped<T> {
 	T setAttribute(File dir, GitParams keys, String attribute, Object data);
 
 	Object getAttribute(File dir, GitParams keys, String attribute);
+
+	Map<String, Object> attributes(File dir, GitParams keys, GitParams names);
 
 	// +------------- RESOURCE METHODS ------------------+
 
