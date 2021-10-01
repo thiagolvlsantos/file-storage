@@ -478,7 +478,7 @@ public class FileStorageImpl implements IFileStorage {
 		FileParams selection = names;
 		if (selection == null) {
 			PropertyDescriptor[] pds = PropertyUtils.getPropertyDescriptors(current);
-			selection = FileParams.of(Stream.of(pds).map(p -> p.getName()).collect(Collectors.toList()));
+			selection = FileParams.of(Stream.of(pds).map(PropertyDescriptor::getName).collect(Collectors.toList()));
 		}
 
 		Map<String, Object> result = new LinkedHashMap<>();
