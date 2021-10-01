@@ -373,7 +373,7 @@ public class FileStorageImpl implements IFileStorage {
 	public <T> long count(File dir, Class<T> type, FilePaging paging) {
 		File[] files = idManager.directory(entityRoot(dir, type), IFileIndex.IDS).listFiles();
 		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
-		return (long) (page.getEnd(files.length) - page.getStart(files.length));
+		return ((long) (page.getEnd(files.length)) - page.getStart(files.length));
 	}
 
 	@Override
