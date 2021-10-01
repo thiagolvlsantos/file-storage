@@ -15,11 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
-import io.github.thiagolvlsantos.file.storage.FilePaging;
-import io.github.thiagolvlsantos.file.storage.FileParams;
-import io.github.thiagolvlsantos.file.storage.FilePredicate;
-import io.github.thiagolvlsantos.file.storage.IFileStorage;
-import io.github.thiagolvlsantos.file.storage.IFileStorageTyped;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageAttributeNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
 import io.github.thiagolvlsantos.file.storage.objects.Outlier;
@@ -171,8 +167,8 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, Project.class, new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"),
-					null);
+			List<Project> list = storage.list(dir, Project.class,
+					new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -431,8 +427,9 @@ class FileStorageApplicationTests {
 
 			assertThatThrownBy(
 					() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "title", "newDescription"))//
-							.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-							.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+							.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+							.hasMessage(
+									new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -453,8 +450,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of(name1), "title", "newDescription"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -475,8 +472,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, FileParams.of(name1), "title"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -497,8 +494,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.getAttribute(dir, FileParams.of(name1), "title"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -518,9 +515,11 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.attributes(dir, Project.class, FileParams.of(name1), FileParams.of("title")))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+			assertThatThrownBy(
+					() -> storage.attributes(dir, Project.class, FileParams.of(name1), FileParams.of("title")))//
+							.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+							.hasMessage(
+									new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -541,8 +540,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			assertThatThrownBy(() -> storage.attributes(dir, FileParams.of(name1), FileParams.of("title")))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -619,9 +618,10 @@ class FileStorageApplicationTests {
 							.hasMessage("Update of @FileKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "created", "\"10\""))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
+			assertThatThrownBy(
+					() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "created", "\"10\""))//
+							.isExactlyInstanceOf(FileStorageException.class)//
+							.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
 			assertThatThrownBy(
@@ -779,9 +779,11 @@ class FileStorageApplicationTests {
 			assertThat(objs.size()).isEqualTo(2);
 
 			// invalid attribute
-			assertThatThrownBy(() -> storage.attributes(dir, Project.class, FileParams.of(name1), FileParams.of("title")))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+			assertThatThrownBy(
+					() -> storage.attributes(dir, Project.class, FileParams.of(name1), FileParams.of("title")))//
+							.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+							.hasMessage(
+									new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -819,8 +821,8 @@ class FileStorageApplicationTests {
 
 			// invalid attribute
 			assertThatThrownBy(() -> storage.attributes(dir, FileParams.of(name1), FileParams.of("title")))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Attribute '" + "title" + "' not found for type: " + project1.getClass());
+					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);

@@ -47,6 +47,7 @@ import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
 import io.github.thiagolvlsantos.file.storage.audit.FileCreated;
 import io.github.thiagolvlsantos.file.storage.audit.IFileInitializer;
 import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageAttributeNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
@@ -306,12 +307,16 @@ public class FileStorageImpl implements IFileStorage {
 			if (log.isInfoEnabled()) {
 				log.info("Return " + annotation.getSimpleName() + ": {}={}", c.getName(), c.getValue());
 			}
-			try {
-				PropertyUtils.setProperty(current, c.getName(), c.getValue());
-			} catch (NoSuchMethodException e) {
-				throw new FileStorageNotFoundException(
-						"Attribute '" + c.getName() + "' not found for type: " + current.getClass(), e);
-			}
+			trySetAttribute(current, c.getName(), c.getValue());
+		}
+	}
+
+	protected <T> void trySetAttribute(T current, String name, Object value)
+			throws IllegalAccessException, InvocationTargetException {
+		try {
+			PropertyUtils.setProperty(current, name, value);
+		} catch (NoSuchMethodException e) {
+			throw new FileStorageAttributeNotFoundException(name, current, e);
 		}
 	}
 
@@ -431,13 +436,8 @@ public class FileStorageImpl implements IFileStorage {
 		validateAttribute(FileCreated.class, type, attribute, current);
 		validateAttribute(FileRevision.class, type, attribute, current);
 		validateAttribute(FileKeep.class, type, attribute, current);
-		// TODO: create an interface IReplicator as an abstraction of this set.
-		try {
-			PropertyUtils.setProperty(current, attribute, data);
-		} catch (NoSuchMethodException e) {
-			throw new FileStorageNotFoundException(
-					"Attribute '" + attribute + "' not found for type: " + current.getClass(), e);
-		}
+
+		trySetAttribute(current, attribute, data);
 
 		return write(dir, current);
 	}
@@ -460,11 +460,15 @@ public class FileStorageImpl implements IFileStorage {
 
 		T current = read(dir, type, keys);
 
+		return tryGetAttribute(current, attribute);
+	}
+
+	protected <T> Object tryGetAttribute(T current, String attribute)
+			throws IllegalAccessException, InvocationTargetException {
 		try {
 			return PropertyUtils.getProperty(current, attribute);
 		} catch (NoSuchMethodException e) {
-			throw new FileStorageNotFoundException(
-					"Attribute '" + attribute + "' not found for type: " + current.getClass(), e);
+			throw new FileStorageAttributeNotFoundException(attribute, current, e);
 		}
 	}
 
@@ -483,14 +487,8 @@ public class FileStorageImpl implements IFileStorage {
 
 		Map<String, Object> result = new LinkedHashMap<>();
 		for (Object n : selection) {
-			try {
-				String attribute = String.valueOf(n);
-				Object value = PropertyUtils.getProperty(current, attribute);
-				result.put(attribute, value);
-			} catch (NoSuchMethodException e) {
-				throw new FileStorageNotFoundException(
-						"Attribute '" + n + "' not found for type: " + current.getClass(), e);
-			}
+			String attribute = String.valueOf(n);
+			result.put(attribute, tryGetAttribute(current, attribute));
 		}
 		return result;
 	}
