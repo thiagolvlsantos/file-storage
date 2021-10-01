@@ -20,11 +20,11 @@ Why not organizing you objects in directories that can be easily accessed? Furth
 
 Just to be clear, I`not saying that this is a 'database' for massive data, but most part of applications can use such a simpler structure where objects are stored in file systems as JSON without the majority of restrictions imposed by relational databases.
 
-Welcome to ``git-storage``, see bellow how simple it is.
+Welcome to ``file-storage``, see bellow how simple it is.
 
 ## Usage
 
-Include latest version [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.thiagolvlsantos/git-storage/badge.svg)](https://repo1.maven.org/maven2/io/github/thiagolvlsantos/git-storage/) to your project.
+Include latest version [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.thiagolvlsantos/file-storage/badge.svg)](https://repo1.maven.org/maven2/io/github/thiagolvlsantos/file-storage/) to your project.
 
 ```xml
 		<dependency>
