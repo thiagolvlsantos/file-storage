@@ -837,7 +837,7 @@ class FileStorageApplicationTests {
 
 			// attribute full map
 			Map<String, Object> objs = storage.attributes(dir, params, null);
-			assertThat(objs.get("description")).isEqualTo("newDescription");
+			assertThat(objs).containsEntry("description", "newDescription");
 
 			// attribute map projection
 			FileParams names = FileParams.of(Arrays.asList("name", "created"));
