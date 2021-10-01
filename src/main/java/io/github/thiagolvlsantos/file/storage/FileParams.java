@@ -3,6 +3,7 @@ package io.github.thiagolvlsantos.file.storage;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import lombok.AllArgsConstructor;
@@ -60,6 +61,9 @@ public class FileParams implements Iterable<Object> {
 
 			@Override
 			public Object next() {
+				if (!hasNext()) {
+					throw new NoSuchElementException();
+				}
 				return keys[index++];
 			}
 		};
