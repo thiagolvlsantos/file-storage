@@ -383,8 +383,10 @@ class FileStorageApplicationTests {
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			final Project instance = new Project();
-			assertThatThrownBy(() -> storage.merge(dir, Project.class, FileParams.of("doNotExist"), instance))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
+			FileParams params = FileParams.of("doNotExist");
+			assertThatThrownBy(() -> {
+				storage.merge(dir, Project.class, params, instance);
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ FileParams.of("doNotExist") + "' not found.");
 		} finally {
@@ -402,8 +404,10 @@ class FileStorageApplicationTests {
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
 			final Project instance = new Project();
-			assertThatThrownBy(() -> storage.merge(dir, FileParams.of("doNotExist"), instance))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
+			FileParams params = FileParams.of("doNotExist");
+			assertThatThrownBy(() -> {
+				storage.merge(dir, params, instance);
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ FileParams.of("doNotExist") + "' not found.");
 		} finally {
@@ -425,11 +429,11 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(
-					() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "title", "newDescription"))//
-							.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-							.hasMessage(
-									new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.setAttribute(dir, Project.class, params, "title", "newDescription");
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -449,8 +453,10 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of(name1), "title", "newDescription"))//
-					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.setAttribute(dir, params, "title", "newDescription");
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
 					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
@@ -471,8 +477,10 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.getAttribute(dir, Project.class, FileParams.of(name1), "title"))//
-					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.getAttribute(dir, Project.class, params, "title");
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
 					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
@@ -493,8 +501,10 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.getAttribute(dir, FileParams.of(name1), "title"))//
-					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.getAttribute(dir, params, "title");
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
 					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
@@ -515,11 +525,12 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(
-					() -> storage.attributes(dir, Project.class, FileParams.of(name1), FileParams.of("title")))//
-							.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-							.hasMessage(
-									new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+			FileParams params = FileParams.of(name1);
+			FileParams names = FileParams.of("title");
+			assertThatThrownBy(() -> {
+				storage.attributes(dir, Project.class, params, names);
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -539,8 +550,11 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.attributes(dir, FileParams.of(name1), FileParams.of("title")))//
-					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+			FileParams params = FileParams.of(name1);
+			FileParams names = FileParams.of("title");
+			assertThatThrownBy(() -> {
+				storage.attributes(dir, params, names);
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
 					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
@@ -561,8 +575,10 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			assertThatThrownBy(() -> storage.getResource(dir, Project.class, FileParams.of(name1), "css/example.css"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.getResource(dir, Project.class, params, "css/example.css");
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
 		} finally {
 			try {
@@ -583,8 +599,10 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.getResource(dir, FileParams.of(name1), "css/example.css"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.getResource(dir, params, "css/example.css");
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
 		} finally {
 			try {
@@ -607,27 +625,26 @@ class FileStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "id", "\"10\""))//
-					.isExactlyInstanceOf(FileStorageException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.setAttribute(dir, Project.class, params, "id", "\"10\"");
+			}).isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Update of @FileId annotated attribute 'id' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(
-					() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "name", "\"newName\""))//
-							.isExactlyInstanceOf(FileStorageException.class)//
-							.hasMessage("Update of @FileKey annotated attribute 'name' is not allowed.");
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, params, "name", "\"newName\""))//
+					.isExactlyInstanceOf(FileStorageException.class)//
+					.hasMessage("Update of @FileKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(
-					() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "created", "\"10\""))//
-							.isExactlyInstanceOf(FileStorageException.class)//
-							.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, params, "created", "\"10\""))//
+					.isExactlyInstanceOf(FileStorageException.class)//
+					.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(
-					() -> storage.setAttribute(dir, Project.class, FileParams.of(name1), "revision", "\"10\""))//
-							.isExactlyInstanceOf(FileStorageException.class)//
-							.hasMessage("Update of @FileRevision annotated attribute 'revision' is not allowed.");
+			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, params, "revision", "\"10\""))//
+					.isExactlyInstanceOf(FileStorageException.class)//
+					.hasMessage("Update of @FileRevision annotated attribute 'revision' is not allowed.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -649,22 +666,24 @@ class FileStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of(name1), "id", "\"10\""))//
-					.isExactlyInstanceOf(FileStorageException.class)//
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.setAttribute(dir, params, "id", "\"10\"");
+			}).isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Update of @FileId annotated attribute 'id' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of(name1), "name", "\"newName\""))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, params, "name", "\"newName\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Update of @FileKey annotated attribute 'name' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of(name1), "created", "\"10\""))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, params, "created", "\"10\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
 
 			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of(name1), "revision", "\"10\""))//
+			assertThatThrownBy(() -> storage.setAttribute(dir, params, "revision", "\"10\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Update of @FileRevision annotated attribute 'revision' is not allowed.");
 		} finally {
@@ -681,11 +700,12 @@ class FileStorageApplicationTests {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(
-					() -> storage.setAttribute(dir, Project.class, FileParams.of("doNotExist"), "description", "10"))//
-							.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-							.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-									+ FileParams.of("doNotExist") + "' not found.");
+			FileParams params = FileParams.of("doNotExist");
+			assertThatThrownBy(() -> {
+				storage.setAttribute(dir, Project.class, params, "description", "10");
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
+					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
+							+ FileParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -700,8 +720,10 @@ class FileStorageApplicationTests {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.setAttribute(dir, FileParams.of("doNotExist"), "description", "10"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
+			FileParams params = FileParams.of("doNotExist");
+			assertThatThrownBy(() -> {
+				storage.setAttribute(dir, params, "description", "10");
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ FileParams.of("doNotExist") + "' not found.");
 		} finally {
@@ -761,29 +783,29 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			// attribute reading
-			Object attribute = storage.getAttribute(dir, Project.class, FileParams.of(name1), "name");
+			FileParams params = FileParams.of(name1);
+			Object attribute = storage.getAttribute(dir, Project.class, params, "name");
 			assertThat(attribute).isEqualTo(name1);
 
 			// attribute writing
-			Project result = storage.setAttribute(dir, Project.class, FileParams.of(name1), "description",
-					"newDescription");
+			Project result = storage.setAttribute(dir, Project.class, params, "description", "newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
 			// attribute full map
-			Map<String, Object> objs = storage.attributes(dir, Project.class, FileParams.of(name1), null);
+			Map<String, Object> objs = storage.attributes(dir, Project.class, params, null);
 			assertThat(objs.get("description")).isEqualTo("newDescription");
 
 			// attribute map projection
-			objs = storage.attributes(dir, Project.class, FileParams.of(name1),
-					FileParams.of(Arrays.asList("name", "created")));
+			FileParams names = FileParams.of(Arrays.asList("name", "created"));
+			objs = storage.attributes(dir, Project.class, params, names);
 			assertThat(objs.size()).isEqualTo(2);
 
 			// invalid attribute
-			assertThatThrownBy(
-					() -> storage.attributes(dir, Project.class, FileParams.of(name1), FileParams.of("title")))//
-							.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-							.hasMessage(
-									new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+			FileParams name = FileParams.of("title");
+			assertThatThrownBy(() -> {
+				storage.attributes(dir, Project.class, params, name);
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -804,24 +826,28 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			// attribute reading
-			Object attribute = storage.getAttribute(dir, FileParams.of(name1), "name");
+			FileParams params = FileParams.of(name1);
+			Object attribute = storage.getAttribute(dir, params, "name");
 			assertThat(attribute).isEqualTo(name1);
 
 			// attribute writing
-			Project result = storage.setAttribute(dir, FileParams.of(name1), "description", "newDescription");
+			Project result = storage.setAttribute(dir, params, "description", "newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
 			// attribute full map
-			Map<String, Object> objs = storage.attributes(dir, FileParams.of(name1), null);
+			Map<String, Object> objs = storage.attributes(dir, params, null);
 			assertThat(objs.get("description")).isEqualTo("newDescription");
 
 			// attribute map projection
-			objs = storage.attributes(dir, FileParams.of(name1), FileParams.of(Arrays.asList("name", "created")));
+			FileParams names = FileParams.of(Arrays.asList("name", "created"));
+			objs = storage.attributes(dir, params, names);
 			assertThat(objs.size()).isEqualTo(2);
 
 			// invalid attribute
-			assertThatThrownBy(() -> storage.attributes(dir, FileParams.of(name1), FileParams.of("title")))//
-					.isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
+			FileParams name = FileParams.of("title");
+			assertThatThrownBy(() -> {
+				storage.attributes(dir, params, name);
+			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
 					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
@@ -849,10 +875,11 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// writing
-			Project result = storage.setResource(dir, Project.class, FileParams.of(name1), resource);
+			FileParams params = FileParams.of(name1);
+			Project result = storage.setResource(dir, Project.class, params, resource);
 
 			// reading
-			Resource outcome = storage.getResource(dir, Project.class, FileParams.of(name1), path);
+			Resource outcome = storage.getResource(dir, Project.class, params, path);
 
 			// object setup
 			assertThat(project1.getRevision()).isEqualTo(result.getRevision() - 1);
@@ -892,10 +919,11 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// writing
-			Project result = storage.setResource(dir, FileParams.of(name1), resource);
+			FileParams params = FileParams.of(name1);
+			Project result = storage.setResource(dir, params, resource);
 
 			// reading
-			Resource outcome = storage.getResource(dir, FileParams.of(name1), path);
+			Resource outcome = storage.getResource(dir, params, path);
 
 			// object setup
 			assertThat(project1.getRevision()).isEqualTo(result.getRevision() - 1);
@@ -934,21 +962,22 @@ class FileStorageApplicationTests {
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, FileParams.of(name1), resource);
+			FileParams params = FileParams.of(name1);
+			storage.setResource(dir, Project.class, params, resource);
 
 			path = "component/compA.html";
 			metadata = ResourceMetadata.builder().path(path).contentType("html").build();
 			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, FileParams.of(name1), resource);
+			storage.setResource(dir, Project.class, params, resource);
 
 			path = "component/inner/compC.java";
 			metadata = ResourceMetadata.builder().path(path).contentType("java").build();
 			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, FileParams.of(name1), resource);
+			storage.setResource(dir, Project.class, params, resource);
 
-			List<Resource> resources = storage.listResources(dir, Project.class, FileParams.of(name1));
+			List<Resource> resources = storage.listResources(dir, Project.class, params);
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -963,8 +992,8 @@ class FileStorageApplicationTests {
 			assertThat(resource3.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// delete last resource
-			storage.deleteResource(dir, Project.class, FileParams.of(name1), "component/compB.css");
-			resources = storage.listResources(dir, Project.class, FileParams.of(name1));
+			storage.deleteResource(dir, Project.class, params, "component/compB.css");
+			resources = storage.listResources(dir, Project.class, params);
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -976,21 +1005,20 @@ class FileStorageApplicationTests {
 			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// FilePaging only 1
-			resources = storage.listResources(dir, Project.class, FileParams.of(name1),
-					FilePaging.builder().skip(1).max(1).build());
+			resources = storage.listResources(dir, Project.class, params, FilePaging.builder().skip(1).max(1).build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, Project.class, FileParams.of(name1),
-					FilePaging.builder().skip(1).max(1).build())).isEqualTo(1);
+			assertThat(storage.countResources(dir, Project.class, params, FilePaging.builder().skip(1).max(1).build()))
+					.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// GitFilterfilter contentType with 'html'
-			resources = storage.listResources(dir, Project.class, FileParams.of(name1),
+			resources = storage.listResources(dir, Project.class, params,
 					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, Project.class, FileParams.of(name1),
+			assertThat(storage.countResources(dir, Project.class, params,
 					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
 							.isEqualTo(1);
 			resource1 = resources.get(0);
@@ -1014,27 +1042,28 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
+			FileParams params = FileParams.of(name1);
 
 			// attribute reading
 			String path = "component/compB.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, FileParams.of(name1), resource);
+			storage.setResource(dir, params, resource);
 
 			path = "component/compA.html";
 			metadata = ResourceMetadata.builder().path(path).contentType("html").build();
 			content = ResourceContent.builder().data("<html>Here I am!</html>".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, FileParams.of(name1), resource);
+			storage.setResource(dir, params, resource);
 
 			path = "component/inner/compC.java";
 			metadata = ResourceMetadata.builder().path(path).contentType("java").build();
 			content = ResourceContent.builder().data("public class A {}".getBytes()).build();
 			resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, FileParams.of(name1), resource);
+			storage.setResource(dir, params, resource);
 
-			List<Resource> resources = storage.listResources(dir, FileParams.of(name1));
+			List<Resource> resources = storage.listResources(dir, params);
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -1049,8 +1078,8 @@ class FileStorageApplicationTests {
 			assertThat(resource3.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// delete last resource
-			storage.deleteResource(dir, FileParams.of(name1), "component/compB.css");
-			resources = storage.listResources(dir, FileParams.of(name1));
+			storage.deleteResource(dir, params, "component/compB.css");
+			resources = storage.listResources(dir, params);
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -1062,20 +1091,19 @@ class FileStorageApplicationTests {
 			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// FilePaging only 1
-			resources = storage.listResources(dir, FileParams.of(name1), FilePaging.builder().skip(1).max(1).build());
+			resources = storage.listResources(dir, params, FilePaging.builder().skip(1).max(1).build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, FileParams.of(name1), FilePaging.builder().skip(1).max(1).build()))
-					.isEqualTo(1);
+			assertThat(storage.countResources(dir, params, FilePaging.builder().skip(1).max(1).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// GitFilterfilter contentType with 'html'
-			resources = storage.listResources(dir, FileParams.of(name1),
+			resources = storage.listResources(dir, params,
 					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, FileParams.of(name1),
+			assertThat(storage.countResources(dir, params,
 					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
 							.isEqualTo(1);
 			resource1 = resources.get(0);
@@ -1099,6 +1127,7 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
+			FileParams params = FileParams.of(name1);
 
 			// attribute reading
 			String path = "css/style.css";
@@ -1107,20 +1136,20 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// Success save @resources
-			storage.setResource(dir, Project.class, FileParams.of(name1), resource);
+			storage.setResource(dir, Project.class, params, resource);
 
 			// sabotage
 			final String newPath = "../../css/style.css";
 			metadata.setPath(newPath);
-			assertThatThrownBy(() -> storage.setResource(dir, Project.class, FileParams.of(name1), resource))//
+			assertThatThrownBy(() -> storage.setResource(dir, Project.class, params, resource))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
 
-			assertThatThrownBy(() -> storage.getResource(dir, Project.class, FileParams.of(name1), newPath))//
+			assertThatThrownBy(() -> storage.getResource(dir, Project.class, params, newPath))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
 
-			assertThatThrownBy(() -> storage.deleteResource(dir, Project.class, FileParams.of(name1), newPath))//
+			assertThatThrownBy(() -> storage.deleteResource(dir, Project.class, params, newPath))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot delete resources from a higher file structure. " + newPath);
 		} finally {
@@ -1141,6 +1170,7 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
+			FileParams params = FileParams.of(name1);
 
 			// attribute reading
 			String path = "css/style.css";
@@ -1149,16 +1179,16 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// Success save @resources
-			storage.setResource(dir, FileParams.of(name1), resource);
+			storage.setResource(dir, params, resource);
 
 			// sabotage
 			final String newPath = "../../css/style.css";
 			metadata.setPath(newPath);
-			assertThatThrownBy(() -> storage.setResource(dir, FileParams.of(name1), resource))//
+			assertThatThrownBy(() -> storage.setResource(dir, params, resource))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
 
-			assertThatThrownBy(() -> storage.getResource(dir, FileParams.of(name1), newPath))//
+			assertThatThrownBy(() -> storage.getResource(dir, params, newPath))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
 		} finally {
@@ -1179,14 +1209,16 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
+			FileParams params = FileParams.of(name1);
 
-			assertThatThrownBy(() -> storage.listResources(dir, Project.class, FileParams.of(name1)))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
+			assertThatThrownBy(() -> {
+				storage.listResources(dir, Project.class, params);
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
+					.hasMessage("Resources for " + params + " not found.");
 
-			assertThatThrownBy(() -> storage.countResources(dir, Project.class, FileParams.of(name1)))//
+			assertThatThrownBy(() -> storage.countResources(dir, Project.class, params))//
 					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
+					.hasMessage("Resources for " + params + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1206,13 +1238,15 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			assertThatThrownBy(() -> storage.listResources(dir, FileParams.of(name1)))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
+			FileParams params = FileParams.of(name1);
+			assertThatThrownBy(() -> {
+				storage.listResources(dir, params);
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
+					.hasMessage("Resources for " + params + " not found.");
 
-			assertThatThrownBy(() -> storage.countResources(dir, FileParams.of(name1)))//
+			assertThatThrownBy(() -> storage.countResources(dir, params))//
 					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
+					.hasMessage("Resources for " + params + " not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1230,10 +1264,11 @@ class FileStorageApplicationTests {
 		try {
 			// write
 			Project project1 = Project.builder().name(name1).build();
+			FileParams params = FileParams.of(name1);
 
 			File location1 = storage.location(dir, project1);
 			File location2 = storage.location(dir, Project.class, project1);
-			File location3 = storage.location(dir, Project.class, FileParams.of(name1));
+			File location3 = storage.location(dir, Project.class, params);
 
 			assertThat(location1).isEqualTo(location2);
 			assertThat(location2).isEqualTo(location3);
@@ -1244,16 +1279,16 @@ class FileStorageApplicationTests {
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, Project.class, FileParams.of(name1), resource);
+			storage.setResource(dir, Project.class, params, resource);
 
-			File location4 = storage.locationResource(dir, Project.class, FileParams.of(name1));
-			File location5 = storage.locationResource(dir, Project.class, FileParams.of(name1), "css/style.css");
+			File location4 = storage.locationResource(dir, Project.class, params);
+			File location5 = storage.locationResource(dir, Project.class, params, "css/style.css");
 
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
 			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
 
 			String invalidPath = "../css/style.css";
-			assertThatThrownBy(() -> storage.locationResource(dir, Project.class, FileParams.of(name1), invalidPath))//
+			assertThatThrownBy(() -> storage.locationResource(dir, Project.class, params, invalidPath))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
 		} finally {
@@ -1273,9 +1308,10 @@ class FileStorageApplicationTests {
 		try {
 			// write
 			Project project1 = Project.builder().name(name1).build();
+			FileParams params = FileParams.of(name1);
 
 			File location1 = storage.location(dir, project1);
-			File location2 = storage.location(dir, FileParams.of(name1));
+			File location2 = storage.location(dir, params);
 
 			assertThat(location1).isEqualTo(location2);
 			assertThat(location2).isEqualTo(new File(dir, "@projects/" + name1));
@@ -1285,16 +1321,16 @@ class FileStorageApplicationTests {
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			storage.setResource(dir, FileParams.of(name1), resource);
+			storage.setResource(dir, params, resource);
 
-			File location4 = storage.locationResource(dir, FileParams.of(name1));
-			File location5 = storage.locationResource(dir, FileParams.of(name1), "css/style.css");
+			File location4 = storage.locationResource(dir, params);
+			File location5 = storage.locationResource(dir, params, "css/style.css");
 
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
 			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
 
 			String invalidPath = "../css/style.css";
-			assertThatThrownBy(() -> storage.locationResource(dir, FileParams.of(name1), invalidPath))//
+			assertThatThrownBy(() -> storage.locationResource(dir, params, invalidPath))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
 		} finally {
