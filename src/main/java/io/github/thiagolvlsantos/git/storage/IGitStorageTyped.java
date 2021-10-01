@@ -36,11 +36,11 @@ public interface IGitStorageTyped<T> {
 
 	long count(File dir, GitPaging paging);
 
-	long count(File dir, GitQuery query, GitPaging paging);
+	long count(File dir, GitFilter filter, GitPaging paging);
 
 	List<T> list(File dir, GitPaging paging);
 
-	List<T> list(File dir, GitQuery query, GitPaging paging);
+	List<T> list(File dir, GitFilter filter, GitPaging paging);
 
 	// +------------- ATTRIBUTE METHODS ------------------+
 
@@ -64,13 +64,13 @@ public interface IGitStorageTyped<T> {
 
 	long countResources(File dir, GitParams keys, GitPaging paging);
 
-	long countResources(File dir, GitParams keys, GitQuery query, GitPaging paging);
+	long countResources(File dir, GitParams keys, GitFilter filter, GitPaging paging);
 
 	List<Resource> listResources(File dir, GitParams keys);
 
 	List<Resource> listResources(File dir, GitParams keys, GitPaging paging);
 
-	List<Resource> listResources(File dir, GitParams keys, GitQuery query, GitPaging paging);
+	List<Resource> listResources(File dir, GitParams keys, GitFilter filter, GitPaging paging);
 
 	T deleteResource(File dir, GitParams keys, String path);
 }

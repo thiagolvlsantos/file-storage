@@ -44,11 +44,11 @@ public interface IGitStorage {
 
 	<T> long count(File dir, Class<T> type, GitPaging paging);
 
-	<T> long count(File dir, Class<T> type, GitQuery query, GitPaging paging);
+	<T> long count(File dir, Class<T> type, GitFilter filter, GitPaging paging);
 
 	<T> List<T> list(File dir, Class<T> type, GitPaging paging);
 
-	<T> List<T> list(File dir, Class<T> type, GitQuery query, GitPaging paging);
+	<T> List<T> list(File dir, Class<T> type, GitFilter filter, GitPaging paging);
 
 	// +------------- ATTRIBUTE METHODS ------------------+
 
@@ -74,12 +74,12 @@ public interface IGitStorage {
 
 	<T> long countResources(File dir, Class<T> type, GitParams keys, GitPaging paging);
 
-	<T> long countResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging);
+	<T> long countResources(File dir, Class<T> type, GitParams keys, GitFilter filter, GitPaging paging);
 
 	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys);
 
 	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitPaging paging);
 
-	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging);
+	<T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitFilter filter, GitPaging paging);
 
 }

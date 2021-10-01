@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import io.github.thiagolvlsantos.git.storage.GitPaging;
 import io.github.thiagolvlsantos.git.storage.GitParams;
-import io.github.thiagolvlsantos.git.storage.GitQuery;
+import io.github.thiagolvlsantos.git.storage.GitFilter;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
 import io.github.thiagolvlsantos.git.storage.IGitStorageTyped;
@@ -93,8 +93,8 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public long count(File dir, GitQuery query, GitPaging paging) {
-		return storage.count(dir, type, query, paging);
+	public long count(File dir, GitFilter filter, GitPaging paging) {
+		return storage.count(dir, type, filter, paging);
 	}
 
 	@Override
@@ -103,8 +103,8 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public List<T> list(File dir, GitQuery query, GitPaging paging) {
-		return storage.list(dir, type, query, paging);
+	public List<T> list(File dir, GitFilter filter, GitPaging paging) {
+		return storage.list(dir, type, filter, paging);
 	}
 
 	// +------------- ATTRIBUTE METHODS ------------------+
@@ -157,8 +157,8 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public long countResources(File dir, GitParams keys, GitQuery query, GitPaging paging) {
-		return storage.countResources(dir, type, keys, query, paging);
+	public long countResources(File dir, GitParams keys, GitFilter filter, GitPaging paging) {
+		return storage.countResources(dir, type, keys, filter, paging);
 	}
 
 	@Override
@@ -172,8 +172,8 @@ public abstract class AGitStorageTypedImpl<T> implements IGitStorageTyped<T> {
 	}
 
 	@Override
-	public List<Resource> listResources(File dir, GitParams keys, GitQuery query, GitPaging paging) {
-		return storage.listResources(dir, type, keys, query, paging);
+	public List<Resource> listResources(File dir, GitParams keys, GitFilter filter, GitPaging paging) {
+		return storage.listResources(dir, type, keys, filter, paging);
 	}
 
 	@Override

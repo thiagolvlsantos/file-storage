@@ -35,9 +35,9 @@ import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.git.storage.GitEntity;
+import io.github.thiagolvlsantos.git.storage.GitFilter;
 import io.github.thiagolvlsantos.git.storage.GitPaging;
 import io.github.thiagolvlsantos.git.storage.GitParams;
-import io.github.thiagolvlsantos.git.storage.GitQuery;
 import io.github.thiagolvlsantos.git.storage.IGitIndex;
 import io.github.thiagolvlsantos.git.storage.IGitSerializer;
 import io.github.thiagolvlsantos.git.storage.IGitStorage;
@@ -367,8 +367,8 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
-	public <T> long count(File dir, Class<T> type, GitQuery query, GitPaging paging) {
-		return list(dir, type, query, paging).size();
+	public <T> long count(File dir, Class<T> type, GitFilter filter, GitPaging paging) {
+		return list(dir, type, filter, paging).size();
 	}
 
 	@Override
@@ -386,22 +386,22 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
-	public <T> List<T> list(File dir, Class<T> type, GitQuery query, GitPaging paging) {
+	public <T> List<T> list(File dir, Class<T> type, GitFilter filter, GitPaging paging) {
 		List<T> result = list(dir, type, null);
-		result = filter(query, result);
+		result = filter(filter, result);
 		return selectRange(paging, result);
 	}
 
-	protected <T> List<T> filter(GitQuery query, List<T> result) {
-		Predicate<Object> p = filter(query);
+	protected <T> List<T> filter(GitFilter filter, List<T> result) {
+		Predicate<Object> p = filter(filter);
 		if (p != null) {
 			result = result.stream().filter(p).collect(Collectors.toList());
 		}
 		return result;
 	}
 
-	protected Predicate<Object> filter(GitQuery query) {
-		return query == null ? null : predicateFactory.read(query.getQuery().getBytes());
+	protected Predicate<Object> filter(GitFilter filter) {
+		return filter == null ? null : predicateFactory.read(filter.getFilter().getBytes());
 	}
 
 	protected <T> List<T> selectRange(GitPaging paging, List<T> result) {
@@ -591,8 +591,8 @@ public class GitStorageImpl implements IGitStorage {
 	}
 
 	@Override
-	public <T> long countResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging) {
-		return listResources(dir, type, keys, query, paging).size();
+	public <T> long countResources(File dir, Class<T> type, GitParams keys, GitFilter filter, GitPaging paging) {
+		return listResources(dir, type, keys, filter, paging).size();
 	}
 
 	@Override
@@ -609,12 +609,13 @@ public class GitStorageImpl implements IGitStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitQuery query, GitPaging paging) {
+	public <T> List<Resource> listResources(File dir, Class<T> type, GitParams keys, GitFilter filter,
+			GitPaging paging) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
 
-		final Predicate<Object> filter = filter(query);
+		final Predicate<Object> predicate = filter(filter);
 
 		List<Resource> result = new LinkedList<>();
 		Files.walkFileTree(Paths.get(root.toURI()), new SimpleFileVisitor<Path>() {
@@ -631,8 +632,8 @@ public class GitStorageImpl implements IGitStorage {
 							ResourceMetadata.class);
 					ResourceContent content = ResourceContent.builder().data(Files.readAllBytes(contentFile)).build();
 					Resource resource = Resource.builder().metadata(metadata).content(content).build();
-					if (filter != null) {
-						if (filter.test(resource)) {
+					if (predicate != null) {
+						if (predicate.test(resource)) {
 							result.add(resource);
 						}
 					} else {

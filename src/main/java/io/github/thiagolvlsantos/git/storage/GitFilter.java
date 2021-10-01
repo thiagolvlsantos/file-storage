@@ -13,6 +13,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @ToString
 @SuperBuilder
-public class GitQuery {
-	private String query;
+public class GitFilter {
+	private String filter;
 }

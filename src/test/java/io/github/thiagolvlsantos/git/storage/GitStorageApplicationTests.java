@@ -166,7 +166,7 @@ class GitStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, Project.class, new GitQuery("{\"name\":{\"$eq\": \"projectB\"}}"),
+			List<Project> list = storage.list(dir, Project.class, new GitFilter("{\"name\":{\"$eq\": \"projectB\"}}"),
 					null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
@@ -220,7 +220,7 @@ class GitStorageApplicationTests {
 			assertThat(storage.list(dir, GitPaging.builder().skip(0).build())).contains(project1, project2);
 			// count all, skip 1
 			assertThat(storage.count(dir, GitPaging.builder().skip(1).max(1).build())).isEqualTo(1L);
-			// count without query
+			// count without filter
 			assertThat(storage.count(dir, null, GitPaging.builder().skip(1).max(1).build())).isEqualTo(1L);
 
 			// exists by key
@@ -237,7 +237,7 @@ class GitStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, new GitQuery("{\"name\":{\"$eq\": \"projectB\"}}"), null);
+			List<Project> list = storage.list(dir, new GitFilter("{\"name\":{\"$eq\": \"projectB\"}}"), null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -978,13 +978,13 @@ class GitStorageApplicationTests {
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
-			// GitQueryquery contentType with 'html'
+			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, Project.class, GitParams.of(name1),
-					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
+					GitFilter.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, Project.class, GitParams.of(name1),
-					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
+					GitFilter.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
 							.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
@@ -1063,13 +1063,13 @@ class GitStorageApplicationTests {
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
-			// GitQueryquery contentType with 'html'
+			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, GitParams.of(name1),
-					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
+					GitFilter.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, GitParams.of(name1),
-					GitQuery.builder().query("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
+					GitFilter.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
 							.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
