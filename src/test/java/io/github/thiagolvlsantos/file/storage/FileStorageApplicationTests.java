@@ -18,6 +18,8 @@ import org.springframework.context.ApplicationContext;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageAttributeNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageResourceNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageSecurityException;
 import io.github.thiagolvlsantos.file.storage.objects.Outlier;
 import io.github.thiagolvlsantos.file.storage.objects.OutlierStorage;
 import io.github.thiagolvlsantos.file.storage.objects.Project;
@@ -578,8 +580,8 @@ class FileStorageApplicationTests {
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.getResource(dir, Project.class, params, "css/example.css");
-			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
+			}).isExactlyInstanceOf(FileStorageResourceNotFoundException.class)//
+					.hasMessage("Resource not found: 'css/example.css'.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -602,8 +604,8 @@ class FileStorageApplicationTests {
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.getResource(dir, params, "css/example.css");
-			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + FileParams.of(name1) + " not found.");
+			}).isExactlyInstanceOf(FileStorageResourceNotFoundException.class)//
+					.hasMessage("Resource not found: 'css/example.css'.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1143,16 +1145,16 @@ class FileStorageApplicationTests {
 			final String newPath = "../../css/style.css";
 			metadata.setPath(newPath);
 			assertThatThrownBy(() -> storage.setResource(dir, Project.class, params, resource))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + newPath);
 
 			assertThatThrownBy(() -> storage.getResource(dir, Project.class, params, newPath))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + newPath);
 
 			assertThatThrownBy(() -> storage.deleteResource(dir, Project.class, params, newPath))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot delete resources from a higher file structure. " + newPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + newPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1186,12 +1188,12 @@ class FileStorageApplicationTests {
 			final String newPath = "../../css/style.css";
 			metadata.setPath(newPath);
 			assertThatThrownBy(() -> storage.setResource(dir, params, resource))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot save resources in a higher file structure. " + newPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + newPath);
 
 			assertThatThrownBy(() -> storage.getResource(dir, params, newPath))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot read resources from a higher file structure. " + newPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + newPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1202,7 +1204,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidAllResources(@Autowired ApplicationContext context) {
+	void testEmptyResources(@Autowired ApplicationContext context) {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -1212,14 +1214,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			FileParams params = FileParams.of(name1);
 
-			assertThatThrownBy(() -> {
-				storage.listResources(dir, Project.class, params);
-			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + params + " not found.");
-
-			assertThatThrownBy(() -> storage.countResources(dir, Project.class, params))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + params + " not found.");
+			assertThat(storage.listResources(dir, Project.class, params)).hasSize(0);
+			assertThat(storage.countResources(dir, Project.class, params)).isEqualTo(0);
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1240,14 +1236,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			FileParams params = FileParams.of(name1);
-			assertThatThrownBy(() -> {
-				storage.listResources(dir, params);
-			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + params + " not found.");
-
-			assertThatThrownBy(() -> storage.countResources(dir, params))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Resources for " + params + " not found.");
+			assertThat(storage.listResources(dir, params)).hasSize(0);
+			assertThat(storage.countResources(dir, params)).isEqualTo(0);
 		} finally {
 			try {
 				FileUtils.delete(dir);

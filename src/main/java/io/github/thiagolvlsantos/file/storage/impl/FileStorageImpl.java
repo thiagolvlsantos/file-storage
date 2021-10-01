@@ -50,6 +50,8 @@ import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageAttributeNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageResourceNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageSecurityException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
 import io.github.thiagolvlsantos.file.storage.identity.FileKey;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
@@ -132,8 +134,10 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
+	@SneakyThrows
 	public <T> T write(File dir, Class<T> type, T instance) {
-		File file = entityFile(dir, type, FileParams.of(UtilAnnotations.getKeys(type, instance)));
+		FileParams keys = FileParams.of(UtilAnnotations.getKeys(type, instance));
+		File file = entityFile(dir, type, keys);
 		T old = null;
 		if (file.exists()) {
 			old = read(file, type);
@@ -145,6 +149,19 @@ public class FileStorageImpl implements IFileStorage {
 
 		write(instance, file);
 
+		// init @resources
+		File resourceDir = resourceDir(entityDir(dir, type, keys));
+		if (!resourceDir.exists()) {
+			boolean created = resourceDir.mkdirs();
+			if (created) {
+				File gitKeep = new File(resourceDir, ".keep");
+				Files.write(gitKeep.toPath(), "For git only.".getBytes(), StandardOpenOption.CREATE,
+						StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+			}
+			if (log.isInfoEnabled()) {
+				log.info("Resources created={}", created);
+			}
+		}
 		return instance;
 	}
 
@@ -524,17 +541,15 @@ public class FileStorageImpl implements IFileStorage {
 		File root = resourceDir(entityDir(dir, type, keys));
 
 		ResourceMetadata metadata = resource.getMetadata();
-		File contentFile = new File(root, metadata.getPath());
-		// SECURITY: avoid attempt to override files in higher locations as /etc
-		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
-			throw new FileStorageException("Cannot save resources in a higher file structure. " + metadata.getPath(),
-					null);
-		}
+		String path = metadata.getPath();
+		File contentFile = new File(root, path);
+		verifySecurity(root, contentFile, path);
+
 		FileUtils.prepare(contentFile);
 		Files.write(contentFile.toPath(), resource.getContent().getData(), StandardOpenOption.CREATE,
 				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 
-		File metadataFile = resourceMeta(root, metadata.getPath());
+		File metadataFile = resourceMeta(root, path);
 		FileUtils.prepare(metadataFile);
 		metadata.setTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(contentFile.lastModified()),
 				TimeZone.getDefault().toZoneId()));
@@ -567,10 +582,9 @@ public class FileStorageImpl implements IFileStorage {
 		verifyResources(root, keys);
 
 		File contentFile = new File(root, path);
-		// SECURITY: avoid attempt to override files in higher locations as /etc
-		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
-			throw new FileStorageException("Cannot read resources from a higher file structure. " + path, null);
-		}
+		verifySecurity(root, contentFile, path);
+		verifyResourceExists(contentFile, path);
+
 		ResourceContent content = new ResourceContent(Files.readAllBytes(contentFile.toPath()));
 		File metadataFile = resourceMeta(root, path);
 		ResourceMetadata meta = serializer.decode(Files.readAllBytes(metadataFile.toPath()), ResourceMetadata.class);
@@ -580,6 +594,19 @@ public class FileStorageImpl implements IFileStorage {
 	protected void verifyResources(File root, FileParams keys) {
 		if (!root.exists()) {
 			throw new FileStorageNotFoundException("Resources for " + keys + " not found.", null);
+		}
+	}
+
+	protected void verifySecurity(File root, File contentFile, String path) throws IOException {
+		// SECURITY: avoid attempt to override files in higher locations as /etc
+		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
+			throw new FileStorageSecurityException(path, null);
+		}
+	}
+
+	protected void verifyResourceExists(File contentFile, String path) {
+		if (!contentFile.exists()) {
+			throw new FileStorageResourceNotFoundException(path, null);
 		}
 	}
 
@@ -626,7 +653,7 @@ public class FileStorageImpl implements IFileStorage {
 			public FileVisitResult visitFile(Path contentFile, BasicFileAttributes attrs) throws IOException {
 				File file = contentFile.toFile();
 				String name = file.getName();
-				if (!name.endsWith(".meta.json")) {
+				if (!name.endsWith(".meta.json") && !name.equals(".keep")) {
 					File metadataFile = resourceMeta(file.getParentFile(), name);
 					if (log.isInfoEnabled()) {
 						log.info("Loading..." + contentFile);
@@ -658,10 +685,9 @@ public class FileStorageImpl implements IFileStorage {
 		verifyResources(root, keys);
 
 		File contentFile = new File(root, path);
-		// SECURITY: avoid attempt to override files in higher locations as /etc
-		if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
-			throw new FileStorageException("Cannot delete resources from a higher file structure. " + path, null);
-		}
+		verifySecurity(root, contentFile, path);
+		verifyResourceExists(contentFile, path);
+
 		File metadataFile = resourceMeta(root, path);
 
 		FileUtils.delete(contentFile);
