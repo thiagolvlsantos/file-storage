@@ -11,7 +11,7 @@
 
 	<groupId>io.github.thiagolvlsantos</groupId>
 	<artifactId>file-storage</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.2</version>
 
 	<name>${project.artifactId}</name>
 	<description>A file system object storage in Spring Boot.</description>
@@ -56,7 +56,7 @@
 		<url>https://${project.domain.name}/${project.owner.login}/${project.artifactId}.git</url>
 		<connection>scm:git:git://${project.domain.name}/${project.owner.login}/${project.artifactId}.git</connection>
 		<developerConnection>scm:git:git@${project.domain.name}:${project.owner.login}/${project.artifactId}.git</developerConnection>
-		<tag>HEAD</tag>
+		<tag>file-storage-0.0.2</tag>
 	</scm>
 
 	<url>https://${project.domain.name}/${project.owner.login}/${project.artifactId}</url>
