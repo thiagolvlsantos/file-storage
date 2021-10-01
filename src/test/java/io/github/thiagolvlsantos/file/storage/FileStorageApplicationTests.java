@@ -740,11 +740,11 @@ class FileStorageApplicationTests {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(
-					() -> storage.getAttribute(dir, Project.class, FileParams.of("doNotExist"), "description"))//
-							.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-							.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-									+ FileParams.of("doNotExist") + "' not found.");
+			FileParams params = FileParams.of("doNotExist");
+			assertThatThrownBy(() -> {
+				storage.getAttribute(dir, Project.class, params, "description");
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
+					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '" + params + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -759,10 +759,11 @@ class FileStorageApplicationTests {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			assertThatThrownBy(() -> storage.getAttribute(dir, FileParams.of("doNotExist"), "description"))//
-					.isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ FileParams.of("doNotExist") + "' not found.");
+			FileParams params = FileParams.of("doNotExist");
+			assertThatThrownBy(() -> {
+				storage.getAttribute(dir, params, "description");
+			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
+					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '" + params + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -793,12 +794,12 @@ class FileStorageApplicationTests {
 
 			// attribute full map
 			Map<String, Object> objs = storage.attributes(dir, Project.class, params, null);
-			assertThat(objs.get("description")).isEqualTo("newDescription");
+			assertThat(objs).containsEntry("description", "newDescription");
 
 			// attribute map projection
 			FileParams names = FileParams.of(Arrays.asList("name", "created"));
 			objs = storage.attributes(dir, Project.class, params, names);
-			assertThat(objs.size()).isEqualTo(2);
+			assertThat(objs).hasSize(2);
 
 			// invalid attribute
 			FileParams name = FileParams.of("title");
@@ -841,7 +842,7 @@ class FileStorageApplicationTests {
 			// attribute map projection
 			FileParams names = FileParams.of(Arrays.asList("name", "created"));
 			objs = storage.attributes(dir, params, names);
-			assertThat(objs.size()).isEqualTo(2);
+			assertThat(objs).hasSize(2);
 
 			// invalid attribute
 			FileParams name = FileParams.of("title");
