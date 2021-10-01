@@ -1214,8 +1214,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			FileParams params = FileParams.of(name1);
 
-			assertThat(storage.listResources(dir, Project.class, params)).hasSize(0);
-			assertThat(storage.countResources(dir, Project.class, params)).isEqualTo(0);
+			assertThat(storage.listResources(dir, Project.class, params)).isEmpty();
+			assertThat(storage.countResources(dir, Project.class, params)).isZero();
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1236,8 +1236,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			FileParams params = FileParams.of(name1);
-			assertThat(storage.listResources(dir, params)).hasSize(0);
-			assertThat(storage.countResources(dir, params)).isEqualTo(0);
+			assertThat(storage.listResources(dir, params)).isEmpty();
+			assertThat(storage.countResources(dir, params)).isZero();
 		} finally {
 			try {
 				FileUtils.delete(dir);
