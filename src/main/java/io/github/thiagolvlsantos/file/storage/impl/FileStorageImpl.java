@@ -150,18 +150,8 @@ public class FileStorageImpl implements IFileStorage {
 		write(instance, file);
 
 		// init @resources
-		File resourceDir = resourceDir(entityDir(dir, type, keys));
-		if (!resourceDir.exists()) {
-			boolean created = resourceDir.mkdirs();
-			if (created) {
-				File gitKeep = new File(resourceDir, ".keep");
-				Files.write(gitKeep.toPath(), "For git only.".getBytes(), StandardOpenOption.CREATE,
-						StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-			}
-			if (log.isInfoEnabled()) {
-				log.info("Resources created={}", created);
-			}
-		}
+		initResources(dir, type, keys);
+
 		return instance;
 	}
 
@@ -512,6 +502,21 @@ public class FileStorageImpl implements IFileStorage {
 
 	// +------------- RESOURCE METHODS ------------------+
 
+	protected <T> void initResources(File dir, Class<T> type, FileParams keys) throws IOException {
+		File resourceDir = resourceDir(entityDir(dir, type, keys));
+		if (!resourceDir.exists()) {
+			boolean created = resourceDir.mkdirs();
+			if (created) {
+				File gitKeep = new File(resourceDir, ".keep");
+				Files.write(gitKeep.toPath(), "For git only.".getBytes(), StandardOpenOption.CREATE,
+						StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+			}
+			if (log.isInfoEnabled()) {
+				log.info("Resources created={}", created);
+			}
+		}
+	}
+
 	@Override
 	public <T> File locationResource(File dir, Class<T> type, FileParams keys) {
 		return locationResource(dir, type, keys, null);
@@ -566,12 +571,12 @@ public class FileStorageImpl implements IFileStorage {
 		return result;
 	}
 
-	protected File resourceDir(File root) {
-		return new File(root, "@resources");
+	protected File resourceDir(File entityDir) {
+		return new File(entityDir, "@resources");
 	}
 
-	protected File resourceMeta(File root, String path) {
-		return new File(root, path + ".meta.json");
+	protected File resourceMeta(File entityDir, String path) {
+		return new File(entityDir, path + ".meta.json");
 	}
 
 	@Override
