@@ -306,7 +306,12 @@ public class FileStorageImpl implements IFileStorage {
 			if (log.isInfoEnabled()) {
 				log.info("Return " + annotation.getSimpleName() + ": {}={}", c.getName(), c.getValue());
 			}
-			BeanUtils.setProperty(current, c.getName(), c.getValue());
+			try {
+				PropertyUtils.setProperty(current, c.getName(), c.getValue());
+			} catch (NoSuchMethodException e) {
+				throw new FileStorageNotFoundException(
+						"Attribute '" + c.getName() + "' not found for type: " + current.getClass(), e);
+			}
 		}
 	}
 
@@ -483,8 +488,8 @@ public class FileStorageImpl implements IFileStorage {
 				Object value = PropertyUtils.getProperty(current, attribute);
 				result.put(attribute, value);
 			} catch (NoSuchMethodException e) {
-				throw new FileStorageNotFoundException("Attribute '" + n + "' not found for type: " + current.getClass(),
-						e);
+				throw new FileStorageNotFoundException(
+						"Attribute '" + n + "' not found for type: " + current.getClass(), e);
 			}
 		}
 		return result;
