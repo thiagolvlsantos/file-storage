@@ -282,7 +282,7 @@ public class FileStorageImpl implements IFileStorage {
 		PairValue<FileRevision>[] currentRevision = UtilAnnotations.getValues(FileRevision.class, type, current);
 		PairValue<FileKeep>[] currentKeep = UtilAnnotations.getValues(FileKeep.class, type, current);
 		// new object
-		// TODO: create an interface IReplicator as an abstraction of this copy.
+		// why not create an interface IReplicator as an abstraction of this copy?
 		BeanUtils.copyProperties(current, instance);
 		// return unchangeable attributes
 		reassignAttributes(FileId.class, current, currentIds);
