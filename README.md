@@ -1,4 +1,4 @@
-# git-storage
+# file-storage
 
 [![CI with Maven](https://github.com/thiagolvlsantos/git-storage/actions/workflows/maven.yml/badge.svg)](https://github.com/thiagolvlsantos/git-storage/actions/workflows/maven.yml)
 [![CI with CodeQL](https://github.com/thiagolvlsantos/git-storage/actions/workflows/codeql.yml/badge.svg)](https://github.com/thiagolvlsantos/git-storage/actions/workflows/codeql.yml)
@@ -29,7 +29,7 @@ Include latest version [![Maven Central](https://maven-badges.herokuapp.com/mave
 ```xml
 		<dependency>
 			<groupId>io.github.thiagolvlsantos</groupId>
-			<artifactId>git-storage</artifactId>
+			<artifactId>file-storage</artifactId>
 			<version>${latestVersion}</version>
 		</dependency>
 ```
