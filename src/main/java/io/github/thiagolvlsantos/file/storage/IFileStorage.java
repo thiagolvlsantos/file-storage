@@ -42,13 +42,9 @@ public interface IFileStorage {
 
 	<T> T delete(File dir, Class<T> type, FileParams keys);
 
-	<T> long count(File dir, Class<T> type, FilePaging paging);
-
 	<T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging);
 
-	<T> List<T> list(File dir, Class<T> type, FilePaging paging);
-
-	<T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging);
+	<T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting);
 
 	// +------------- ATTRIBUTE METHODS ------------------+
 

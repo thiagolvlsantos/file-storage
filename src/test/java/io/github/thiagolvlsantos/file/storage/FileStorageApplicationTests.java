@@ -151,9 +151,10 @@ class FileStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.list(dir, Project.class, null)).contains(project1, project2);
+			assertThat(storage.list(dir, Project.class, null, null, FileSorting.builder().property("name").build()))
+					.contains(project1, project2);
 			// count all
-			assertThat(storage.count(dir, Project.class, null)).isEqualTo(2L);
+			assertThat(storage.count(dir, Project.class, null, null)).isEqualTo(2L);
 
 			// exists by key
 			assertThat(storage.exists(dir, Project.class, FileParams.of(project1.getName()))).isTrue();
@@ -170,7 +171,7 @@ class FileStorageApplicationTests {
 
 			// search by name
 			List<Project> list = storage.list(dir, Project.class,
-					new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null);
+					new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null, null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -220,10 +221,9 @@ class FileStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.list(dir, FilePaging.builder().skip(0).build())).contains(project1, project2);
+			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(),
+					FileSorting.builder().property("name").nullsFirst(true).build())).contains(project1, project2);
 			// count all, skip 1
-			assertThat(storage.count(dir, FilePaging.builder().skip(1).max(1).build())).isEqualTo(1L);
-			// count without filter
 			assertThat(storage.count(dir, null, FilePaging.builder().skip(1).max(1).build())).isEqualTo(1L);
 
 			// exists by key
@@ -240,7 +240,7 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null);
+			List<Project> list = storage.list(dir, new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null, null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 

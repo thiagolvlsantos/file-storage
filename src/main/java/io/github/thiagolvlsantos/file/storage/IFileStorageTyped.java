@@ -34,13 +34,9 @@ public interface IFileStorageTyped<T> {
 
 	T delete(File dir, FileParams keys);
 
-	long count(File dir, FilePaging paging);
-
 	long count(File dir, FilePredicate filter, FilePaging paging);
 
-	List<T> list(File dir, FilePaging paging);
-
-	List<T> list(File dir, FilePredicate filter, FilePaging paging);
+	List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting);
 
 	// +------------- ATTRIBUTE METHODS ------------------+
 

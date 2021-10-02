@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.collections.comparators.ComparatorChain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
@@ -37,6 +39,7 @@ import io.github.thiagolvlsantos.file.storage.FileEntity;
 import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
 import io.github.thiagolvlsantos.file.storage.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.FileSorting;
 import io.github.thiagolvlsantos.file.storage.IFileIndex;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
@@ -57,6 +60,7 @@ import io.github.thiagolvlsantos.file.storage.identity.FileKey;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
+import io.github.thiagolvlsantos.file.storage.util.comparator.ComparatorNullSafe;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import lombok.SneakyThrows;
@@ -80,8 +84,7 @@ public class FileStorageImpl implements IFileStorage {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> File location(File dir, T example) {
-		Class<T> type = (Class<T>) example.getClass();
-		return location(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
+		return location(dir, (Class<T>) example.getClass(), example);
 	}
 
 	@Override
@@ -97,8 +100,7 @@ public class FileStorageImpl implements IFileStorage {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> boolean exists(File dir, T example) {
-		Class<T> type = (Class<T>) example.getClass();
-		return exists(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
+		return exists(dir, (Class<T>) example.getClass(), example);
 	}
 
 	@Override
@@ -327,16 +329,15 @@ public class FileStorageImpl implements IFileStorage {
 		}
 	}
 
-	@Override
-	public <T> T read(File dir, Class<T> type, T reference) {
-		return read(dir, type, FileParams.of(UtilAnnotations.getKeys(type, reference)));
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T read(File dir, T reference) {
-		Class<T> type = (Class<T>) reference.getClass();
-		return read(dir, type, FileParams.of(UtilAnnotations.getKeys(type, reference)));
+	public <T> T read(File dir, T example) {
+		return read(dir, (Class<T>) example.getClass(), example);
+	}
+
+	@Override
+	public <T> T read(File dir, Class<T> type, T example) {
+		return read(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
@@ -348,16 +349,15 @@ public class FileStorageImpl implements IFileStorage {
 		return serializer.readValue(file, type);
 	}
 
-	@Override
-	public <T> T delete(File dir, Class<T> type, T reference) {
-		return delete(dir, type, FileParams.of(UtilAnnotations.getKeys(type, reference)));
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T delete(File dir, T reference) {
-		Class<T> type = (Class<T>) reference.getClass();
-		return delete(dir, type, FileParams.of(UtilAnnotations.getKeys(type, reference)));
+	public <T> T delete(File dir, T example) {
+		return delete(dir, (Class<T>) example.getClass(), example);
+	}
+
+	@Override
+	public <T> T delete(File dir, Class<T> type, T example) {
+		return delete(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
@@ -377,20 +377,20 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> long count(File dir, Class<T> type, FilePaging paging) {
-		File[] files = idManager.directory(entityRoot(dir, type), IFileIndex.IDS).listFiles();
-		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
-		return ((long) (page.getEnd(files.length)) - page.getStart(files.length));
-	}
-
-	@Override
 	public <T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
-		return list(dir, type, filter, paging).size();
+		return list(dir, type, filter, paging, null).size();
 	}
 
 	@Override
+	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		List<T> result = all(dir, type, null);
+		result = sort(sorting, result);
+		result = filter(filter, result);
+		return range(paging, result);
+	}
+
 	@SneakyThrows
-	public <T> List<T> list(File dir, Class<T> type, FilePaging paging) {
+	public <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
 		List<T> result = new LinkedList<>();
 		File[] ids = idManager.directory(entityRoot(dir, type), IFileIndex.IDS).listFiles();
 		if (ids != null) {
@@ -399,14 +399,42 @@ public class FileStorageImpl implements IFileStorage {
 				result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
 			}
 		}
-		return selectRange(paging, result);
+		return range(paging, result);
 	}
 
-	@Override
-	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
-		List<T> result = list(dir, type, null);
-		result = filter(filter, result);
-		return selectRange(paging, result);
+	@SuppressWarnings("unchecked")
+	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
+		if (sorting != null) {
+			List<Comparator<T>> list = new LinkedList<>();
+			Comparator<T> tmp = null;
+			if (sorting.isValid()) {
+				tmp = comparator(sorting);
+				if (sorting.isDescending()) {
+					tmp = tmp.reversed();
+				}
+				list.add(tmp);
+			}
+			List<FileSorting> secondary = sorting.getSecondary();
+			if (secondary != null) {
+				for (FileSorting s : secondary) {
+					if (sorting.isValid() && !sorting.isSameProperty(s)) {
+						tmp = comparator(s);
+						if (s.isDescending()) {
+							tmp = tmp.reversed();
+						}
+						list.add(tmp);
+					}
+				}
+			}
+			if (!list.isEmpty()) {
+				Collections.sort(result, new ComparatorChain(list));
+			}
+		}
+		return result;
+	}
+
+	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
+		return new ComparatorNullSafe<T>(sorting.getProperty(), sorting.isNullsFirst());
 	}
 
 	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
@@ -421,7 +449,7 @@ public class FileStorageImpl implements IFileStorage {
 		return filter == null ? null : predicateFactory.read(filter.getFilter().getBytes());
 	}
 
-	protected <T> List<T> selectRange(FilePaging paging, List<T> result) {
+	protected <T> List<T> range(FilePaging paging, List<T> result) {
 		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
 		Integer start = page.getStart(result.size());
 		Integer end = page.getEnd(result.size());
@@ -679,7 +707,7 @@ public class FileStorageImpl implements IFileStorage {
 			}
 		});
 		result.sort((a, b) -> a.getMetadata().getPath().compareTo(b.getMetadata().getPath()));
-		return selectRange(paging, result);
+		return range(paging, result);
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
 import io.github.thiagolvlsantos.file.storage.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.FileSorting;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
 import io.github.thiagolvlsantos.file.storage.IFileStorageTyped;
@@ -88,23 +89,13 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public long count(File dir, FilePaging paging) {
-		return storage.count(dir, type, paging);
-	}
-
-	@Override
 	public long count(File dir, FilePredicate filter, FilePaging paging) {
 		return storage.count(dir, type, filter, paging);
 	}
 
 	@Override
-	public List<T> list(File dir, FilePaging paging) {
-		return storage.list(dir, type, paging);
-	}
-
-	@Override
-	public List<T> list(File dir, FilePredicate filter, FilePaging paging) {
-		return storage.list(dir, type, filter, paging);
+	public List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		return storage.list(dir, type, filter, paging, sorting);
 	}
 
 	// +------------- ATTRIBUTE METHODS ------------------+
