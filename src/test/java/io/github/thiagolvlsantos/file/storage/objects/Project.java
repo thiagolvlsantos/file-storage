@@ -24,6 +24,8 @@ public class Project extends BasicNamedObject {
 
 	public static final String REPO = "projects";
 
+	private ProjectAlias parent;
+
 	@FileChanged(UUIInitializer.class)
 	private UUID uuid;
 

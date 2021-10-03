@@ -391,7 +391,14 @@ public class FileStorageImpl implements IFileStorage {
 		if (ids != null) {
 			for (File f : ids) {
 				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-				result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
+				try {
+					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
+				} catch (Throwable e) {
+					if (log.isErrorEnabled()) {
+						log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.",
+								e);
+					}
+				}
 			}
 		}
 		return range(paging, result);

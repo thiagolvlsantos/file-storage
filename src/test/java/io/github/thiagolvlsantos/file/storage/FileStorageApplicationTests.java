@@ -157,6 +157,30 @@ class FileStorageApplicationTests {
 			// list all
 			assertThat(storage.list(dir, Project.class, null, null, FileSorting.builder().property("name").build()))
 					.contains(project1, project2);
+
+			// list filtered/sorted
+			FilePredicate predicate = new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
+			assertThat(storage.list(dir, Project.class, predicate, FilePaging.builder().skip(0).build(), null))
+					.contains(project1);
+
+			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(),
+					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(null).build())).containsExactly(project2, project1);
+
+			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(),
+					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(Arrays.asList(
+									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
+							.build())).containsExactly(project2, project1);
+
+			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(), FileSorting
+					.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
+					.secondary(Arrays.asList(
+							FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING).build(),
+							FileSorting.builder().property("name").sort(FileSorting.SORT_ASCENDING).build(),
+							FileSorting.builder().property(null).sort(null).build()))
+					.build())).containsExactly(project1, project2);
+
 			// count all
 			assertThat(storage.count(dir, Project.class, null, null)).isEqualTo(2L);
 
@@ -227,6 +251,29 @@ class FileStorageApplicationTests {
 			// list all
 			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(),
 					FileSorting.builder().property("name").nullsFirst(true).build())).contains(project1, project2);
+
+			// list filtered/sorted
+			FilePredicate predicate = new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
+			assertThat(storage.list(dir, predicate, FilePaging.builder().skip(0).build(), null)).contains(project1);
+
+			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(), FileSorting.builder()
+					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build()))
+							.containsExactly(project2, project1);
+
+			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(),
+					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(Arrays.asList(
+									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
+							.build())).containsExactly(project2, project1);
+
+			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(), FileSorting.builder()
+					.property("parent.name").sort(FileSorting.SORT_DESCENDING)
+					.secondary(Arrays.asList(
+							FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING).build(),
+							FileSorting.builder().property("name").sort(FileSorting.SORT_ASCENDING).build(),
+							FileSorting.builder().property(null).sort(null).build()))
+					.build())).containsExactly(project1, project2);
+
 			// count all, skip 1
 			assertThat(storage.count(dir, null, FilePaging.builder().skip(1).max(1).build())).isEqualTo(1L);
 
