@@ -534,8 +534,8 @@ public class FileStorageImpl implements IFileStorage {
 		if (!resourceDir.exists()) {
 			boolean created = resourceDir.mkdirs();
 			if (created) {
-				File gitKeep = new File(resourceDir, ".keep");
-				Files.write(gitKeep.toPath(), "For git only.".getBytes(), StandardOpenOption.CREATE,
+				File keep = new File(resourceDir, ".keep");
+				Files.write(keep.toPath(), "Forcing directory existence.".getBytes(), StandardOpenOption.CREATE,
 						StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 			}
 			if (log.isInfoEnabled()) {

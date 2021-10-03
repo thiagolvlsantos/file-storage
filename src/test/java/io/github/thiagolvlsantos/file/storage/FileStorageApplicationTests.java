@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -1384,6 +1386,35 @@ class FileStorageApplicationTests {
 			assertThatThrownBy(() -> storage.locationResource(dir, params, invalidPath))//
 					.isExactlyInstanceOf(FileStorageException.class)//
 					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testResilience(@Autowired ApplicationContext context) throws IOException {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			// write
+			String name1 = "projectA";
+			Project project1 = Project.builder().name(name1).build();
+			project1 = storage.write(dir, project1);
+
+			String name2 = "projectB";
+			Project project2 = Project.builder().name(name2).build();
+			project2 = storage.write(dir, project2);
+
+			// sabotage
+			Files.write(new File(storage.location(dir, Project.class, FileParams.of(name1)), "meta.json").toPath(),
+					"Set invalid file!".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+					StandardOpenOption.TRUNCATE_EXISTING);
+
+			assertThat(storage.list(dir, Project.class, null, null, null)).containsExactly(project2);
 		} finally {
 			try {
 				FileUtils.delete(dir);
