@@ -429,7 +429,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
-		return new ComparatorNullSafe<T>(sorting.getProperty(), sorting.isNullsFirst());
+		return new ComparatorNullSafe<>(sorting.getProperty(), sorting.isNullsFirst());
 	}
 
 	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
