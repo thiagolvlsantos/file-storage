@@ -385,7 +385,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@SneakyThrows
-	public <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
+	protected <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
 		List<T> result = new LinkedList<>();
 		File[] ids = idManager.directory(entityRoot(dir, type), IFileIndex.IDS).listFiles();
 		if (ids != null) {
@@ -400,32 +400,29 @@ public class FileStorageImpl implements IFileStorage {
 	@SuppressWarnings("unchecked")
 	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
 		if (sorting != null) {
-			List<Comparator<T>> list = new LinkedList<>();
-			Comparator<T> tmp = null;
-			if (sorting.isValid()) {
-				tmp = comparator(sorting);
-				if (sorting.isDescending()) {
-					tmp = tmp.reversed();
-				}
-				list.add(tmp);
-			}
+			List<Comparator<T>> comparators = new LinkedList<>();
+			append(sorting, (o) -> o.isValid(), comparators);
 			List<FileSorting> secondary = sorting.getSecondary();
 			if (secondary != null) {
 				for (FileSorting s : secondary) {
-					if (s.isValid() && !s.isSameProperty(sorting)) {
-						tmp = comparator(s);
-						if (s.isDescending()) {
-							tmp = tmp.reversed();
-						}
-						list.add(tmp);
-					}
+					append(s, (o) -> o.isValid() && !o.isSameProperty(sorting), comparators);
 				}
 			}
-			if (!list.isEmpty()) {
-				Collections.sort(result, new ComparatorChain(list));
+			if (!comparators.isEmpty()) {
+				Collections.sort(result, new ComparatorChain(comparators));
 			}
 		}
 		return result;
+	}
+
+	protected <T> void append(FileSorting sorting, Predicate<FileSorting> test, List<Comparator<T>> list) {
+		if (test.test(sorting)) {
+			Comparator<T> tmp = comparator(sorting);
+			if (sorting.isDescending()) {
+				tmp = tmp.reversed();
+			}
+			list.add(tmp);
+		}
 	}
 
 	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
