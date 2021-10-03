@@ -1,5 +1,7 @@
 package io.github.thiagolvlsantos.file.storage;
 
+import java.util.function.Predicate;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,5 +16,5 @@ import lombok.experimental.SuperBuilder;
 @ToString
 @SuperBuilder
 public class FilePredicate {
-	private String filter;
+	private Predicate<Object> filter;
 }

@@ -29,9 +29,13 @@ import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
+import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
+import io.github.thiagolvlsantos.json.predicate.impl.PredicateFactoryJson;
 
 @SpringBootTest
 class FileStorageApplicationTests {
+
+	private IPredicateFactory factory = new PredicateFactoryJson();
 
 	@Test
 	void testInvalidEntity(@Autowired ApplicationContext context) {
@@ -171,7 +175,7 @@ class FileStorageApplicationTests {
 
 			// search by name
 			List<Project> list = storage.list(dir, Project.class,
-					new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null, null);
+					new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes())), null, null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -240,7 +244,8 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, new FilePredicate("{\"name\":{\"$eq\": \"projectB\"}}"), null, null);
+			List<Project> list = storage.list(dir,
+					new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes())), null, null);
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -1018,12 +1023,15 @@ class FileStorageApplicationTests {
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, Project.class, params,
-					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
+					FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
+					null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, Project.class, params,
-					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
-							.isEqualTo(1);
+					FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
+					null)).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -1103,12 +1111,15 @@ class FileStorageApplicationTests {
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, params,
-					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null);
+					FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
+					null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, params,
-					FilePredicate.builder().filter("{\"metadata.contentType\": {\"$eq\": \"html\"}}").build(), null))
-							.isEqualTo(1);
+					FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
+					null)).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");

@@ -62,7 +62,6 @@ import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
 import io.github.thiagolvlsantos.file.storage.util.comparator.ComparatorNullSafe;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
-import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,7 +71,6 @@ public class FileStorageImpl implements IFileStorage {
 
 	private @Autowired IFileSerializer serializer;
 	private @Autowired IFileIndex idManager;
-	private @Autowired IPredicateFactory predicateFactory;
 
 	@Override
 	public IFileSerializer getSerializer() {
@@ -446,7 +444,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected Predicate<Object> filter(FilePredicate filter) {
-		return filter == null ? null : predicateFactory.read(filter.getFilter().getBytes());
+		return filter == null ? null : filter.getFilter();
 	}
 
 	protected <T> List<T> range(FilePaging paging, List<T> result) {
