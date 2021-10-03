@@ -985,7 +985,7 @@ class FileStorageApplicationTests {
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, Project.class, params, resource);
 
-			List<Resource> resources = storage.listResources(dir, Project.class, params);
+			List<Resource> resources = storage.listResources(dir, Project.class, params, null, null, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -1001,7 +1001,7 @@ class FileStorageApplicationTests {
 
 			// delete last resource
 			storage.deleteResource(dir, Project.class, params, "component/compB.css");
-			resources = storage.listResources(dir, Project.class, params);
+			resources = storage.listResources(dir, Project.class, params, null, null, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -1013,11 +1013,12 @@ class FileStorageApplicationTests {
 			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// FilePaging only 1
-			resources = storage.listResources(dir, Project.class, params, FilePaging.builder().skip(1).max(1).build());
+			resources = storage.listResources(dir, Project.class, params, null,
+					FilePaging.builder().skip(1).max(1).build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, Project.class, params, FilePaging.builder().skip(1).max(1).build()))
-					.isEqualTo(1);
+			assertThat(storage.countResources(dir, Project.class, params, null,
+					FilePaging.builder().skip(1).max(1).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
@@ -1025,7 +1026,7 @@ class FileStorageApplicationTests {
 			resources = storage.listResources(dir, Project.class, params,
 					FilePredicate.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
-					null);
+					null, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, Project.class, params,
@@ -1074,7 +1075,7 @@ class FileStorageApplicationTests {
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, params, resource);
 
-			List<Resource> resources = storage.listResources(dir, params);
+			List<Resource> resources = storage.listResources(dir, params, null, null, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -1090,7 +1091,7 @@ class FileStorageApplicationTests {
 
 			// delete last resource
 			storage.deleteResource(dir, params, "component/compB.css");
-			resources = storage.listResources(dir, params);
+			resources = storage.listResources(dir, params, null, null, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -1102,10 +1103,11 @@ class FileStorageApplicationTests {
 			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// FilePaging only 1
-			resources = storage.listResources(dir, params, FilePaging.builder().skip(1).max(1).build());
+			resources = storage.listResources(dir, params, null, FilePaging.builder().skip(1).max(1).build(), null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, params, FilePaging.builder().skip(1).max(1).build())).isEqualTo(1);
+			assertThat(storage.countResources(dir, params, null, FilePaging.builder().skip(1).max(1).build()))
+					.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
@@ -1113,7 +1115,7 @@ class FileStorageApplicationTests {
 			resources = storage.listResources(dir, params,
 					FilePredicate.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
-					null);
+					null, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, params,
@@ -1225,8 +1227,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			FileParams params = FileParams.of(name1);
 
-			assertThat(storage.listResources(dir, Project.class, params)).isEmpty();
-			assertThat(storage.countResources(dir, Project.class, params)).isZero();
+			assertThat(storage.listResources(dir, Project.class, params, null, null, null)).isEmpty();
+			assertThat(storage.countResources(dir, Project.class, params, null, null)).isZero();
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1247,8 +1249,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			FileParams params = FileParams.of(name1);
-			assertThat(storage.listResources(dir, params)).isEmpty();
-			assertThat(storage.countResources(dir, params)).isZero();
+			assertThat(storage.listResources(dir, params, null, null, null)).isEmpty();
+			assertThat(storage.countResources(dir, params, null, null)).isZero();
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1283,7 +1285,7 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, Project.class, params, resource);
 
-			File location4 = storage.locationResource(dir, Project.class, params);
+			File location4 = storage.locationResource(dir, Project.class, params, null);
 			File location5 = storage.locationResource(dir, Project.class, params, "css/style.css");
 
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
@@ -1325,7 +1327,7 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, params, resource);
 
-			File location4 = storage.locationResource(dir, params);
+			File location4 = storage.locationResource(dir, params, null);
 			File location5 = storage.locationResource(dir, params, "css/style.css");
 
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));

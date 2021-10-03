@@ -381,10 +381,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		List<T> result = all(dir, type, null);
-		result = sort(sorting, result);
-		result = filter(filter, result);
-		return range(paging, result);
+		return range(paging, filter(filter, sort(sorting, all(dir, type, null))));
 	}
 
 	@SneakyThrows
@@ -544,11 +541,6 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> File locationResource(File dir, Class<T> type, FileParams keys) {
-		return locationResource(dir, type, keys, null);
-	}
-
-	@Override
 	@SneakyThrows
 	public <T> File locationResource(File dir, Class<T> type, FileParams keys, String path) {
 		verifyExists(dir, type, keys);
@@ -642,36 +634,14 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> long countResources(File dir, Class<T> type, FileParams keys) {
-		return listResources(dir, type, keys).size();
-	}
-
-	@Override
-	public <T> long countResources(File dir, Class<T> type, FileParams keys, FilePaging paging) {
-		return listResources(dir, type, keys, paging).size();
-	}
-
-	@Override
 	public <T> long countResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging) {
-		return listResources(dir, type, keys, filter, paging).size();
-	}
-
-	@Override
-	@SneakyThrows
-	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys) {
-		return listResources(dir, type, keys, null);
-	}
-
-	@Override
-	@SneakyThrows
-	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePaging paging) {
-		return listResources(dir, type, keys, null, paging);
+		return listResources(dir, type, keys, filter, paging, null).size();
 	}
 
 	@Override
 	@SneakyThrows
 	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePredicate filter,
-			FilePaging paging) {
+			FilePaging paging, FileSorting sorting) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys));
 		verifyResources(root, keys);
@@ -704,8 +674,7 @@ public class FileStorageImpl implements IFileStorage {
 				return FileVisitResult.CONTINUE;
 			}
 		});
-		result.sort((a, b) -> a.getMetadata().getPath().compareTo(b.getMetadata().getPath()));
-		return range(paging, result);
+		return range(paging, sort(sorting, result));
 	}
 
 	@Override

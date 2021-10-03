@@ -56,8 +56,6 @@ public interface IFileStorage {
 
 	// +------------- RESOURCE METHODS ------------------+
 
-	<T> File locationResource(File dir, Class<T> type, FileParams keys);
-
 	<T> File locationResource(File dir, Class<T> type, FileParams keys, String path);
 
 	<T> T setResource(File dir, Class<T> type, FileParams keys, Resource resource);
@@ -66,16 +64,9 @@ public interface IFileStorage {
 
 	<T> T deleteResource(File dir, Class<T> type, FileParams keys, String path);
 
-	<T> long countResources(File dir, Class<T> type, FileParams keys);
-
-	<T> long countResources(File dir, Class<T> type, FileParams keys, FilePaging paging);
-
 	<T> long countResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging);
 
-	<T> List<Resource> listResources(File dir, Class<T> type, FileParams keys);
-
-	<T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePaging paging);
-
-	<T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging);
+	<T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging,
+			FileSorting sorting);
 
 }

@@ -118,11 +118,6 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	// +------------- RESOURCE METHODS ------------------+
 
 	@Override
-	public File locationResource(File dir, FileParams keys) {
-		return storage.locationResource(dir, type, keys);
-	}
-
-	@Override
 	public File locationResource(File dir, FileParams keys, String path) {
 		return storage.locationResource(dir, type, keys, path);
 	}
@@ -138,13 +133,8 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public long countResources(File dir, FileParams keys) {
-		return storage.countResources(dir, type, keys);
-	}
-
-	@Override
-	public long countResources(File dir, FileParams keys, FilePaging paging) {
-		return storage.countResources(dir, type, keys, paging);
+	public T deleteResource(File dir, FileParams keys, String path) {
+		return storage.deleteResource(dir, type, keys, path);
 	}
 
 	@Override
@@ -153,23 +143,8 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public List<Resource> listResources(File dir, FileParams keys) {
-		return storage.listResources(dir, type, keys);
+	public List<Resource> listResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging,
+			FileSorting sorting) {
+		return storage.listResources(dir, type, keys, filter, paging, sorting);
 	}
-
-	@Override
-	public List<Resource> listResources(File dir, FileParams keys, FilePaging paging) {
-		return storage.listResources(dir, type, keys, paging);
-	}
-
-	@Override
-	public List<Resource> listResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging) {
-		return storage.listResources(dir, type, keys, filter, paging);
-	}
-
-	@Override
-	public T deleteResource(File dir, FileParams keys, String path) {
-		return storage.deleteResource(dir, type, keys, path);
-	}
-
 }

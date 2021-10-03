@@ -48,25 +48,16 @@ public interface IFileStorageTyped<T> {
 
 	// +------------- RESOURCE METHODS ------------------+
 
-	File locationResource(File dir, FileParams keys);
-
 	File locationResource(File dir, FileParams keys, String path);
 
 	T setResource(File dir, FileParams keys, Resource resource);
 
 	Resource getResource(File dir, FileParams keys, String path);
 
-	long countResources(File dir, FileParams keys);
-
-	long countResources(File dir, FileParams keys, FilePaging paging);
+	T deleteResource(File dir, FileParams keys, String path);
 
 	long countResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging);
 
-	List<Resource> listResources(File dir, FileParams keys);
-
-	List<Resource> listResources(File dir, FileParams keys, FilePaging paging);
-
-	List<Resource> listResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging);
-
-	T deleteResource(File dir, FileParams keys, String path);
+	List<Resource> listResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging,
+			FileSorting sorting);
 }
