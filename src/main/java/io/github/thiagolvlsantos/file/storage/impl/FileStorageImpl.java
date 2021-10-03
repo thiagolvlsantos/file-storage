@@ -408,11 +408,11 @@ public class FileStorageImpl implements IFileStorage {
 	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
 		if (sorting != null) {
 			List<Comparator<T>> comparators = new LinkedList<>();
-			append(sorting, (o) -> o.isValid(), comparators);
+			append(sorting, o -> o.isValid(), comparators);
 			List<FileSorting> secondary = sorting.getSecondary();
 			if (secondary != null) {
 				for (FileSorting s : secondary) {
-					append(s, (o) -> o.isValid() && !o.isSameProperty(sorting), comparators);
+					append(s, o -> o.isValid() && !o.isSameProperty(sorting), comparators);
 				}
 			}
 			if (!comparators.isEmpty()) {
