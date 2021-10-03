@@ -412,7 +412,7 @@ public class FileStorageImpl implements IFileStorage {
 			List<FileSorting> secondary = sorting.getSecondary();
 			if (secondary != null) {
 				for (FileSorting s : secondary) {
-					if (sorting.isValid() && !sorting.isSameProperty(s)) {
+					if (s.isValid() && !s.isSameProperty(sorting)) {
 						tmp = comparator(s);
 						if (s.isDescending()) {
 							tmp = tmp.reversed();
