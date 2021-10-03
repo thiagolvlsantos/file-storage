@@ -674,6 +674,9 @@ public class FileStorageImpl implements IFileStorage {
 				return FileVisitResult.CONTINUE;
 			}
 		});
+		if (sorting == null) {
+			result.sort(new ComparatorNullSafe<>("metadata.path", false));
+		}
 		return range(paging, sort(sorting, result));
 	}
 
