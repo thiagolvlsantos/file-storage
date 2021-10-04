@@ -38,13 +38,13 @@ public interface IFileStorageTyped<T> {
 
 	List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting);
 
-	// +------------- ATTRIBUTE METHODS ------------------+
+	// +------------- PROPERTY METHODS ------------------+
 
-	T setAttribute(File dir, FileParams keys, String attribute, Object data);
+	T setProperty(File dir, FileParams keys, String property, Object data);
 
-	Object getAttribute(File dir, FileParams keys, String attribute);
+	Object getProperty(File dir, FileParams keys, String property);
 
-	Map<String, Object> attributes(File dir, FileParams keys, FileParams names);
+	Map<String, Object> properties(File dir, FileParams keys, FileParams names);
 
 	// +------------- RESOURCE METHODS ------------------+
 

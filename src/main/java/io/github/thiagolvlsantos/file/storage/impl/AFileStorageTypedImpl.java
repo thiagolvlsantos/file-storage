@@ -98,21 +98,21 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 		return storage.list(dir, type, filter, paging, sorting);
 	}
 
-	// +------------- ATTRIBUTE METHODS ------------------+
+	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
-	public T setAttribute(File dir, FileParams keys, String attribute, Object data) {
-		return storage.setAttribute(dir, type, keys, attribute, data);
+	public T setProperty(File dir, FileParams keys, String property, Object data) {
+		return storage.setProperty(dir, type, keys, property, data);
 	}
 
 	@Override
-	public Object getAttribute(File dir, FileParams keys, String attribute) {
-		return storage.getAttribute(dir, type, keys, attribute);
+	public Object getProperty(File dir, FileParams keys, String property) {
+		return storage.getProperty(dir, type, keys, property);
 	}
 
 	@Override
-	public Map<String, Object> attributes(File dir, FileParams keys, FileParams names) {
-		return storage.attributes(dir, type, keys, names);
+	public Map<String, Object> properties(File dir, FileParams keys, FileParams names) {
+		return storage.properties(dir, type, keys, names);
 	}
 
 	// +------------- RESOURCE METHODS ------------------+

@@ -50,9 +50,9 @@ import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
 import io.github.thiagolvlsantos.file.storage.audit.FileCreated;
 import io.github.thiagolvlsantos.file.storage.audit.IFileInitializer;
 import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
-import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageAttributeNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageResourceNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageSecurityException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
@@ -291,12 +291,12 @@ public class FileStorageImpl implements IFileStorage {
 		// new object
 		// why not create an interface IReplicator as an abstraction of this copy?
 		BeanUtils.copyProperties(current, instance);
-		// return unchangeable attributes
-		reassignAttributes(FileId.class, current, currentIds);
-		reassignAttributes(FileKey.class, current, currentKeys);
-		reassignAttributes(FileCreated.class, current, currentCreated);
-		reassignAttributes(FileRevision.class, current, currentRevision);
-		reassignAttributes(FileKeep.class, current, currentKeep);
+		// return unchangeable properties
+		reassignPropertys(FileId.class, current, currentIds);
+		reassignPropertys(FileKey.class, current, currentKeys);
+		reassignPropertys(FileCreated.class, current, currentCreated);
+		reassignPropertys(FileRevision.class, current, currentRevision);
+		reassignPropertys(FileKeep.class, current, currentKeep);
 		// write resulting object
 		return write(dir, current);
 	}
@@ -308,22 +308,22 @@ public class FileStorageImpl implements IFileStorage {
 		}
 	}
 
-	protected <A extends Annotation, T> void reassignAttributes(Class<A> annotation, T current, PairValue<A>[] pairs)
+	protected <A extends Annotation, T> void reassignPropertys(Class<A> annotation, T current, PairValue<A>[] pairs)
 			throws IllegalAccessException, InvocationTargetException {
 		for (PairValue<A> c : pairs) {
 			if (log.isInfoEnabled()) {
 				log.info("Return " + annotation.getSimpleName() + ": {}={}", c.getName(), c.getValue());
 			}
-			trySetAttribute(current, c.getName(), c.getValue());
+			trySetProperty(current, c.getName(), c.getValue());
 		}
 	}
 
-	protected <T> void trySetAttribute(T current, String name, Object value)
+	protected <T> void trySetProperty(T current, String name, Object value)
 			throws IllegalAccessException, InvocationTargetException {
 		try {
 			PropertyUtils.setProperty(current, name, value);
 		} catch (NoSuchMethodException e) {
-			throw new FileStorageAttributeNotFoundException(name, current, e);
+			throw new FileStoragePropertyNotFoundException(name, current, e);
 		}
 	}
 
@@ -455,33 +455,33 @@ public class FileStorageImpl implements IFileStorage {
 		return start < end ? result.subList(start, end) : Collections.emptyList();
 	}
 
-	// +------------- ATTRIBUTE METHODS ------------------+
+	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
 	@SneakyThrows
-	public <T> T setAttribute(File dir, Class<T> type, FileParams keys, String attribute, Object data) {
+	public <T> T setProperty(File dir, Class<T> type, FileParams keys, String property, Object data) {
 		verifyExists(dir, type, keys);
 
 		T current = read(dir, type, keys);
 
-		// check unchangeable attributes
-		validateAttribute(FileId.class, type, attribute, current);
-		validateAttribute(FileKey.class, type, attribute, current);
-		validateAttribute(FileCreated.class, type, attribute, current);
-		validateAttribute(FileRevision.class, type, attribute, current);
-		validateAttribute(FileKeep.class, type, attribute, current);
+		// check unchangeable properties
+		validateProperty(FileId.class, type, property, current);
+		validateProperty(FileKey.class, type, property, current);
+		validateProperty(FileCreated.class, type, property, current);
+		validateProperty(FileRevision.class, type, property, current);
+		validateProperty(FileKeep.class, type, property, current);
 
-		trySetAttribute(current, attribute, data);
+		trySetProperty(current, property, data);
 
 		return write(dir, current);
 	}
 
-	protected <A extends Annotation, T> void validateAttribute(Class<A> annotation, Class<T> type, String attribute,
+	protected <A extends Annotation, T> void validateProperty(Class<A> annotation, Class<T> type, String property,
 			T current) {
 		PairValue<A>[] values = UtilAnnotations.getValues(annotation, type, current);
 		for (PairValue<A> c : values) {
-			if (c.getName().equalsIgnoreCase(attribute)) {
-				throw new FileStorageException("Update of @" + annotation.getSimpleName() + " annotated attribute '"
+			if (c.getName().equalsIgnoreCase(property)) {
+				throw new FileStorageException("Update of @" + annotation.getSimpleName() + " annotated property '"
 						+ c.getName() + "' is not allowed.", null);
 			}
 		}
@@ -489,26 +489,26 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Object getAttribute(File dir, Class<T> type, FileParams keys, String attribute) {
+	public <T> Object getProperty(File dir, Class<T> type, FileParams keys, String property) {
 		verifyExists(dir, type, keys);
 
 		T current = read(dir, type, keys);
 
-		return tryGetAttribute(current, attribute);
+		return tryGetProperty(current, property);
 	}
 
-	protected <T> Object tryGetAttribute(T current, String attribute)
+	protected <T> Object tryGetProperty(T current, String property)
 			throws IllegalAccessException, InvocationTargetException {
 		try {
-			return PropertyUtils.getProperty(current, attribute);
+			return PropertyUtils.getProperty(current, property);
 		} catch (NoSuchMethodException e) {
-			throw new FileStorageAttributeNotFoundException(attribute, current, e);
+			throw new FileStoragePropertyNotFoundException(property, current, e);
 		}
 	}
 
 	@Override
 	@SneakyThrows
-	public <T> Map<String, Object> attributes(File dir, Class<T> type, FileParams keys, FileParams names) {
+	public <T> Map<String, Object> properties(File dir, Class<T> type, FileParams keys, FileParams names) {
 		verifyExists(dir, type, keys);
 
 		T current = read(dir, type, keys);
@@ -521,8 +521,8 @@ public class FileStorageImpl implements IFileStorage {
 
 		Map<String, Object> result = new LinkedHashMap<>();
 		for (Object n : selection) {
-			String attribute = String.valueOf(n);
-			result.put(attribute, tryGetAttribute(current, attribute));
+			String property = String.valueOf(n);
+			result.put(property, tryGetProperty(current, property));
 		}
 		return result;
 	}

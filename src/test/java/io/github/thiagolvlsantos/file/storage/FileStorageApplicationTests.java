@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
-import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageAttributeNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageResourceNotFoundException;
@@ -362,20 +362,20 @@ class FileStorageApplicationTests {
 			newVersion.setDescription(description);
 			project1 = storage.merge(dir, Project.class, FileParams.of(name1), newVersion);
 
-			// old attributes
+			// old properties
 			assertThat(project1.getId()).isEqualTo(id);
 			assertThat(project1.getName()).isEqualTo(name1);
 			assertThat(project1.getCreated()).isEqualTo(created);
 			assertThat(project1.getRevision()).isEqualTo(revision + 1);
 
-			// new attributes
+			// new properties
 			assertThat(project1.getDescription()).isEqualTo(description);
 
-			// update valid attribute
+			// update valid property
 			description = "Final version";
-			project1 = storage.setAttribute(dir, Project.class, FileParams.of(name1), "description", description);
+			project1 = storage.setProperty(dir, Project.class, FileParams.of(name1), "description", description);
 
-			// changed attribute
+			// changed property
 			assertThat(project1.getDescription()).isEqualTo(description);
 			assertThat(project1.getRevision()).isEqualTo(revision + 2);
 		} finally {
@@ -408,20 +408,20 @@ class FileStorageApplicationTests {
 			newVersion.setDescription(description);
 			project1 = storage.merge(dir, FileParams.of(name1), newVersion);
 
-			// old attributes
+			// old properties
 			assertThat(project1.getId()).isEqualTo(id);
 			assertThat(project1.getName()).isEqualTo(name1);
 			assertThat(project1.getCreated()).isEqualTo(created);
 			assertThat(project1.getRevision()).isEqualTo(revision + 1);
 
-			// new attributes
+			// new properties
 			assertThat(project1.getDescription()).isEqualTo(description);
 
-			// update valid attribute
+			// update valid property
 			description = "Final version";
-			project1 = storage.setAttribute(dir, FileParams.of(name1), "description", description);
+			project1 = storage.setProperty(dir, FileParams.of(name1), "description", description);
 
-			// changed attribute
+			// changed property
 			assertThat(project1.getDescription()).isEqualTo(description);
 			assertThat(project1.getRevision()).isEqualTo(revision + 2);
 		} finally {
@@ -476,7 +476,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidSetAttributeName(@Autowired ApplicationContext context) {
+	void testInvalidSetPropertyName(@Autowired ApplicationContext context) {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -487,9 +487,9 @@ class FileStorageApplicationTests {
 
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
-				storage.setAttribute(dir, Project.class, params, "title", "newDescription");
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.setProperty(dir, Project.class, params, "title", "newDescription");
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -500,7 +500,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidSetAttributeNameTyped(@Autowired ApplicationContext context) {
+	void testInvalidSetPropertyNameTyped(@Autowired ApplicationContext context) {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -511,9 +511,9 @@ class FileStorageApplicationTests {
 
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
-				storage.setAttribute(dir, params, "title", "newDescription");
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.setProperty(dir, params, "title", "newDescription");
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -524,7 +524,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidGetAttributeName(@Autowired ApplicationContext context) {
+	void testInvalidGetPropertyName(@Autowired ApplicationContext context) {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -535,9 +535,9 @@ class FileStorageApplicationTests {
 
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
-				storage.getAttribute(dir, Project.class, params, "title");
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.getProperty(dir, Project.class, params, "title");
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -548,7 +548,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidGetAttributeNameTyped(@Autowired ApplicationContext context) {
+	void testInvalidGetPropertyNameTyped(@Autowired ApplicationContext context) {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -559,9 +559,9 @@ class FileStorageApplicationTests {
 
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
-				storage.getAttribute(dir, params, "title");
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.getProperty(dir, params, "title");
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -572,7 +572,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidAllAttributeName(@Autowired ApplicationContext context) {
+	void testInvalidAllPropertyName(@Autowired ApplicationContext context) {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -584,9 +584,9 @@ class FileStorageApplicationTests {
 			FileParams params = FileParams.of(name1);
 			FileParams names = FileParams.of("title");
 			assertThatThrownBy(() -> {
-				storage.attributes(dir, Project.class, params, names);
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.properties(dir, Project.class, params, names);
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -597,7 +597,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testInvalidAllAttributeNameTyped(@Autowired ApplicationContext context) {
+	void testInvalidAllPropertyNameTyped(@Autowired ApplicationContext context) {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -609,9 +609,9 @@ class FileStorageApplicationTests {
 			FileParams params = FileParams.of(name1);
 			FileParams names = FileParams.of("title");
 			assertThatThrownBy(() -> {
-				storage.attributes(dir, params, names);
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.properties(dir, params, names);
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -680,27 +680,27 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			assertThat(project1.getId()).isNotNull();
 
-			// try update invalid attributes
+			// try update invalid properties
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
-				storage.setAttribute(dir, Project.class, params, "id", "\"10\"");
+				storage.setProperty(dir, Project.class, params, "id", "\"10\"");
 			}).isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileId annotated attribute 'id' is not allowed.");
+					.hasMessage("Update of @FileId annotated property 'id' is not allowed.");
 
-			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, params, "name", "\"newName\""))//
+			// try update invalid properties
+			assertThatThrownBy(() -> storage.setProperty(dir, Project.class, params, "name", "\"newName\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileKey annotated attribute 'name' is not allowed.");
+					.hasMessage("Update of @FileKey annotated property 'name' is not allowed.");
 
-			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, params, "created", "\"10\""))//
+			// try update invalid properties
+			assertThatThrownBy(() -> storage.setProperty(dir, Project.class, params, "created", "\"10\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
+					.hasMessage("Update of @FileCreated annotated property 'created' is not allowed.");
 
-			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, Project.class, params, "revision", "\"10\""))//
+			// try update invalid properties
+			assertThatThrownBy(() -> storage.setProperty(dir, Project.class, params, "revision", "\"10\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileRevision annotated attribute 'revision' is not allowed.");
+					.hasMessage("Update of @FileRevision annotated property 'revision' is not allowed.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -721,27 +721,27 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 			assertThat(project1.getId()).isNotNull();
 
-			// try update invalid attributes
+			// try update invalid properties
 			FileParams params = FileParams.of(name1);
 			assertThatThrownBy(() -> {
-				storage.setAttribute(dir, params, "id", "\"10\"");
+				storage.setProperty(dir, params, "id", "\"10\"");
 			}).isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileId annotated attribute 'id' is not allowed.");
+					.hasMessage("Update of @FileId annotated property 'id' is not allowed.");
 
-			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, params, "name", "\"newName\""))//
+			// try update invalid properties
+			assertThatThrownBy(() -> storage.setProperty(dir, params, "name", "\"newName\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileKey annotated attribute 'name' is not allowed.");
+					.hasMessage("Update of @FileKey annotated property 'name' is not allowed.");
 
-			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, params, "created", "\"10\""))//
+			// try update invalid properties
+			assertThatThrownBy(() -> storage.setProperty(dir, params, "created", "\"10\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileCreated annotated attribute 'created' is not allowed.");
+					.hasMessage("Update of @FileCreated annotated property 'created' is not allowed.");
 
-			// try update invalid attributes
-			assertThatThrownBy(() -> storage.setAttribute(dir, params, "revision", "\"10\""))//
+			// try update invalid properties
+			assertThatThrownBy(() -> storage.setProperty(dir, params, "revision", "\"10\""))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Update of @FileRevision annotated attribute 'revision' is not allowed.");
+					.hasMessage("Update of @FileRevision annotated property 'revision' is not allowed.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -758,7 +758,7 @@ class FileStorageApplicationTests {
 		try {
 			FileParams params = FileParams.of("doNotExist");
 			assertThatThrownBy(() -> {
-				storage.setAttribute(dir, Project.class, params, "description", "10");
+				storage.setProperty(dir, Project.class, params, "description", "10");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ FileParams.of("doNotExist") + "' not found.");
@@ -778,7 +778,7 @@ class FileStorageApplicationTests {
 		try {
 			FileParams params = FileParams.of("doNotExist");
 			assertThatThrownBy(() -> {
-				storage.setAttribute(dir, params, "description", "10");
+				storage.setProperty(dir, params, "description", "10");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
 							+ FileParams.of("doNotExist") + "' not found.");
@@ -798,7 +798,7 @@ class FileStorageApplicationTests {
 		try {
 			FileParams params = FileParams.of("doNotExist");
 			assertThatThrownBy(() -> {
-				storage.getAttribute(dir, Project.class, params, "description");
+				storage.getProperty(dir, Project.class, params, "description");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '" + params + "' not found.");
 		} finally {
@@ -817,7 +817,7 @@ class FileStorageApplicationTests {
 		try {
 			FileParams params = FileParams.of("doNotExist");
 			assertThatThrownBy(() -> {
-				storage.getAttribute(dir, params, "description");
+				storage.getProperty(dir, params, "description");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '" + params + "' not found.");
 		} finally {
@@ -830,7 +830,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testAttributes(@Autowired ApplicationContext context) {
+	void testPropertys(@Autowired ApplicationContext context) {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -839,30 +839,30 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			// attribute reading
+			// property reading
 			FileParams params = FileParams.of(name1);
-			Object attribute = storage.getAttribute(dir, Project.class, params, "name");
-			assertThat(attribute).isEqualTo(name1);
+			Object property = storage.getProperty(dir, Project.class, params, "name");
+			assertThat(property).isEqualTo(name1);
 
-			// attribute writing
-			Project result = storage.setAttribute(dir, Project.class, params, "description", "newDescription");
+			// property writing
+			Project result = storage.setProperty(dir, Project.class, params, "description", "newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
-			// attribute full map
-			Map<String, Object> objs = storage.attributes(dir, Project.class, params, null);
+			// property full map
+			Map<String, Object> objs = storage.properties(dir, Project.class, params, null);
 			assertThat(objs).containsEntry("description", "newDescription");
 
-			// attribute map projection
+			// property map projection
 			FileParams names = FileParams.of(Arrays.asList("name", "created"));
-			objs = storage.attributes(dir, Project.class, params, names);
+			objs = storage.properties(dir, Project.class, params, names);
 			assertThat(objs).hasSize(2);
 
-			// invalid attribute
+			// invalid property
 			FileParams name = FileParams.of("title");
 			assertThatThrownBy(() -> {
-				storage.attributes(dir, Project.class, params, name);
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.properties(dir, Project.class, params, name);
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -873,7 +873,7 @@ class FileStorageApplicationTests {
 	}
 
 	@Test
-	void testAttributesTyped(@Autowired ApplicationContext context) {
+	void testPropertysTyped(@Autowired ApplicationContext context) {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		String name1 = "projectA";
@@ -882,30 +882,30 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			// attribute reading
+			// property reading
 			FileParams params = FileParams.of(name1);
-			Object attribute = storage.getAttribute(dir, params, "name");
-			assertThat(attribute).isEqualTo(name1);
+			Object property = storage.getProperty(dir, params, "name");
+			assertThat(property).isEqualTo(name1);
 
-			// attribute writing
-			Project result = storage.setAttribute(dir, params, "description", "newDescription");
+			// property writing
+			Project result = storage.setProperty(dir, params, "description", "newDescription");
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
-			// attribute full map
-			Map<String, Object> objs = storage.attributes(dir, params, null);
+			// property full map
+			Map<String, Object> objs = storage.properties(dir, params, null);
 			assertThat(objs).containsEntry("description", "newDescription");
 
-			// attribute map projection
+			// property map projection
 			FileParams names = FileParams.of(Arrays.asList("name", "created"));
-			objs = storage.attributes(dir, params, names);
+			objs = storage.properties(dir, params, names);
 			assertThat(objs).hasSize(2);
 
-			// invalid attribute
+			// invalid property
 			FileParams name = FileParams.of("title");
 			assertThatThrownBy(() -> {
-				storage.attributes(dir, params, name);
-			}).isExactlyInstanceOf(FileStorageAttributeNotFoundException.class)//
-					.hasMessage(new FileStorageAttributeNotFoundException("title", project1, null).getMessage());
+				storage.properties(dir, params, name);
+			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
+					.hasMessage(new FileStoragePropertyNotFoundException("title", project1, null).getMessage());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -925,7 +925,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			// attribute reading
+			// property reading
 			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
@@ -969,7 +969,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			// attribute reading
+			// property reading
 			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
@@ -1014,7 +1014,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			// attribute reading
+			// property reading
 			String path = "component/compB.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
@@ -1105,7 +1105,7 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 			FileParams params = FileParams.of(name1);
 
-			// attribute reading
+			// property reading
 			String path = "component/compB.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
@@ -1194,7 +1194,7 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			FileParams params = FileParams.of(name1);
 
-			// attribute reading
+			// property reading
 			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
@@ -1237,7 +1237,7 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 			FileParams params = FileParams.of(name1);
 
-			// attribute reading
+			// property reading
 			String path = "css/style.css";
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
