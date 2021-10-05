@@ -260,7 +260,7 @@ public class FileStorageImpl implements IFileStorage {
 			}
 			Number obj = (Number) c.get(instance);
 			if (obj == null) {
-				c.set(instance, fieldType.cast(0L));
+				obj = (Number) fieldType.cast(0L);
 			} else {
 				Number current = null;
 				if (old != null) {
@@ -271,8 +271,9 @@ public class FileStorageImpl implements IFileStorage {
 				if (obj.longValue() < current.longValue()) {
 					throw new FileStorageException("Invalid revision. Reload object and try again.", null);
 				}
-				c.set(instance, current.longValue() + 1);
+				obj = current.longValue() + 1;
 			}
+			c.set(instance, obj);
 			if (log.isInfoEnabled()) {
 				log.info("new revision: {}", obj);
 			}
