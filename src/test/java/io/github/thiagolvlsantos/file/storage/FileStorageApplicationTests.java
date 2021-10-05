@@ -17,11 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
-import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
+import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageResourceNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageSecurityException;
+import io.github.thiagolvlsantos.file.storage.objects.InvalidRevision;
 import io.github.thiagolvlsantos.file.storage.objects.Outlier;
 import io.github.thiagolvlsantos.file.storage.objects.OutlierStorage;
 import io.github.thiagolvlsantos.file.storage.objects.Project;
@@ -38,6 +39,24 @@ import io.github.thiagolvlsantos.json.predicate.impl.PredicateFactoryJson;
 class FileStorageApplicationTests {
 
 	private IPredicateFactory factory = new PredicateFactoryJson();
+
+	@Test
+	void testInvalidEntityRevision(@Autowired ApplicationContext context) {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			final InvalidRevision instance = new InvalidRevision();
+			assertThatThrownBy(() -> storage.write(dir, instance))//
+					.isExactlyInstanceOf(FileStorageException.class)//
+					.hasMessage("@FileRevision.revision type must be a subclass of Number.class.");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	@Test
 	void testInvalidEntity(@Autowired ApplicationContext context) {
@@ -357,10 +376,10 @@ class FileStorageApplicationTests {
 			LocalDateTime created = project1.getCreated();
 			Long revision = project1.getRevision();
 
-			Project newVersion = Project.builder().name(name1).build();
+			Project newVersion = Project.builder().name(name1).revision(revision).build();
 			String description = "This is a new description.";
 			newVersion.setDescription(description);
-			project1 = storage.merge(dir, Project.class, FileParams.of(name1), newVersion);
+			project1 = storage.write(dir, Project.class, newVersion);
 
 			// old properties
 			assertThat(project1.getId()).isEqualTo(id);
@@ -403,10 +422,10 @@ class FileStorageApplicationTests {
 			LocalDateTime created = project1.getCreated();
 			Long revision = project1.getRevision();
 
-			Project newVersion = Project.builder().name(name1).build();
+			Project newVersion = Project.builder().name(name1).revision(revision).build();
 			String description = "This is a new description.";
 			newVersion.setDescription(description);
-			project1 = storage.merge(dir, FileParams.of(name1), newVersion);
+			project1 = storage.write(dir, newVersion);
 
 			// old properties
 			assertThat(project1.getId()).isEqualTo(id);
@@ -424,48 +443,6 @@ class FileStorageApplicationTests {
 			// changed property
 			assertThat(project1.getDescription()).isEqualTo(description);
 			assertThat(project1.getRevision()).isEqualTo(revision + 2);
-		} finally {
-			try {
-				FileUtils.delete(dir);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@Test
-	void testInvalidMerge(@Autowired ApplicationContext context) {
-		IFileStorage storage = context.getBean(IFileStorage.class);
-		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		try {
-			final Project instance = new Project();
-			FileParams params = FileParams.of("doNotExist");
-			assertThatThrownBy(() -> {
-				storage.merge(dir, Project.class, params, instance);
-			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ FileParams.of("doNotExist") + "' not found.");
-		} finally {
-			try {
-				FileUtils.delete(dir);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@Test
-	void testInvalidMergeTyped(@Autowired ApplicationContext context) {
-		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
-		File dir = new File("target/data/storage_" + System.currentTimeMillis());
-		try {
-			final Project instance = new Project();
-			FileParams params = FileParams.of("doNotExist");
-			assertThatThrownBy(() -> {
-				storage.merge(dir, params, instance);
-			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
-					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ FileParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1337,13 +1314,14 @@ class FileStorageApplicationTests {
 			File location4 = storage.locationResource(dir, Project.class, params, null);
 			File location5 = storage.locationResource(dir, Project.class, params, "css/style.css");
 
+			assertThat(storage.existsResource(dir, Project.class, params, path)).isTrue();
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
 			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
 
 			String invalidPath = "../css/style.css";
 			assertThatThrownBy(() -> storage.locationResource(dir, Project.class, params, invalidPath))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + invalidPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1379,13 +1357,14 @@ class FileStorageApplicationTests {
 			File location4 = storage.locationResource(dir, params, null);
 			File location5 = storage.locationResource(dir, params, "css/style.css");
 
+			assertThat(storage.existsResource(dir, params, path)).isTrue();
 			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
 			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
 
 			String invalidPath = "../css/style.css";
 			assertThatThrownBy(() -> storage.locationResource(dir, params, invalidPath))//
-					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Cannot read location of resources in a higher file structure. " + invalidPath);
+					.isExactlyInstanceOf(FileStorageSecurityException.class)//
+					.hasMessage("Cannot work with resources from a higher file structure. " + invalidPath);
 		} finally {
 			try {
 				FileUtils.delete(dir);

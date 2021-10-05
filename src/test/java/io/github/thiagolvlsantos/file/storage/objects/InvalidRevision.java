@@ -1,5 +1,6 @@
-package io.github.thiagolvlsantos.file.storage.objects.common;
+package io.github.thiagolvlsantos.file.storage.objects;
 
+import io.github.thiagolvlsantos.file.storage.FileEntity;
 import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,8 +13,9 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class IdObjectVersioned extends IdObject {
+@FileEntity("anyname")
+public class InvalidRevision {
 
 	@FileRevision
-	private Long revision; // could be initialized as 0L
+	private String revision; // revisions can only be a subclass of Number.class
 }

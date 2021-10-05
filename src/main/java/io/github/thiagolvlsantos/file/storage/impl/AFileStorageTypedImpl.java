@@ -64,11 +64,6 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public T merge(File dir, FileParams keys, T instance) {
-		return storage.merge(dir, type, keys, instance);
-	}
-
-	@Override
 	public T read(File dir, T example) {
 		return storage.read(dir, type, example);
 	}
@@ -120,6 +115,11 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	@Override
 	public File locationResource(File dir, FileParams keys, String path) {
 		return storage.locationResource(dir, type, keys, path);
+	}
+
+	@Override
+	public boolean existsResource(File dir, FileParams keys, String path) {
+		return storage.existsResource(dir, type, keys, path);
 	}
 
 	@Override

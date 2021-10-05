@@ -28,8 +28,6 @@ public interface IFileStorage {
 
 	<T> T write(File dir, Class<T> type, T instance);
 
-	<T> T merge(File dir, Class<T> type, FileParams keys, T instance);
-
 	<T> T read(File dir, T example);
 
 	<T> T read(File dir, Class<T> type, T example);
@@ -55,8 +53,9 @@ public interface IFileStorage {
 	<T> Map<String, Object> properties(File dir, Class<T> type, FileParams keys, FileParams names);
 
 	// +------------- RESOURCE METHODS ------------------+
-
 	<T> File locationResource(File dir, Class<T> type, FileParams keys, String path);
+
+	<T> boolean existsResource(File dir, Class<T> type, FileParams keys, String path);
 
 	<T> T setResource(File dir, Class<T> type, FileParams keys, Resource resource);
 

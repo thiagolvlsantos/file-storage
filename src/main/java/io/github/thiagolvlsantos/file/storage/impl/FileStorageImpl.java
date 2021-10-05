@@ -28,7 +28,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,6 +132,12 @@ public class FileStorageImpl implements IFileStorage {
 		return new File(dir, "@" + entity.value());
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T write(File dir, T instance) {
+		return write(dir, (Class<T>) instance.getClass(), instance);
+	}
+
 	@Override
 	@SneakyThrows
 	public <T> T write(File dir, Class<T> type, T instance) {
@@ -143,11 +148,45 @@ public class FileStorageImpl implements IFileStorage {
 			old = read(file, type);
 		}
 
-		prepareCreated(dir, type, instance, file, old);
-		prepareRevisions(dir, type, instance, file, old);
-		prepareChanged(dir, type, instance, file, old);
+		PairValue<FileId>[] idFields = UtilAnnotations.getValues(FileId.class, type, instance);
+		if (log.isInfoEnabled()) {
+			log.info("ids: {}", Arrays.toString(idFields));
+		}
+		PairValue<FileCreated>[] createdFields = UtilAnnotations.getValues(FileCreated.class, type, instance);
+		if (log.isInfoEnabled()) {
+			log.info("created: {}", Arrays.toString(createdFields));
+		}
+		if (!file.exists()) {
+			File parent = file.getParentFile();
+			if (!parent.mkdirs()) {
+				throw new FileStorageException("Could not create object directory: " + parent, null);
+			}
+			initIds(dir, type, idFields, instance);
+			initCreated(dir, type, createdFields, instance);
+		} else {
+			keepValues(old, idFields, instance);
+			keepValues(old, createdFields, instance);
 
-		write(instance, file);
+			PairValue<FileKeep>[] keepFields = UtilAnnotations.getValues(FileKeep.class, type, instance);
+			if (log.isInfoEnabled()) {
+				log.info("keep: {}", Arrays.toString(keepFields));
+			}
+			keepValues(old, keepFields, instance);
+		}
+
+		PairValue<FileRevision>[] revisions = UtilAnnotations.getValues(FileRevision.class, type, instance);
+		if (log.isInfoEnabled()) {
+			log.info("revisions: {}", Arrays.toString(revisions));
+		}
+		prepareRevisions(dir, type, revisions, instance, old);
+
+		PairValue<FileChanged>[] changed = UtilAnnotations.getValues(FileChanged.class, type, instance);
+		if (log.isInfoEnabled()) {
+			log.info("changed: {}", Arrays.toString(changed));
+		}
+		prepareChanged(dir, type, changed, instance);
+
+		writeToFile(file, instance);
 
 		// init @resources
 		initResources(dir, type, keys);
@@ -155,57 +194,15 @@ public class FileStorageImpl implements IFileStorage {
 		return instance;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T write(File dir, T instance) {
-		return write(dir, (Class<T>) instance.getClass(), instance);
-	}
-
 	protected <T> File entityFile(File dir, Class<T> type, FileParams keys) {
 		return new File(entityDir(dir, type, keys), "meta.json");
 	}
 
-	protected <T> void prepareCreated(File dir, Class<T> type, T instance, File target, T old) {
-		PairValue<FileId>[] ids = UtilAnnotations.getValues(FileId.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("ids: {}", Arrays.toString(ids));
-		}
-		PairValue<FileCreated>[] created = UtilAnnotations.getValues(FileCreated.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("created: {}", Arrays.toString(created));
-		}
-		if (!target.exists()) {
-			File parent = target.getParentFile();
-			if (!parent.mkdirs()) {
-				throw new FileStorageException("Could not create object directory: " + parent, null);
-			}
-			initializeFixed(dir, type, instance, ids, created);
-		} else {
-			keepFixed(old, ids, created, instance);
-		}
-	}
-
-	@SneakyThrows
-	protected Object value(Object instance, String name, Class<? extends IFileInitializer> initializer, Method m) {
-		IFileInitializer factory = initializer.getConstructor().newInstance();
-		return factory.value(instance, name, m.getReturnType());
-	}
-
-	protected <T> void initializeFixed(File dir, Class<T> type, T instance, PairValue<FileId>[] ids,
-			PairValue<FileCreated>[] created) {
-		for (PairValue<FileCreated> c : created) {
-			Object obj = c.get(instance);
-			if (obj == null) {
-				c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
-				if (log.isInfoEnabled()) {
-					log.info("new created: {}", c.get(instance));
-				}
-			}
-		}
+	protected <T> void initIds(File dir, Class<T> type, PairValue<FileId>[] ids, T instance) {
 		for (PairValue<FileId> c : ids) {
 			Object obj = c.get(instance);
 			if (obj == null) {
-				Long nextId = idManager.next(entityRoot(dir, type));
+				Object nextId = idManager.next(entityRoot(dir, type), c);
 				c.set(instance, nextId);
 				idManager.bind(entityRoot(dir, type), instance);
 				if (log.isInfoEnabled()) {
@@ -215,32 +212,55 @@ public class FileStorageImpl implements IFileStorage {
 		}
 	}
 
-	protected <T> void keepFixed(T old, PairValue<FileId>[] ids, PairValue<FileCreated>[] created, T instance) {
+	protected <T> void initCreated(File dir, Class<T> type, PairValue<FileCreated>[] created, T instance) {
 		for (PairValue<FileCreated> c : created) {
-			Object obj = c.get(old);
-			c.set(instance, obj);
-			if (log.isInfoEnabled()) {
-				log.info("keep created: {}", c.get(instance));
-			}
-		}
-		for (PairValue<FileId> c : ids) {
-			Object obj = c.get(old);
-			c.set(instance, obj);
-			if (log.isInfoEnabled()) {
-				log.info("keep ids: {}", c.get(instance));
+			Object obj = c.get(instance);
+			if (obj == null) {
+				c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
+				if (log.isInfoEnabled()) {
+					log.info("new created: {}", c.get(instance));
+				}
 			}
 		}
 	}
 
-	protected <T> void prepareRevisions(File dir, Class<T> type, T instance, File target, T old) {
-		PairValue<FileRevision>[] revisions = UtilAnnotations.getValues(FileRevision.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("revisions: {}", Arrays.toString(revisions));
+	@SneakyThrows
+	protected Object value(Object instance, String name, Class<? extends IFileInitializer> initializer, Method m) {
+		IFileInitializer factory = initializer.getConstructor().newInstance();
+		return factory.value(instance, name, m.getReturnType());
+	}
+
+	protected <T> void prepareChanged(File dir, Class<T> type, PairValue<FileChanged>[] changed, T instance) {
+		for (PairValue<FileChanged> c : changed) {
+			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
+			if (log.isInfoEnabled()) {
+				log.info("new changed: {}", c.get(instance));
+			}
 		}
+	}
+
+	protected <T> void keepValues(T old, PairValue<?>[] values, T instance) {
+		for (PairValue<?> c : values) {
+			Object obj = c.get(old);
+			c.set(instance, obj);
+			if (log.isInfoEnabled()) {
+				log.info("'{}', keeped: {}", c.getName(), c.get(instance));
+			}
+		}
+	}
+
+	@SneakyThrows
+	protected <T> void prepareRevisions(File dir, Class<T> type, PairValue<FileRevision>[] revisions, T instance,
+			T old) {
 		for (PairValue<FileRevision> c : revisions) {
+			Class<?> fieldType = c.getRead().getReturnType();
+			if (!Number.class.isAssignableFrom(fieldType)) {
+				throw new FileStorageException(
+						"@FileRevision." + c.getName() + " type must be a subclass of Number.class.", null);
+			}
 			Number obj = (Number) c.get(instance);
 			if (obj == null) {
-				c.set(instance, 0);
+				c.set(instance, fieldType.cast(0L));
 			} else {
 				Number current = null;
 				if (old != null) {
@@ -254,77 +274,13 @@ public class FileStorageImpl implements IFileStorage {
 				c.set(instance, current.longValue() + 1);
 			}
 			if (log.isInfoEnabled()) {
-				log.info("new revision: {}", c.get(instance));
+				log.info("new revision: {}", obj);
 			}
 		}
 	}
 
-	protected <T> void prepareChanged(File dir, Class<T> type, T instance, File target, T old) {
-		PairValue<FileChanged>[] changed = UtilAnnotations.getValues(FileChanged.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("changed: {}", Arrays.toString(changed));
-		}
-		for (PairValue<FileChanged> c : changed) {
-			Method read = c.getRead();
-			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), read));
-			if (log.isInfoEnabled()) {
-				log.info("new changed: {}", c.get(instance));
-			}
-		}
-	}
-
-	protected <T> void write(T instance, File file) {
-		serializer.writeValue(file, instance);
-	}
-
-	@Override
-	@SneakyThrows
-	public <T> T merge(File dir, Class<T> type, FileParams keys, T instance) {
-		verifyExists(dir, type, keys);
-		// old objects
-		T current = read(dir, type, keys);
-		PairValue<FileId>[] currentIds = UtilAnnotations.getValues(FileId.class, type, current);
-		PairValue<FileKey>[] currentKeys = UtilAnnotations.getValues(FileKey.class, type, current);
-		PairValue<FileCreated>[] currentCreated = UtilAnnotations.getValues(FileCreated.class, type, current);
-		PairValue<FileRevision>[] currentRevision = UtilAnnotations.getValues(FileRevision.class, type, current);
-		PairValue<FileKeep>[] currentKeep = UtilAnnotations.getValues(FileKeep.class, type, current);
-		// new object
-		// why not create an interface IReplicator as an abstraction of this copy?
-		BeanUtils.copyProperties(current, instance);
-		// return unchangeable properties
-		reassignPropertys(FileId.class, current, currentIds);
-		reassignPropertys(FileKey.class, current, currentKeys);
-		reassignPropertys(FileCreated.class, current, currentCreated);
-		reassignPropertys(FileRevision.class, current, currentRevision);
-		reassignPropertys(FileKeep.class, current, currentKeep);
-		// write resulting object
-		return write(dir, current);
-	}
-
-	protected <T> void verifyExists(File dir, Class<T> type, FileParams keys) {
-		if (!exists(dir, type, keys)) {
-			throw new FileStorageNotFoundException(
-					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
-		}
-	}
-
-	protected <A extends Annotation, T> void reassignPropertys(Class<A> annotation, T current, PairValue<A>[] pairs)
-			throws IllegalAccessException, InvocationTargetException {
-		for (PairValue<A> c : pairs) {
-			if (log.isInfoEnabled()) {
-				log.info("Return " + annotation.getSimpleName() + ": {}={}", c.getName(), c.getValue());
-			}
-			trySetProperty(current, c.getName(), c.getValue());
-		}
-	}
-
-	protected <T> void trySetProperty(T current, String name, Object value)
-			throws IllegalAccessException, InvocationTargetException {
-		try {
-			PropertyUtils.setProperty(current, name, value);
-		} catch (NoSuchMethodException e) {
-			throw new FileStoragePropertyNotFoundException(name, current, e);
-		}
+	protected <T> void writeToFile(File target, T instance) {
+		serializer.writeValue(target, instance);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -476,6 +432,13 @@ public class FileStorageImpl implements IFileStorage {
 		return write(dir, current);
 	}
 
+	protected <T> void verifyExists(File dir, Class<T> type, FileParams keys) {
+		if (!exists(dir, type, keys)) {
+			throw new FileStorageNotFoundException(
+					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
+		}
+	}
+
 	protected <A extends Annotation, T> void validateProperty(Class<A> annotation, Class<T> type, String property,
 			T current) {
 		PairValue<A>[] values = UtilAnnotations.getValues(annotation, type, current);
@@ -484,6 +447,15 @@ public class FileStorageImpl implements IFileStorage {
 				throw new FileStorageException("Update of @" + annotation.getSimpleName() + " annotated property '"
 						+ c.getName() + "' is not allowed.", null);
 			}
+		}
+	}
+
+	protected <T> void trySetProperty(T current, String name, Object value)
+			throws IllegalAccessException, InvocationTargetException {
+		try {
+			PropertyUtils.setProperty(current, name, value);
+		} catch (NoSuchMethodException e) {
+			throw new FileStoragePropertyNotFoundException(name, current, e);
 		}
 	}
 
@@ -521,7 +493,7 @@ public class FileStorageImpl implements IFileStorage {
 
 		Map<String, Object> result = new LinkedHashMap<>();
 		for (Object n : selection) {
-			String property = String.valueOf(n);
+			String property = String.valueOf(n).trim();
 			result.put(property, tryGetProperty(current, property));
 		}
 		return result;
@@ -551,14 +523,15 @@ public class FileStorageImpl implements IFileStorage {
 		File root = resourceDir(entityDir(dir, type, keys));
 		if (path != null) {
 			File contentFile = new File(root, path);
-			// SECURITY: avoid attempt to override files in higher locations as /etc
-			if (!contentFile.getCanonicalPath().startsWith(root.getCanonicalPath())) {
-				throw new FileStorageException("Cannot read location of resources in a higher file structure. " + path,
-						null);
-			}
+			verifySecurity(root, contentFile, path);
 			root = new File(root, path);
 		}
 		return root;
+	}
+
+	@Override
+	public <T> boolean existsResource(File dir, Class<T> type, FileParams keys, String path) {
+		return locationResource(dir, type, keys, path).exists();
 	}
 
 	@Override
@@ -584,7 +557,7 @@ public class FileStorageImpl implements IFileStorage {
 				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 
 		// force change flags like revision and updated
-		T result = merge(dir, type, keys, read(dir, type, keys));
+		T result = write(dir, type, read(dir, type, keys));
 
 		if (log.isInfoEnabled()) {
 			log.info("Resource written: " + metadata);
@@ -701,7 +674,7 @@ public class FileStorageImpl implements IFileStorage {
 		FileUtils.delete(metadataFile);
 
 		// force change flags like revision and updated
-		T result = merge(dir, type, keys, read(dir, type, keys));
+		T result = write(dir, type, read(dir, type, keys));
 
 		if (log.isInfoEnabled()) {
 			log.info("Resource deleted: " + path);

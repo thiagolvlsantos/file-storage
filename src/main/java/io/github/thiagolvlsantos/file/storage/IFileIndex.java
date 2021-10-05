@@ -2,13 +2,16 @@ package io.github.thiagolvlsantos.file.storage;
 
 import java.io.File;
 
+import io.github.thiagolvlsantos.file.storage.annotations.PairValue;
+import io.github.thiagolvlsantos.file.storage.identity.FileId;
+
 public interface IFileIndex {
 
 	String IDS = "ids";
 
 	String KEYS = "keys";
 
-	Long next(File dir);
+	Object next(File dir, PairValue<FileId> info);
 
 	<T> void bind(File dir, T instance);
 

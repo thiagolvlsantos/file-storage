@@ -10,24 +10,35 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.file.storage.IFileIndex;
+import io.github.thiagolvlsantos.file.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.file.storage.annotations.UtilAnnotations;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
+import io.github.thiagolvlsantos.file.storage.identity.FileId;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class FileIndexImpl implements IFileIndex {
+
+	private Object lock = new Object();
 
 	@Override
 	@SneakyThrows
-	public Long next(File dir) {
+	public Object next(File dir, PairValue<FileId> info) {
 		Long current = 0L;
-		File file = new File(dir, ".current");
-		if (file.exists()) {
-			current = Long.valueOf(Files.readString(file.toPath()));
+		synchronized (lock) {
+			File file = new File(dir, ".current");
+			if (file.exists()) {
+				current = Long.valueOf(Files.readString(file.toPath()));
+			}
+			current = current + 1;
+			if (log.isInfoEnabled()) {
+				log.info("Next id for '" + info.getName() + "'=" + current);
+			}
+			Files.write(file.toPath(), String.valueOf(current).getBytes(), StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 		}
-		current = current + 1;
-		Files.write(file.toPath(), String.valueOf(current).getBytes(), StandardOpenOption.CREATE,
-				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 		return current;
 	}
 
@@ -42,8 +53,9 @@ public class FileIndexImpl implements IFileIndex {
 			throw new FileStorageException("Could not create index directory: " + index, null);
 		}
 
-		Object[] ids = UtilAnnotations.getIds(instance.getClass(), instance);
-		Object[] keys = UtilAnnotations.getKeys(instance.getClass(), instance);
+		Class<? extends Object> clazz = instance.getClass();
+		Object[] ids = UtilAnnotations.getIds(clazz, instance);
+		Object[] keys = UtilAnnotations.getKeys(clazz, instance);
 
 		File id2Keys = ids(dir, ids);
 		File id2KeysParent = id2Keys.getParentFile();
@@ -68,7 +80,9 @@ public class FileIndexImpl implements IFileIndex {
 
 	@Override
 	public <T> void unbind(File dir, T instance) {
-		File ids2Keys = ids(dir, UtilAnnotations.getIds(instance.getClass(), instance));
+		Class<? extends Object> clazz = instance.getClass();
+
+		File ids2Keys = ids(dir, UtilAnnotations.getIds(clazz, instance));
 		if (ids2Keys.exists()) {
 			try {
 				Files.delete(ids2Keys.toPath());
@@ -77,7 +91,7 @@ public class FileIndexImpl implements IFileIndex {
 			}
 		}
 
-		File keys2Id = keys(dir, UtilAnnotations.getKeys(instance.getClass(), instance));
+		File keys2Id = keys(dir, UtilAnnotations.getKeys(clazz, instance));
 		if (keys2Id.exists()) {
 			try {
 				Files.delete(keys2Id.toPath());

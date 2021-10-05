@@ -24,8 +24,6 @@ public interface IFileStorageTyped<T> {
 
 	T write(File dir, T instance);
 
-	T merge(File dir, FileParams keys, T instance);
-
 	T read(File dir, T example);
 
 	T read(File dir, FileParams keys);
@@ -49,6 +47,8 @@ public interface IFileStorageTyped<T> {
 	// +------------- RESOURCE METHODS ------------------+
 
 	File locationResource(File dir, FileParams keys, String path);
+
+	boolean existsResource(File dir, FileParams keys, String path);
 
 	T setResource(File dir, FileParams keys, Resource resource);
 
