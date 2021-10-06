@@ -17,7 +17,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FileParams implements Iterable<Object> {
 
-	private static final String SEPARATOR = "_";
+	private static final String SEPARATOR = ";";
 
 	private Object[] keys;
 
