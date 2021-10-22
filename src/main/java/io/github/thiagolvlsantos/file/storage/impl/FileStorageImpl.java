@@ -76,6 +76,11 @@ public class FileStorageImpl implements IFileStorage {
 		return serializer;
 	}
 
+	@Override
+	public void setSerializer(IFileSerializer serializer) {
+		this.serializer = serializer;
+	}
+
 	// +------------- ENTITY METHODS ------------------+
 
 	@SuppressWarnings("unchecked")

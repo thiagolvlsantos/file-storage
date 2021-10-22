@@ -36,6 +36,11 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 		return storage.getSerializer();
 	}
 
+	@Override
+	public void setSerializer(IFileSerializer serializer) {
+		storage.setSerializer(serializer);
+	}
+
 	// +------------- ENTITY METHODS ------------------+
 
 	@Override

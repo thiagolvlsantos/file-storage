@@ -12,6 +12,8 @@ public interface IFileStorageTyped<T> {
 
 	IFileSerializer getSerializer();
 
+	void setSerializer(IFileSerializer serializer);
+
 	// +------------- ENTITY METHODS ------------------+
 
 	File location(File dir, T example);

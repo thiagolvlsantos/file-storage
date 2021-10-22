@@ -10,6 +10,8 @@ public interface IFileStorage {
 
 	IFileSerializer getSerializer();
 
+	void setSerializer(IFileSerializer serializer);
+
 	// +------------- ENTITY METHODS ------------------+
 
 	<T> File location(File dir, T example);
