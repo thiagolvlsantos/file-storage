@@ -168,7 +168,7 @@ The default implementation saves/restores objects in `JSON` format which can be 
 You can change it using `setSerializer(...)` on `IFileStorage` interafce.
 
 ## Performing queries on objects
-Call `IFileStorage` passing a `Predicate` object which will be user as filter for selection.
+Call `IFileStorage` passing a `Predicate` object which will be used as filter for selection.
 
 ```java
 ...
@@ -198,14 +198,14 @@ private List<Project> query(Predicate<Project> filter) {
 ### Pagination and Sorting are always optional
 You can use, or not, `FilePaging` and `FileSorting` for paging and sorting on any search methods, for objects or resources.
 
-## Resources
+## Resources - **new object dimension built-in service**
 An extension of object concept to cope also files as part of object elements besides attributes and methods. 
 
-For example, suppose an entity called `Template`, it can have a name attribute, and a content attribute. Depending on how much templates are possible with that name we could have to crate a list attribute to keep track on then. 
+For example, suppose an entity called `Template`, it can have a name attribute, and a content attribute. Depending on how much templates are possible with that name we could have to create a list attribute to keep track on then. 
 
-but could be just an object with a name, and the templates related to that name could be saved as resources in `/data/@templates/mytemplate/@resources`.
+Another option is just have an attribute with a name, and the templates related to that template instance saved as resources in `/data/@templates/mytemplate/@resources`.
 
-Check `IFileStorage.*Resource*()` methods to save/update/query these extra object dimension.
+Check `IFileStorage.*Resource*()` methods to save/update/query this feature.
 
 # Using `file-storage` in conjuction with `git-transactions`
 Imagine a world without databases (I didn`t say without 'data'), a scenario where you already have object keys to access information in a straightforward manner. Yes, you can do it by using a NoSql database, but you already have your file system and can use it to navigate/edit your data. 
