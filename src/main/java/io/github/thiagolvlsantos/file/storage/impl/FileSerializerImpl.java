@@ -30,6 +30,11 @@ public class FileSerializerImpl implements IFileSerializer {
 	private ObjectMapper mapperClean;
 	private ObjectMapper mapper;
 
+	@Override
+	public String getExtension() {
+		return "json";
+	}
+
 	@PostConstruct
 	public void configure() {
 		mapperClean = configure(new ObjectMapper());

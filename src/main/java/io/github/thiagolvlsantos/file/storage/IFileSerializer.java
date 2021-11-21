@@ -5,6 +5,8 @@ import java.lang.reflect.AnnotatedType;
 
 public interface IFileSerializer {
 
+	String getExtension();
+
 	<T> T decode(byte[] data, Class<T> type);
 
 	Object decode(String data, AnnotatedType type);

@@ -200,7 +200,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> File entityFile(File dir, Class<T> type, FileParams keys) {
-		return new File(entityDir(dir, type, keys), "meta.json");
+		return new File(entityDir(dir, type, keys), "meta." + serializer.getExtension());
 	}
 
 	protected <T> void initIds(File dir, Class<T> type, PairValue<FileId>[] ids, T instance) {
@@ -577,7 +577,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected File resourceMeta(File entityDir, String path) {
-		return new File(entityDir, path + ".meta.json");
+		return new File(entityDir, path + ".meta." + serializer.getExtension());
 	}
 
 	@Override
@@ -632,12 +632,13 @@ public class FileStorageImpl implements IFileStorage {
 		final Predicate<Object> predicate = filter(filter);
 
 		List<Resource> result = new LinkedList<>();
+		final String ignoreFile = ".meta." + serializer.getExtension();
 		Files.walkFileTree(Paths.get(root.toURI()), new SimpleFileVisitor<Path>() {
 			@Override
 			public FileVisitResult visitFile(Path contentFile, BasicFileAttributes attrs) throws IOException {
 				File file = contentFile.toFile();
 				String name = file.getName();
-				if (!name.endsWith(".meta.json") && !name.equals(".keep")) {
+				if (!name.endsWith(ignoreFile) && !name.equals(".keep")) {
 					File metadataFile = resourceMeta(file.getParentFile(), name);
 					if (log.isInfoEnabled()) {
 						log.info("Loading..." + contentFile);
