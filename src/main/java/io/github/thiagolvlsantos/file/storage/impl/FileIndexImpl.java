@@ -33,9 +33,7 @@ public class FileIndexImpl implements IFileIndex {
 				current = Long.valueOf(Files.readString(file.toPath()));
 			}
 			current = current + 1;
-			if (log.isInfoEnabled()) {
-				log.info("Next id for '" + info.getName() + "'=" + current);
-			}
+			log.info("Next id for '{}'={}", info.getName(), current);
 			Files.write(file.toPath(), String.valueOf(current).getBytes(), StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 		}

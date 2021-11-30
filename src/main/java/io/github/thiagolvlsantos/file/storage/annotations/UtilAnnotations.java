@@ -89,18 +89,14 @@ public class UtilAnnotations {
 				}
 			}
 		});
-		if (log.isInfoEnabled()) {
-			log.info("keys: {}", path);
-		}
+		log.info("keys: {}", path);
 		return path.toArray(new Object[0]);
 	}
 
 	public static Object[] getIds(Class<?> type, Object instance) {
 		PairValue<FileId>[] ids = UtilAnnotations.getValues(FileId.class, type, instance);
 		Object[] result = Stream.of(ids).map(PairValue::getValue).toArray();
-		if (log.isInfoEnabled()) {
-			log.info("ids: {}", Arrays.toString(result));
-		}
+		log.info("ids: {}", Arrays.toString(result));
 		return result;
 	}
 }

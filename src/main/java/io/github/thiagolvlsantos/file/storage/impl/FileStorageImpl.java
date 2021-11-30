@@ -120,17 +120,13 @@ public class FileStorageImpl implements IFileStorage {
 		for (Object k : keys) {
 			path = new File(path, String.valueOf(k));
 		}
-		if (log.isDebugEnabled()) {
-			log.debug("path: {}", path);
-		}
+		log.debug("path: {}", path);
 		return path;
 	}
 
 	protected <T> File entityRoot(File dir, Class<T> type) {
 		FileEntity entity = AnnotationUtils.findAnnotation(type, FileEntity.class);
-		if (log.isDebugEnabled()) {
-			log.debug("entity: {}", entity);
-		}
+		log.debug("entity: {}", entity);
 		if (entity == null) {
 			throw new FileStorageException("Entity is not annotated with @FileEntity.", null);
 		}
@@ -154,13 +150,9 @@ public class FileStorageImpl implements IFileStorage {
 		}
 
 		PairValue<FileId>[] idFields = UtilAnnotations.getValues(FileId.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("ids: {}", Arrays.toString(idFields));
-		}
+		log.info("ids: {}", Arrays.toString(idFields));
 		PairValue<FileCreated>[] createdFields = UtilAnnotations.getValues(FileCreated.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("created: {}", Arrays.toString(createdFields));
-		}
+		log.info("created: {}", Arrays.toString(createdFields));
 		if (!file.exists()) {
 			File parent = file.getParentFile();
 			if (!parent.mkdirs()) {
@@ -173,22 +165,16 @@ public class FileStorageImpl implements IFileStorage {
 			keepValues(old, createdFields, instance);
 
 			PairValue<FileKeep>[] keepFields = UtilAnnotations.getValues(FileKeep.class, type, instance);
-			if (log.isInfoEnabled()) {
-				log.info("keep: {}", Arrays.toString(keepFields));
-			}
+			log.info("keep: {}", Arrays.toString(keepFields));
 			keepValues(old, keepFields, instance);
 		}
 
 		PairValue<FileRevision>[] revisions = UtilAnnotations.getValues(FileRevision.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("revisions: {}", Arrays.toString(revisions));
-		}
+		log.info("revisions: {}", Arrays.toString(revisions));
 		prepareRevisions(dir, type, revisions, instance, old);
 
 		PairValue<FileChanged>[] changed = UtilAnnotations.getValues(FileChanged.class, type, instance);
-		if (log.isInfoEnabled()) {
-			log.info("changed: {}", Arrays.toString(changed));
-		}
+		log.info("changed: {}", Arrays.toString(changed));
 		prepareChanged(dir, type, changed, instance);
 
 		writeToFile(file, instance);
@@ -210,9 +196,7 @@ public class FileStorageImpl implements IFileStorage {
 				Object nextId = idManager.next(entityRoot(dir, type), c);
 				c.set(instance, nextId);
 				idManager.bind(entityRoot(dir, type), instance);
-				if (log.isInfoEnabled()) {
-					log.info("new id: {}", c.get(instance));
-				}
+				log.info("new id: {}", c.get(instance));
 			}
 		}
 	}
@@ -222,9 +206,7 @@ public class FileStorageImpl implements IFileStorage {
 			Object obj = c.get(instance);
 			if (obj == null) {
 				c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
-				if (log.isInfoEnabled()) {
-					log.info("new created: {}", c.get(instance));
-				}
+				log.info("new created: {}", c.get(instance));
 			}
 		}
 	}
@@ -238,9 +220,7 @@ public class FileStorageImpl implements IFileStorage {
 	protected <T> void prepareChanged(File dir, Class<T> type, PairValue<FileChanged>[] changed, T instance) {
 		for (PairValue<FileChanged> c : changed) {
 			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
-			if (log.isInfoEnabled()) {
-				log.info("new changed: {}", c.get(instance));
-			}
+			log.info("new changed: {}", c.get(instance));
 		}
 	}
 
@@ -248,9 +228,7 @@ public class FileStorageImpl implements IFileStorage {
 		for (PairValue<?> c : values) {
 			Object obj = c.get(old);
 			c.set(instance, obj);
-			if (log.isInfoEnabled()) {
-				log.info("'{}', keeped: {}", c.getName(), c.get(instance));
-			}
+			log.info("'{}', keeped: {}", c.getName(), c.get(instance));
 		}
 	}
 
@@ -279,9 +257,7 @@ public class FileStorageImpl implements IFileStorage {
 				obj = current.longValue() + 1;
 			}
 			c.set(instance, obj);
-			if (log.isInfoEnabled()) {
-				log.info("new revision: {}", obj);
-			}
+			log.info("new revision: {}", obj);
 		}
 	}
 
@@ -356,10 +332,7 @@ public class FileStorageImpl implements IFileStorage {
 				try {
 					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
 				} catch (Throwable e) {
-					if (log.isErrorEnabled()) {
-						log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.",
-								e);
-					}
+					log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.", e);
 				}
 			}
 		}
@@ -516,9 +489,7 @@ public class FileStorageImpl implements IFileStorage {
 				Files.write(keep.toPath(), "Forcing directory existence.".getBytes(), StandardOpenOption.CREATE,
 						StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 			}
-			if (log.isInfoEnabled()) {
-				log.info("Resources created={}", created);
-			}
+			log.info("Resources created={}", created);
 		}
 	}
 
@@ -565,9 +536,7 @@ public class FileStorageImpl implements IFileStorage {
 		// force change flags like revision and updated
 		T result = write(dir, type, read(dir, type, keys));
 
-		if (log.isInfoEnabled()) {
-			log.info("Resource written: " + metadata);
-		}
+		log.info("Resource written: {}", metadata);
 
 		return result;
 	}
@@ -640,9 +609,7 @@ public class FileStorageImpl implements IFileStorage {
 				String name = file.getName();
 				if (!name.endsWith(ignoreFile) && !name.equals(".keep")) {
 					File metadataFile = resourceMeta(file.getParentFile(), name);
-					if (log.isInfoEnabled()) {
-						log.info("Loading..." + contentFile);
-					}
+					log.info("Loading... {}", contentFile);
 					ResourceMetadata metadata = serializer.decode(Files.readAllBytes(metadataFile.toPath()),
 							ResourceMetadata.class);
 					ResourceContent content = ResourceContent.builder().data(Files.readAllBytes(contentFile)).build();
@@ -683,9 +650,7 @@ public class FileStorageImpl implements IFileStorage {
 		// force change flags like revision and updated
 		T result = write(dir, type, read(dir, type, keys));
 
-		if (log.isInfoEnabled()) {
-			log.info("Resource deleted: " + path);
-		}
+		log.info("Resource deleted: {}", path);
 
 		return result;
 	}
