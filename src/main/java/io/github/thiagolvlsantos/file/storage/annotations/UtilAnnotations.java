@@ -9,12 +9,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import io.github.thiagolvlsantos.file.storage.FileAlias;
+import io.github.thiagolvlsantos.file.storage.FileParams;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
 import io.github.thiagolvlsantos.file.storage.identity.FileKey;
@@ -91,6 +93,11 @@ public class UtilAnnotations {
 		});
 		log.info("keys: {}", path);
 		return path.toArray(new Object[0]);
+	}
+
+	public static String getKeysChain(Class<?> type, Object instance) {
+		return Arrays.stream(UtilAnnotations.getKeys(type, instance)).map(o -> String.valueOf(o))
+				.collect(Collectors.joining(FileParams.SEPARATOR));
 	}
 
 	public static Object[] getIds(Class<?> type, Object instance) {
