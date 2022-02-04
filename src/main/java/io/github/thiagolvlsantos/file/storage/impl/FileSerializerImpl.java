@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,6 +30,8 @@ public class FileSerializerImpl implements IFileSerializer {
 
 	private ObjectMapper mapperClean;
 	private ObjectMapper mapper;
+	@Value("${gitt.storage.serializer.wrap:false}")
+	private boolean wrap;
 
 	@Override
 	public String getExtension() {
@@ -39,8 +42,10 @@ public class FileSerializerImpl implements IFileSerializer {
 	public void configure() {
 		mapperClean = configure(new ObjectMapper());
 		mapper = configure(new ObjectMapper());
-		mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
-				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
+		if (wrap) {
+			mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
+					ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
+		}
 	}
 
 	private ObjectMapper configure(ObjectMapper mapper) {
@@ -92,8 +97,14 @@ public class FileSerializerImpl implements IFileSerializer {
 			throw new FileStorageNotFoundException("Object not found.", null);
 		}
 		try {
-			ObjectWrapper wrapper = mapper.readValue(file, ObjectWrapper.class);
-			return type.cast(wrapper.getObject());
+			Object obj = null;
+			if (wrap) {
+				ObjectWrapper wrapper = mapper.readValue(file, ObjectWrapper.class);
+				obj = wrapper.getObject();
+			} else {
+				obj = mapper.readValue(file, type);
+			}
+			return type.cast(obj);
 		} catch (IOException e) {
 			throw new FileStorageException("Could not read object.", e);
 		}
@@ -102,7 +113,7 @@ public class FileSerializerImpl implements IFileSerializer {
 	@Override
 	public <T> void writeValue(File file, T instance) {
 		try {
-			mapper.writeValue(file, new ObjectWrapper(instance));
+			mapper.writeValue(file, wrap ? new ObjectWrapper(instance) : instance);
 		} catch (IOException e) {
 			throw new FileStorageException("Could not write object.", e);
 		}
