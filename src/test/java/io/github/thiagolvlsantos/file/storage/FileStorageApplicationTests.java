@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,15 +93,10 @@ class FileStorageApplicationTests {
 					null);
 			assertTrue(allAuthorizations.size() == 3);
 
-			List<TemplateAuthorization> filterAuthorizations = storage.list(dir, TemplateAuthorization.class,
-					FilePredicate.builder().filter(new Predicate<Object>() {
-
-						@Override
-						public boolean test(Object t) {
-							return ((TemplateAuthorization) t).getTemplate().getName().equals("k8s-job");
-						}
-
-					}).build(), null, null);
+			FilePredicate predicate = new FilePredicate(
+					factory.read("{\"template.name\":{\"$eq\": \"k8s-job\"}}".getBytes()));
+			List<TemplateAuthorization> filterAuthorizations = storage.list(dir, TemplateAuthorization.class, predicate,
+					null, null);
 			assertTrue(filterAuthorizations.size() == 1);
 		} finally {
 			try {
