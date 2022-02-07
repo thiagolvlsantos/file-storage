@@ -17,11 +17,11 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
-@FileEntity(TemplateAuthorization.REPO)
-@FileEntityName("authorization")
+@FileEntity(Template.REPO)
+@FileEntityName(TemplateAuthorization.NAME)
 public class TemplateAuthorization extends IdObjectVersionedAuditable {
 
-	public static final String REPO = "templates";
+	public static final String NAME = "authorization";
 
 	@FileKey
 	private TemplateAlias template;
