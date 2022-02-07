@@ -5,7 +5,9 @@ import java.lang.reflect.AnnotatedType;
 
 public interface IFileSerializer {
 
-	String getExtension();
+	<T> String getFile(Class<T> type);
+
+	<T> boolean isWrapped(Class<T> type);
 
 	<T> T decode(byte[] data, Class<T> type);
 

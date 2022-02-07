@@ -2,6 +2,8 @@ package io.github.thiagolvlsantos.file.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +26,19 @@ import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotF
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageResourceNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageSecurityException;
 import io.github.thiagolvlsantos.file.storage.objects.InvalidRevision;
+import io.github.thiagolvlsantos.file.storage.objects.ObjectMeta;
+import io.github.thiagolvlsantos.file.storage.objects.ObjectOther;
+import io.github.thiagolvlsantos.file.storage.objects.ObjectWrapped;
 import io.github.thiagolvlsantos.file.storage.objects.Outlier;
 import io.github.thiagolvlsantos.file.storage.objects.OutlierStorage;
 import io.github.thiagolvlsantos.file.storage.objects.Project;
 import io.github.thiagolvlsantos.file.storage.objects.ProjectStorage;
 import io.github.thiagolvlsantos.file.storage.objects.SubProject;
+import io.github.thiagolvlsantos.file.storage.objects.Target;
+import io.github.thiagolvlsantos.file.storage.objects.TargetAlias;
+import io.github.thiagolvlsantos.file.storage.objects.Template;
+import io.github.thiagolvlsantos.file.storage.objects.TemplateAlias;
+import io.github.thiagolvlsantos.file.storage.objects.TemplateAuthorization;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
@@ -39,6 +50,125 @@ import io.github.thiagolvlsantos.json.predicate.impl.PredicateFactoryJson;
 class FileStorageApplicationTests {
 
 	private IPredicateFactory factory = new PredicateFactoryJson();
+
+	@Test
+	void testTree(@Autowired ApplicationContext context) {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			Template template = Template.builder().name("k8s-app").build();
+			storage.write(dir, template);
+
+			Template template2 = Template.builder().name("k8s-job").build();
+			storage.write(dir, template2);
+
+			Target dev = Target.builder().name("dev").build();
+			storage.write(dir, dev);
+
+			Target pro = Target.builder().name("pro").build();
+			storage.write(dir, pro);
+
+			TemplateAuthorization taDev = TemplateAuthorization.builder()
+					.template(TemplateAlias.builder().name("k8s-app").build())
+					.target(TargetAlias.builder().name("dev").build()).build();
+
+			storage.write(dir, taDev);
+
+			TemplateAuthorization taPro = TemplateAuthorization.builder()
+					.template(TemplateAlias.builder().name("k8s-app").build())
+					.target(TargetAlias.builder().name("pro").build()).build();
+
+			storage.write(dir, taPro);
+
+			TemplateAuthorization taDevJob = TemplateAuthorization.builder()
+					.template(TemplateAlias.builder().name("k8s-job").build())
+					.target(TargetAlias.builder().name("dev").build()).build();
+
+			storage.write(dir, taDevJob);
+
+			List<Target> allTargets = storage.list(dir, Target.class, null, null, null);
+			assertTrue(allTargets.size() == 2);
+			List<Template> allTemplates = storage.list(dir, Template.class, null, null, null);
+			assertTrue(allTemplates.size() == 2);
+			List<TemplateAuthorization> allAuthorizations = storage.list(dir, TemplateAuthorization.class, null, null,
+					null);
+			assertTrue(allAuthorizations.size() == 3);
+
+			List<TemplateAuthorization> filterAuthorizations = storage.list(dir, TemplateAuthorization.class,
+					FilePredicate.builder().filter(new Predicate<Object>() {
+
+						@Override
+						public boolean test(Object t) {
+							return ((TemplateAuthorization) t).getTemplate().getName().equals("k8s-job");
+						}
+
+					}).build(), null, null);
+			assertTrue(filterAuthorizations.size() == 1);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testWrapped(@Autowired ApplicationContext context) {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			ObjectWrapped instance = ObjectWrapped.builder().name("myName").build();
+			storage.write(dir, instance);
+			IFileSerializer ser = storage.getSerializer();
+			File target = new File(storage.location(dir, instance), ser.getFile(ObjectWrapped.class));
+			assertTrue(target.exists());
+			instance = storage.read(dir, ObjectWrapped.class, FileParams.of("myName"));
+			assertEquals(instance.getName(), "myName");
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testSavingWithNameMeta(@Autowired ApplicationContext context) {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			final ObjectMeta instance = ObjectMeta.builder().name("myName").build();
+			storage.write(dir, instance);
+			File target = storage.location(dir, instance);
+			assertTrue(target.exists());
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testSavingWithNameOther(@Autowired ApplicationContext context) {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			final ObjectOther instance = ObjectOther.builder().name("myName").build();
+			storage.write(dir, instance);
+			File target = storage.location(dir, instance);
+			assertTrue(target.exists());
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	@Test
 	void testInvalidEntityRevision(@Autowired ApplicationContext context) {

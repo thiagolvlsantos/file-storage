@@ -35,6 +35,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
 import io.github.thiagolvlsantos.file.storage.FileEntity;
+import io.github.thiagolvlsantos.file.storage.FileEntityName;
 import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
 import io.github.thiagolvlsantos.file.storage.FilePredicate;
@@ -130,7 +131,7 @@ public class FileStorageImpl implements IFileStorage {
 		if (entity == null) {
 			throw new FileStorageException("Entity is not annotated with @FileEntity.", null);
 		}
-		return new File(dir, "@" + entity.value());
+		return new File(dir, "@" + entity.value().replace("/", "/@"));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -186,14 +187,14 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> File entityFile(File dir, Class<T> type, FileParams keys) {
-		return new File(entityDir(dir, type, keys), "meta." + serializer.getExtension());
+		return new File(entityDir(dir, type, keys), serializer.getFile(type));
 	}
 
 	protected <T> void initIds(File dir, Class<T> type, PairValue<FileId>[] ids, T instance) {
 		for (PairValue<FileId> c : ids) {
 			Object obj = c.get(instance);
 			if (obj == null) {
-				Object nextId = idManager.next(entityRoot(dir, type), c);
+				Object nextId = idManager.next(entityRoot(dir, type), instance, c);
 				c.set(instance, nextId);
 				idManager.bind(entityRoot(dir, type), instance);
 				log.info("new id: {}", c.get(instance));
@@ -325,7 +326,7 @@ public class FileStorageImpl implements IFileStorage {
 	@SneakyThrows
 	protected <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
 		List<T> result = new LinkedList<>();
-		File[] ids = idManager.directory(entityRoot(dir, type), IFileIndex.IDS).listFiles();
+		File[] ids = idManager.directory(entityRoot(dir, type), type, IFileIndex.IDS).listFiles();
 		if (ids != null) {
 			for (File f : ids) {
 				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
@@ -481,7 +482,7 @@ public class FileStorageImpl implements IFileStorage {
 	// +------------- RESOURCE METHODS ------------------+
 
 	protected <T> void initResources(File dir, Class<T> type, FileParams keys) throws IOException {
-		File resourceDir = resourceDir(entityDir(dir, type, keys));
+		File resourceDir = resourceDir(entityDir(dir, type, keys), type);
 		if (!resourceDir.exists()) {
 			boolean created = resourceDir.mkdirs();
 			if (created) {
@@ -497,7 +498,7 @@ public class FileStorageImpl implements IFileStorage {
 	@SneakyThrows
 	public <T> File locationResource(File dir, Class<T> type, FileParams keys, String path) {
 		verifyExists(dir, type, keys);
-		File root = resourceDir(entityDir(dir, type, keys));
+		File root = resourceDir(entityDir(dir, type, keys), type);
 		if (path != null) {
 			File contentFile = new File(root, path);
 			verifySecurity(root, contentFile, path);
@@ -515,7 +516,7 @@ public class FileStorageImpl implements IFileStorage {
 	@SneakyThrows
 	public <T> T setResource(File dir, Class<T> type, FileParams keys, Resource resource) {
 		verifyExists(dir, type, keys);
-		File root = resourceDir(entityDir(dir, type, keys));
+		File root = resourceDir(entityDir(dir, type, keys), type);
 
 		ResourceMetadata metadata = resource.getMetadata();
 		String path = metadata.getPath();
@@ -526,7 +527,7 @@ public class FileStorageImpl implements IFileStorage {
 		Files.write(contentFile.toPath(), resource.getContent().getData(), StandardOpenOption.CREATE,
 				StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 
-		File metadataFile = resourceMeta(root, path);
+		File metadataFile = resourceMeta(root, path, type);
 		FileUtils.prepare(metadataFile);
 		metadata.setTimestamp(LocalDateTime.ofInstant(Instant.ofEpochMilli(contentFile.lastModified()),
 				TimeZone.getDefault().toZoneId()));
@@ -541,19 +542,29 @@ public class FileStorageImpl implements IFileStorage {
 		return result;
 	}
 
-	protected File resourceDir(File entityDir) {
-		return new File(entityDir, "@resources");
+	protected File resourceDir(File entityDir, Class<?> type) {
+		return new File(entityDir, "@resources" + suffix(type));
 	}
 
-	protected File resourceMeta(File entityDir, String path) {
-		return new File(entityDir, path + ".meta." + serializer.getExtension());
+	private String suffix(Class<?> type) {
+		if (type != null) {
+			FileEntityName name = AnnotationUtils.findAnnotation(type, FileEntityName.class);
+			if (name != null) {
+				return "." + name.value();
+			}
+		}
+		return "";
+	}
+
+	protected File resourceMeta(File entityDir, String path, Class<?> type) {
+		return new File(entityDir, path + "." + serializer.getFile(type));
 	}
 
 	@Override
 	@SneakyThrows
 	public <T> Resource getResource(File dir, Class<T> type, FileParams keys, String path) {
 		verifyExists(dir, type, keys);
-		File root = resourceDir(entityDir(dir, type, keys));
+		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
 
 		File contentFile = new File(root, path);
@@ -561,7 +572,7 @@ public class FileStorageImpl implements IFileStorage {
 		verifyResourceExists(contentFile, path);
 
 		ResourceContent content = new ResourceContent(Files.readAllBytes(contentFile.toPath()));
-		File metadataFile = resourceMeta(root, path);
+		File metadataFile = resourceMeta(root, path, type);
 		ResourceMetadata meta = serializer.decode(Files.readAllBytes(metadataFile.toPath()), ResourceMetadata.class);
 		return Resource.builder().metadata(meta).content(content).build();
 	}
@@ -595,20 +606,20 @@ public class FileStorageImpl implements IFileStorage {
 	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePredicate filter,
 			FilePaging paging, FileSorting sorting) {
 		verifyExists(dir, type, keys);
-		File root = resourceDir(entityDir(dir, type, keys));
+		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
 
 		final Predicate<Object> predicate = filter(filter);
 
 		List<Resource> result = new LinkedList<>();
-		final String ignoreFile = ".meta." + serializer.getExtension();
+		final String ignoreFile = "." + serializer.getFile(type);
 		Files.walkFileTree(Paths.get(root.toURI()), new SimpleFileVisitor<Path>() {
 			@Override
 			public FileVisitResult visitFile(Path contentFile, BasicFileAttributes attrs) throws IOException {
 				File file = contentFile.toFile();
 				String name = file.getName();
 				if (!name.endsWith(ignoreFile) && !name.equals(".keep")) {
-					File metadataFile = resourceMeta(file.getParentFile(), name);
+					File metadataFile = resourceMeta(file.getParentFile(), name, type);
 					log.info("Loading... {}", contentFile);
 					ResourceMetadata metadata = serializer.decode(Files.readAllBytes(metadataFile.toPath()),
 							ResourceMetadata.class);
@@ -635,14 +646,14 @@ public class FileStorageImpl implements IFileStorage {
 	@SneakyThrows
 	public <T> T deleteResource(File dir, Class<T> type, FileParams keys, String path) {
 		verifyExists(dir, type, keys);
-		File root = resourceDir(entityDir(dir, type, keys));
+		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
 
 		File contentFile = new File(root, path);
 		verifySecurity(root, contentFile, path);
 		verifyResourceExists(contentFile, path);
 
-		File metadataFile = resourceMeta(root, path);
+		File metadataFile = resourceMeta(root, path, type);
 
 		FileUtils.delete(contentFile);
 		FileUtils.delete(metadataFile);

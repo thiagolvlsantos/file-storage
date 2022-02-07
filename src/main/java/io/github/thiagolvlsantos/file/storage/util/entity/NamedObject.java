@@ -1,4 +1,4 @@
-package io.github.thiagolvlsantos.file.storage.objects.common;
+package io.github.thiagolvlsantos.file.storage.util.entity;
 
 import io.github.thiagolvlsantos.file.storage.identity.FileKey;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
-public class BasicNamedObject extends IdObjectVersionedAuditable {
+public class NamedObject extends IdObjectVersionedAuditable {
 
 	@FileKey(order = 0)
 	@Include

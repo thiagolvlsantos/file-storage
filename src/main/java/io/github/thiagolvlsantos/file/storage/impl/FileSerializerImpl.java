@@ -5,10 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import io.github.thiagolvlsantos.file.storage.FileEntityName;
+import io.github.thiagolvlsantos.file.storage.FileEntityWrapped;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
@@ -28,24 +32,35 @@ import lombok.Setter;
 @Component
 public class FileSerializerImpl implements IFileSerializer {
 
-	private ObjectMapper mapperClean;
 	private ObjectMapper mapper;
-	@Value("${gitt.storage.serializer.wrap:false}")
-	private boolean wrap;
+	private ObjectMapper mapperWrapped;
+	private Map<Class<?>, Boolean> wrapped = new HashMap<>();
 
 	@Override
-	public String getExtension() {
-		return "json";
+	public <T> String getFile(Class<T> type) {
+		String result = "meta";
+		FileEntityName name = AnnotationUtils.findAnnotation(type, FileEntityName.class);
+		if (name != null) {
+			result = name.value();
+		}
+		return result + ".json";
+	}
+
+	@Override
+	public <T> boolean isWrapped(Class<T> type) {
+		Boolean wrap = wrapped.get(type);
+		if (wrap == null) {
+			wrapped.put(type, AnnotationUtils.findAnnotation(type, FileEntityWrapped.class) != null);
+		}
+		return wrapped.get(type);
 	}
 
 	@PostConstruct
 	public void configure() {
-		mapperClean = configure(new ObjectMapper());
 		mapper = configure(new ObjectMapper());
-		if (wrap) {
-			mapper.activateDefaultTypingAsProperty(mapper.getPolymorphicTypeValidator(),
-					ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
-		}
+		mapperWrapped = configure(new ObjectMapper());
+		mapperWrapped.activateDefaultTypingAsProperty(mapperWrapped.getPolymorphicTypeValidator(),
+				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
 	}
 
 	private ObjectMapper configure(ObjectMapper mapper) {
@@ -59,7 +74,7 @@ public class FileSerializerImpl implements IFileSerializer {
 	@Override
 	public <T> T decode(byte[] data, Class<T> type) {
 		try {
-			T tmp = mapperClean.readValue(data, type);
+			T tmp = mapper.readValue(data, type);
 			return type.cast(tmp);
 		} catch (IOException e) {
 			throw new FileStorageException("Could not read value. '" + data + "'", e);
@@ -75,7 +90,7 @@ public class FileSerializerImpl implements IFileSerializer {
 					return type.getType();
 				}
 			};
-			return mapperClean.readValue(data, tr);
+			return mapper.readValue(data, tr);
 		} catch (IOException e) {
 			throw new FileStorageException("Could not read value. '" + data + "'", e);
 		}
@@ -84,7 +99,7 @@ public class FileSerializerImpl implements IFileSerializer {
 	@Override
 	public String encode(Object instance) {
 		try (ByteArrayOutputStream bout = new ByteArrayOutputStream()) {
-			mapperClean.writeValue(bout, instance);
+			mapper.writeValue(bout, instance);
 			return new String(bout.toByteArray());
 		} catch (IOException e) {
 			throw new FileStorageException("Could not write value.", e);
@@ -98,8 +113,8 @@ public class FileSerializerImpl implements IFileSerializer {
 		}
 		try {
 			Object obj = null;
-			if (wrap) {
-				ObjectWrapper wrapper = mapper.readValue(file, ObjectWrapper.class);
+			if (isWrapped(type)) {
+				ObjectWrapper wrapper = mapperWrapped.readValue(file, ObjectWrapper.class);
 				obj = wrapper.getObject();
 			} else {
 				obj = mapper.readValue(file, type);
@@ -113,7 +128,11 @@ public class FileSerializerImpl implements IFileSerializer {
 	@Override
 	public <T> void writeValue(File file, T instance) {
 		try {
-			mapper.writeValue(file, wrap ? new ObjectWrapper(instance) : instance);
+			if (isWrapped(instance.getClass())) {
+				mapperWrapped.writeValue(file, new ObjectWrapper(instance));
+			} else {
+				mapper.writeValue(file, instance);
+			}
 		} catch (IOException e) {
 			throw new FileStorageException("Could not write object.", e);
 		}

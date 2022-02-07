@@ -1,4 +1,4 @@
-package io.github.thiagolvlsantos.file.storage.objects.common;
+package io.github.thiagolvlsantos.file.storage.util.entity;
 
 import java.time.LocalDateTime;
 

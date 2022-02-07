@@ -11,11 +11,11 @@ public interface IFileIndex {
 
 	String KEYS = "keys";
 
-	Object next(File dir, PairValue<FileId> info);
+	Object next(File dir, Object instance, PairValue<FileId> info);
 
 	<T> void bind(File dir, T instance);
 
 	<T> void unbind(File dir, T instance);
 
-	File directory(File dir, String kind);
+	File directory(File dir, Class<?> type, String kind);
 }
