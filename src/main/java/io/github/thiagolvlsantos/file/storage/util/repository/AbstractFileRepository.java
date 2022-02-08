@@ -21,12 +21,12 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 
 @Getter
-public abstract class AbstractRepository<T> {
+public abstract class AbstractFileRepository<T> {
 	private @Autowired IFileStorage storage;
 
 	private Class<T> type;
 
-	public AbstractRepository(Class<T> type) {
+	public AbstractFileRepository(Class<T> type) {
 		this.type = type;
 	}
 
