@@ -14,6 +14,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -36,6 +37,24 @@ public class FileSerializerImpl implements IFileSerializer {
 	private ObjectMapper mapperWrapped;
 	private Map<Class<?>, Boolean> wrapped = new HashMap<>();
 
+	@PostConstruct
+	public void configure() {
+		mapper = configure(new ObjectMapper());
+		mapperWrapped = configure(new ObjectMapper());
+		mapperWrapped.activateDefaultTypingAsProperty(mapperWrapped.getPolymorphicTypeValidator(),
+				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
+	}
+
+	private ObjectMapper configure(ObjectMapper mapper) {
+		mapper = mapper// specific instance
+				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
+				.configure(MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING, true)//
+				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)//
+				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)//
+				.enable(SerializationFeature.INDENT_OUTPUT);
+		return mapper.registerModule(new JavaTimeModule());
+	}
+
 	@Override
 	public <T> String getFile(Class<T> type) {
 		String result = "meta";
@@ -53,22 +72,6 @@ public class FileSerializerImpl implements IFileSerializer {
 			wrapped.put(type, AnnotationUtils.findAnnotation(type, FileEntityWrapped.class) != null);
 		}
 		return wrapped.get(type);
-	}
-
-	@PostConstruct
-	public void configure() {
-		mapper = configure(new ObjectMapper());
-		mapperWrapped = configure(new ObjectMapper());
-		mapperWrapped.activateDefaultTypingAsProperty(mapperWrapped.getPolymorphicTypeValidator(),
-				ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "@class");
-	}
-
-	private ObjectMapper configure(ObjectMapper mapper) {
-		mapper = mapper// specific instance
-				.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)//
-				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)//
-				.enable(SerializationFeature.INDENT_OUTPUT);
-		return mapper.registerModule(new JavaTimeModule());
 	}
 
 	@Override
