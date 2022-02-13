@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 
-import io.github.thiagolvlsantos.file.storage.FileAlias;
 import io.github.thiagolvlsantos.file.storage.FileParams;
+import io.github.thiagolvlsantos.file.storage.entity.FileAliasFor;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
 import io.github.thiagolvlsantos.file.storage.identity.FileKey;
@@ -83,7 +83,7 @@ public class UtilAnnotations {
 			Object value = v.getValue();
 			if (value != null) {
 				Class<?> innerType = value.getClass();
-				FileAlias alias = AnnotationUtils.findAnnotation(innerType, FileAlias.class);
+				FileAliasFor alias = AnnotationUtils.findAnnotation(innerType, FileAliasFor.class);
 				if (alias != null) {
 					Collections.addAll(path, getKeys(innerType, value));
 				} else {

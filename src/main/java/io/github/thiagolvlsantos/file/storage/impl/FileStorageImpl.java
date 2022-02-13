@@ -34,8 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-import io.github.thiagolvlsantos.file.storage.FileEntity;
-import io.github.thiagolvlsantos.file.storage.FileEntityName;
 import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
 import io.github.thiagolvlsantos.file.storage.FilePredicate;
@@ -50,6 +48,8 @@ import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
 import io.github.thiagolvlsantos.file.storage.audit.FileCreated;
 import io.github.thiagolvlsantos.file.storage.audit.IFileInitializer;
 import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
+import io.github.thiagolvlsantos.file.storage.entity.FileName;
+import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotFoundException;
@@ -126,10 +126,11 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> File entityRoot(File dir, Class<T> type) {
-		FileEntity entity = AnnotationUtils.findAnnotation(type, FileEntity.class);
+		FileRepo entity = AnnotationUtils.findAnnotation(type, FileRepo.class);
 		log.debug("entity: {}", entity);
 		if (entity == null) {
-			throw new FileStorageException("Entity is not annotated with @FileEntity.", null);
+			throw new FileStorageException("Entity is not annotated with @" + FileRepo.class.getSimpleName() + ".",
+					null);
 		}
 		return new File(dir, "@" + entity.value().replace("/", "/@"));
 	}
@@ -156,7 +157,7 @@ public class FileStorageImpl implements IFileStorage {
 		log.info("created: {}", Arrays.toString(createdFields));
 		if (!file.exists()) {
 			File parent = file.getParentFile();
-			if (!parent.mkdirs()) {
+			if (!parent.exists() && !parent.mkdirs()) {
 				throw new FileStorageException("Could not create object directory: " + parent, null);
 			}
 			initIds(dir, type, idFields, instance);
@@ -194,7 +195,7 @@ public class FileStorageImpl implements IFileStorage {
 		for (PairValue<FileId> c : ids) {
 			Object obj = c.get(instance);
 			if (obj == null) {
-				Object nextId = idManager.next(entityRoot(dir, type), instance, c);
+				Object nextId = idManager.next(entityRoot(dir, type), type, c);
 				c.set(instance, nextId);
 				idManager.bind(entityRoot(dir, type), instance);
 				log.info("new id: {}", c.get(instance));
@@ -543,17 +544,17 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected File resourceDir(File entityDir, Class<?> type) {
-		return new File(entityDir, "@resources" + suffix(type));
+		return new File(entityDir, preffix(type) + "@resources");
 	}
 
-	private String suffix(Class<?> type) {
+	private String preffix(Class<?> type) {
 		if (type != null) {
-			FileEntityName name = AnnotationUtils.findAnnotation(type, FileEntityName.class);
+			FileName name = AnnotationUtils.findAnnotation(type, FileName.class);
 			if (name != null) {
-				return "." + name.value();
+				return name.value();
 			}
 		}
-		return "";
+		return "data";
 	}
 
 	protected File resourceMeta(File entityDir, String path, Class<?> type) {

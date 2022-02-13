@@ -1,6 +1,6 @@
 package io.github.thiagolvlsantos.file.storage.objects;
 
-import io.github.thiagolvlsantos.file.storage.FileEntity;
+import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import io.github.thiagolvlsantos.file.storage.identity.FileKey;
 import io.github.thiagolvlsantos.file.storage.util.entity.NamedObject;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-@FileEntity(Product.REPO)
+@FileRepo(Product.REPO)
 public class Product extends NamedObject {
 
 	public static final String REPO = "products";

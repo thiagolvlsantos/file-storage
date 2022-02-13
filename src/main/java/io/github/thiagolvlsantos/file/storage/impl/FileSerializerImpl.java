@@ -20,9 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import io.github.thiagolvlsantos.file.storage.FileEntityName;
-import io.github.thiagolvlsantos.file.storage.FileEntityWrapped;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
+import io.github.thiagolvlsantos.file.storage.entity.FileName;
+import io.github.thiagolvlsantos.file.storage.entity.FileWrapped;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
 import lombok.AllArgsConstructor;
@@ -57,8 +57,8 @@ public class FileSerializerImpl implements IFileSerializer {
 
 	@Override
 	public <T> String getFile(Class<T> type) {
-		String result = "meta";
-		FileEntityName name = AnnotationUtils.findAnnotation(type, FileEntityName.class);
+		String result = "data";
+		FileName name = AnnotationUtils.findAnnotation(type, FileName.class);
 		if (name != null) {
 			result = name.value();
 		}
@@ -69,7 +69,7 @@ public class FileSerializerImpl implements IFileSerializer {
 	public <T> boolean isWrapped(Class<T> type) {
 		Boolean wrap = wrapped.get(type);
 		if (wrap == null) {
-			wrapped.put(type, AnnotationUtils.findAnnotation(type, FileEntityWrapped.class) != null);
+			wrapped.put(type, AnnotationUtils.findAnnotation(type, FileWrapped.class) != null);
 		}
 		return wrapped.get(type);
 	}

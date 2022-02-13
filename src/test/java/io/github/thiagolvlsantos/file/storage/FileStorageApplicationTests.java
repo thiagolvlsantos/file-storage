@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
+import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStoragePropertyNotFoundException;
@@ -38,6 +39,7 @@ import io.github.thiagolvlsantos.file.storage.objects.TargetAlias;
 import io.github.thiagolvlsantos.file.storage.objects.Template;
 import io.github.thiagolvlsantos.file.storage.objects.TemplateAlias;
 import io.github.thiagolvlsantos.file.storage.objects.TemplateAuthorization;
+import io.github.thiagolvlsantos.file.storage.objects.TemplateTargetAuthorization;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
@@ -55,11 +57,21 @@ class FileStorageApplicationTests {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			Template template = Template.builder().name("k8s-app").build();
-			storage.write(dir, template);
+			Template k8sApp = Template.builder().name("k8s-app").build();
+			storage.write(dir, k8sApp);
 
-			Template template2 = Template.builder().name("k8s-job").build();
-			storage.write(dir, template2);
+			TemplateAuthorization tAppAuth = TemplateAuthorization.builder()
+					.template(TemplateAlias.builder().name("k8s-app").build()).build();
+
+			storage.write(dir, tAppAuth);
+
+			Template k8sJob = Template.builder().name("k8s-job").build();
+			storage.write(dir, k8sJob);
+
+			TemplateAuthorization tJobAuth = TemplateAuthorization.builder()
+					.template(TemplateAlias.builder().name("k8s-job").build()).build();
+
+			storage.write(dir, tJobAuth);
 
 			Target dev = Target.builder().name("dev").build();
 			storage.write(dir, dev);
@@ -67,19 +79,19 @@ class FileStorageApplicationTests {
 			Target pro = Target.builder().name("pro").build();
 			storage.write(dir, pro);
 
-			TemplateAuthorization taDev = TemplateAuthorization.builder()
+			TemplateTargetAuthorization taDev = TemplateTargetAuthorization.builder()
 					.template(TemplateAlias.builder().name("k8s-app").build())
 					.target(TargetAlias.builder().name("dev").build()).build();
 
 			storage.write(dir, taDev);
 
-			TemplateAuthorization taPro = TemplateAuthorization.builder()
+			TemplateTargetAuthorization taPro = TemplateTargetAuthorization.builder()
 					.template(TemplateAlias.builder().name("k8s-app").build())
 					.target(TargetAlias.builder().name("pro").build()).build();
 
 			storage.write(dir, taPro);
 
-			TemplateAuthorization taDevJob = TemplateAuthorization.builder()
+			TemplateTargetAuthorization taDevJob = TemplateTargetAuthorization.builder()
 					.template(TemplateAlias.builder().name("k8s-job").build())
 					.target(TargetAlias.builder().name("dev").build()).build();
 
@@ -87,16 +99,22 @@ class FileStorageApplicationTests {
 
 			List<Target> allTargets = storage.list(dir, Target.class, null, null, null);
 			assertTrue(allTargets.size() == 2);
+
 			List<Template> allTemplates = storage.list(dir, Template.class, null, null, null);
 			assertTrue(allTemplates.size() == 2);
+
 			List<TemplateAuthorization> allAuthorizations = storage.list(dir, TemplateAuthorization.class, null, null,
 					null);
-			assertTrue(allAuthorizations.size() == 3);
+			assertTrue(allAuthorizations.size() == 2);
+
+			List<TemplateTargetAuthorization> allTargetAuthorizations = storage.list(dir,
+					TemplateTargetAuthorization.class, null, null, null);
+			assertTrue(allTargetAuthorizations.size() == 3);
 
 			FilePredicate predicate = new FilePredicate(
 					factory.read("{\"template.name\":{\"$eq\": \"k8s-job\"}}".getBytes()));
-			List<TemplateAuthorization> filterAuthorizations = storage.list(dir, TemplateAuthorization.class, predicate,
-					null, null);
+			List<TemplateTargetAuthorization> filterAuthorizations = storage.list(dir,
+					TemplateTargetAuthorization.class, predicate, null, null);
 			assertTrue(filterAuthorizations.size() == 1);
 		} finally {
 			try {
@@ -190,7 +208,7 @@ class FileStorageApplicationTests {
 			final Outlier instance = new Outlier();
 			assertThatThrownBy(() -> storage.write(dir, instance))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Entity is not annotated with @FileEntity.");
+					.hasMessage("Entity is not annotated with @" + FileRepo.class.getSimpleName() + ".");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -208,7 +226,7 @@ class FileStorageApplicationTests {
 			final Outlier instance = new Outlier();
 			assertThatThrownBy(() -> storage.write(dir, instance))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Entity is not annotated with @FileEntity.");
+					.hasMessage("Entity is not annotated with @" + FileRepo.class.getSimpleName() + ".");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1439,8 +1457,8 @@ class FileStorageApplicationTests {
 			File location5 = storage.locationResource(dir, Project.class, params, "css/style.css");
 
 			assertThat(storage.existsResource(dir, Project.class, params, path)).isTrue();
-			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
-			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
+			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/data@resources"));
+			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/data@resources/css/style.css"));
 
 			String invalidPath = "../css/style.css";
 			assertThatThrownBy(() -> storage.locationResource(dir, Project.class, params, invalidPath))//
@@ -1482,8 +1500,8 @@ class FileStorageApplicationTests {
 			File location5 = storage.locationResource(dir, params, "css/style.css");
 
 			assertThat(storage.existsResource(dir, params, path)).isTrue();
-			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources"));
-			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/@resources/css/style.css"));
+			assertThat(location4).isEqualTo(new File(dir, "@projects/" + name1 + "/data@resources"));
+			assertThat(location5).isEqualTo(new File(dir, "@projects/" + name1 + "/data@resources/css/style.css"));
 
 			String invalidPath = "../css/style.css";
 			assertThatThrownBy(() -> storage.locationResource(dir, params, invalidPath))//
@@ -1513,7 +1531,7 @@ class FileStorageApplicationTests {
 			project2 = storage.write(dir, project2);
 
 			// sabotage
-			Files.write(new File(storage.location(dir, Project.class, FileParams.of(name1)), "meta.json").toPath(),
+			Files.write(new File(storage.location(dir, Project.class, FileParams.of(name1)), "data.json").toPath(),
 					"Set invalid file!".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE,
 					StandardOpenOption.TRUNCATE_EXISTING);
 

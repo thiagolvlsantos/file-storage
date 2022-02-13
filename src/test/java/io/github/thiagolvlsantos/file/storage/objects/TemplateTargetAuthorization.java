@@ -18,13 +18,16 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @FileRepo(Template.REPO)
-@FileName(TemplateAuthorization.NAME)
-public class TemplateAuthorization extends IdObjectVersionedAuditable {
+@FileName(TemplateTargetAuthorization.NAME)
+public class TemplateTargetAuthorization extends IdObjectVersionedAuditable {
 
-	public static final String NAME = "authorization";
+	public static final String NAME = "target.authorization";
 
 	@FileKey
 	private TemplateAlias template;
+
+	@FileKey
+	private TargetAlias target;
 
 	@Builder.Default
 	private List<Authorization> authorizations = new LinkedList<>();

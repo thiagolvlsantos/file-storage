@@ -11,7 +11,7 @@ public interface IFileIndex {
 
 	String KEYS = "keys";
 
-	Object next(File dir, Object instance, PairValue<FileId> info);
+	Object next(File dir, Class<?> type, PairValue<FileId> info);
 
 	<T> void bind(File dir, T instance);
 

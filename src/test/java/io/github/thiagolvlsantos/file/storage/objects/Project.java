@@ -4,8 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import io.github.thiagolvlsantos.file.storage.FileEntity;
 import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
+import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import io.github.thiagolvlsantos.file.storage.util.entity.NamedObject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-@FileEntity(Project.REPO)
+@FileRepo(Project.REPO)
 public class Project extends NamedObject {
 
 	public static final String REPO = "projects";

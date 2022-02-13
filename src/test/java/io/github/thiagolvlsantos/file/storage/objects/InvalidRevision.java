@@ -1,7 +1,7 @@
 package io.github.thiagolvlsantos.file.storage.objects;
 
-import io.github.thiagolvlsantos.file.storage.FileEntity;
 import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
+import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-@FileEntity("anyname")
+@FileRepo("anyname")
 public class InvalidRevision {
 
 	@FileRevision

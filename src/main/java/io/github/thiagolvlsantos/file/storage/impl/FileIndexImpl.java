@@ -10,10 +10,10 @@ import java.util.stream.Stream;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-import io.github.thiagolvlsantos.file.storage.FileEntityName;
 import io.github.thiagolvlsantos.file.storage.IFileIndex;
 import io.github.thiagolvlsantos.file.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.file.storage.annotations.UtilAnnotations;
+import io.github.thiagolvlsantos.file.storage.entity.FileName;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
 import lombok.SneakyThrows;
@@ -27,33 +27,41 @@ public class FileIndexImpl implements IFileIndex {
 
 	@Override
 	@SneakyThrows
-	public Object next(File dir, Object instance, PairValue<FileId> info) {
-		if (instance == null) {
-			throw new FileStorageException("Invalid object 'null'.", null);
+	public Object next(File dir, Class<?> type, PairValue<FileId> info) {
+		if (type == null) {
+			throw new FileStorageException("Invalid type 'null'.", null);
 		}
 		Long current = 0L;
 		synchronized (lock) {
-			String fileName = prefix(instance.getClass()) + ".current";
-			File file = new File(dir, fileName);
+			File index = index(dir);
+			File file = new File(index, prefix(type) + ".current");
 			if (file.exists()) {
 				current = Long.valueOf(Files.readString(file.toPath()));
 			}
 			current = current + 1;
-			log.info("Next id for '{}'={}, in {}", info.getName(), current, fileName);
+			log.info("Next id for '{}'={}, in {}", type, current, file);
 			Files.write(file.toPath(), String.valueOf(current).getBytes(), StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
 		}
 		return current;
 	}
 
+	private File index(File dir) {
+		File index = new File(dir, ".index");
+		if (!index.exists() && !index.mkdirs()) {
+			throw new FileStorageException("Could not create/recover index directory: " + index, null);
+		}
+		return index;
+	}
+
 	private String prefix(Class<?> type) {
 		if (type != null) {
-			FileEntityName name = AnnotationUtils.findAnnotation(type, FileEntityName.class);
+			FileName name = AnnotationUtils.findAnnotation(type, FileName.class);
 			if (name != null) {
 				return "." + name.value();
 			}
 		}
-		return "";
+		return ".data";
 	}
 
 	@Override
@@ -63,11 +71,6 @@ public class FileIndexImpl implements IFileIndex {
 			throw new FileStorageException("Invalid argument: null", null);
 		}
 		Class<? extends Object> clazz = instance.getClass();
-
-		File index = index(dir, clazz);
-		if (!index.exists() && !index.mkdirs()) {
-			throw new FileStorageException("Could not create index directory: " + index, null);
-		}
 
 		Object[] ids = UtilAnnotations.getIds(clazz, instance);
 		Object[] keys = UtilAnnotations.getKeys(clazz, instance);
@@ -87,10 +90,6 @@ public class FileIndexImpl implements IFileIndex {
 		}
 		Files.write(keys2Id.toPath(), Stream.of(ids).map(String::valueOf).collect(Collectors.joining("\n")).getBytes(),
 				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-	}
-
-	private File index(File dir, Class<?> type) {
-		return new File(dir, prefix(type) + ".index");
 	}
 
 	@Override
@@ -118,7 +117,7 @@ public class FileIndexImpl implements IFileIndex {
 
 	@Override
 	public File directory(File dir, Class<?> type, String kind) {
-		return new File(index(dir, type), kind);
+		return new File(index(dir), prefix(type) + "." + kind);
 	}
 
 	private File ids(File dir, Class<?> type, Object... ids) {

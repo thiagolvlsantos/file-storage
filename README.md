@@ -45,7 +45,7 @@ public class Application {
 }
 ```
 
-## Add `@FileEntity` related annotations to your object
+## Add `@FileRepo` related annotations to your object
 Its kind of Hibernate annotations, but in this case we are annotating information to describe how a given object will be persisted to the file system.
 
 Bellow the example of an object of type `Project` with a set of possible annotations. The semantics of each annotation is explained bellow in sequence.
@@ -53,7 +53,7 @@ Bellow the example of an object of type `Project` with a set of possible annotat
 ```java
 ...
 
-@EntityFile("projects")
+@FileRepo("projects")
 public class Project {
 	// file id field, objects can be found by keys (@FileKey) or ids(@FileIds).
 	@FileId 
@@ -87,14 +87,15 @@ public class Project {
 The usage of annotations above has the following semantics:
 |Annotation|Semantics|
 |-|-|
-|`@FileEntity`| Stands for the entity name on file system. In the example above, supposing a base directory `/data`, the Project objects will be persisted to `/data/@projects` acording to the value in the annotation.|
-|`@FileId`|Stands for id field(s), this field is set automatically on saving actions, similar to @Id in Hibernate|
+|`@FileRepo` | **REQUIRED**. Stands for the entity repository name on file system. In the example above, supposing a base directory `/base`, the Project objects will be persisted to directory `/base/@projects` acording to the value in the annotation.|
+|`@FileName`| Stands for the entity file name in system. The full name is calculated by `IFileSerializer` based on presence of this annotation or not. In the example above, supposing: a base directory `/base`; a JSON serializer; a project named `alpha`, the resulting file name will be `/base/@projects/alpha/data.json`. This annotation replaces the `data` substring when present. |
+|`@FileId`| REQUIRED. Stands for id field(s), this field is set automatically on saving actions, similar to @Id in Hibernate|
 |`@FileRevision`| Stands for a concurrency control on saving actions in order to avoid rewrite of data without having set the right revision (version behind current), similar to @Revision in Hibernate|
 |`@FileCreate`| Stands for an attribute that will be keeped unchanged after the first saving action. Kind of Hibernate audit annotations.|
 |`@FileChanged`| Stands for an attribute that will be changed on every saving action. Kind of Hibernate audit annotations. Both `@FileCreated` and `@FileChanged` admit custom generators.|
-|`@FileKey`| Stands for attributes that will be used as directory structure in file system. In the previous example, if we have a Project named `example` and we send a `IFileStorage` save it a directory with name `/data/@projects/example` will be created where the serialized version will lay and its resources will reside under folder `/data/@project/example/@resources`.|
+|`@FileKey`| REQUIRED. Stands for attributes that will be used as directory structure in file system. In the previous example, if we have a Project named `example` and we send a `IFileStorage` save it a directory with name `/data/@projects/example` will be created where the serialized version will lay and its resources will reside under folder `/data/@project/example/data@resources`.|
 
-`IFileStorage` will refuse saving objects without minimal annotations: `@FileEntity`, `@FileId` and `@FileKey`. The other annotations are optional.
+`IFileStorage` will refuse saving objects without minimal annotations: `@FileRepo`, `@FileId` and `@FileKey`. The other annotations are optional.
 
 ## Using `IFileStorage` to persist objects
 Application using a service...
@@ -132,7 +133,7 @@ to save object in file system.
 @Respository
 public class ProjectRespository ... {
 
-private @Value("#{storage.directory:/data}") String dir;
+private @Value("#{storage.directory:/base}") String dir;
 private @Autowired IFileStorage storage;
 
 private File baseDir() {
@@ -150,15 +151,16 @@ public void save(Project p) {
 ...
 ```
 
-After this call, supposing an initially empty folder `/data`, we`ll have the structure:
+After this call, supposing an initially empty folder `/base`, we`ll have the structure:
 |dir|content|
 |-|-|
-|`/data/@projects`| With data related to all projects|
-|`/data/@projects/example`| With data related to the specific project `example`|
-|`/data/@projects/example/@resources` | With all project `example` resource files|
-|`/data/@projects/.current`| Controll file for ids sequencial. |
-|`/data/@projects/.index`| Controll directory for mapping keys to ids and vice-versa. |
+|`/base/@projects`| With data related to all projects|
+|`/base/@projects/example/data.json`| With data related to the specific project `example`|
+|`/base/@projects/example/data@resources` | With all project `example` resource files|
+|`/base/@projects/.data.current`| Controll file for ids sequencial. |
+|`/base/@projects/.data.index`| Controll directory for mapping keys to ids and vice-versa. |
 
+If the annotation `@FileEntityName` is present, the structure will be the same above with the informed name replacing all ocurrences of substring `data`. i.e. using `@FileEntityname("meta")` the object JSON will be `/base/@projects/example/meta.json` and so on.
 
 ## Interface `IFileSerializer` abstraction
 The serializer in `IFileStorage` is reponsible for preparing and saving the object itself to the file system.
@@ -203,7 +205,7 @@ An extension of object concept to cope also files as part of object elements bes
 
 For example, suppose an entity called `Template`, it can have a name attribute, and a content attribute. Depending on how much templates are possible with that name we could have to create a list attribute to keep track on then. 
 
-Another option is just have an attribute with a name, and the templates related to that template instance saved as resources in `/data/@templates/mytemplate/@resources`.
+Another option is just have an attribute with a name, and the templates related to that template instance saved as resources in `/base/@templates/mytemplate/data@resources`.
 
 Check `IFileStorage.*Resource*()` methods to save/update/query this feature.
 

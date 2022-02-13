@@ -1,8 +1,8 @@
 package io.github.thiagolvlsantos.file.storage.objects;
 
-import io.github.thiagolvlsantos.file.storage.FileEntity;
-import io.github.thiagolvlsantos.file.storage.FileEntityName;
-import io.github.thiagolvlsantos.file.storage.FileEntityWrapped;
+import io.github.thiagolvlsantos.file.storage.entity.FileName;
+import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
+import io.github.thiagolvlsantos.file.storage.entity.FileWrapped;
 import io.github.thiagolvlsantos.file.storage.util.entity.NamedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,9 +13,9 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
-@FileEntity(ObjectWrapped.REPO)
-@FileEntityName(ObjectWrapped.FILE)
-@FileEntityWrapped
+@FileRepo(ObjectWrapped.REPO)
+@FileName(ObjectWrapped.FILE)
+@FileWrapped
 public class ObjectWrapped extends NamedObject {
 
 	public static final String REPO = "repository";
