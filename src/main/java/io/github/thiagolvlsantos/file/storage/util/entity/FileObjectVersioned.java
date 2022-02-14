@@ -11,8 +11,8 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
-public class IdObjectVersioned extends IdObject {
+@SuperBuilder(builderMethodName = "builderFileObjectVersioned")
+public class FileObjectVersioned extends FileObject {
 
 	@FileRevision
 	private Long revision; // could be initialized as 0L

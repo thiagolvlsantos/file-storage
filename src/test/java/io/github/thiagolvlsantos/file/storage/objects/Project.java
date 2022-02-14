@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
 import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
-import io.github.thiagolvlsantos.file.storage.util.entity.NamedObject;
+import io.github.thiagolvlsantos.file.storage.util.entity.FileNamedObject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @FileRepo(Project.REPO)
-public class Project extends NamedObject {
+public class Project extends FileNamedObject {
 
 	public static final String REPO = "projects";
 

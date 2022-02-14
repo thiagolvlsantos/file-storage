@@ -113,7 +113,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, FileParams keys) {
-		return entityDir(dir, type, keys).exists();
+		return entityFile(dir, type, keys).exists();
 	}
 
 	protected <T> File entityDir(File dir, Class<T> type, FileParams keys) {

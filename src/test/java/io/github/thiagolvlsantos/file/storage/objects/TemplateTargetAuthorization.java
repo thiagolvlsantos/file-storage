@@ -6,7 +6,7 @@ import java.util.List;
 import io.github.thiagolvlsantos.file.storage.entity.FileName;
 import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import io.github.thiagolvlsantos.file.storage.identity.FileKey;
-import io.github.thiagolvlsantos.file.storage.util.entity.IdObjectVersionedAuditable;
+import io.github.thiagolvlsantos.file.storage.util.entity.FileObjectVersionedAuditable;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @FileRepo(Template.REPO)
 @FileName(TemplateTargetAuthorization.NAME)
-public class TemplateTargetAuthorization extends IdObjectVersionedAuditable {
+public class TemplateTargetAuthorization extends FileObjectVersionedAuditable {
 
 	public static final String NAME = "target.authorization";
 

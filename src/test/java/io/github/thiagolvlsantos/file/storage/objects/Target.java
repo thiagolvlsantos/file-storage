@@ -1,7 +1,7 @@
 package io.github.thiagolvlsantos.file.storage.objects;
 
 import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
-import io.github.thiagolvlsantos.file.storage.util.entity.NamedObject;
+import io.github.thiagolvlsantos.file.storage.util.entity.FileNamedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @FileRepo(Target.REPO)
-public class Target extends NamedObject {
+public class Target extends FileNamedObject {
 
 	public static final String REPO = "targets";
 }

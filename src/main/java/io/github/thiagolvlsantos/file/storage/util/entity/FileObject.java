@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class IdObject {
+public class FileObject {
 
 	@FileId
 	private Long id;

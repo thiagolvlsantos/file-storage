@@ -15,8 +15,8 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
-public class IdObjectVersionedAuditable extends IdObjectVersioned {
+@SuperBuilder(builderMethodName = "builderFileObjectVersionedAuditable")
+public class FileObjectVersionedAuditable extends FileObjectVersioned {
 
 	@FileCreated
 	@Builder.Default

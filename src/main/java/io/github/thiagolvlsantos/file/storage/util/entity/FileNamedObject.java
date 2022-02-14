@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
-public class NamedObject extends IdObjectVersionedAuditable {
+public class FileNamedObject extends FileObjectVersionedAuditable {
 
 	@FileKey(order = 0)
 	@Include
