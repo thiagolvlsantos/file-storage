@@ -89,6 +89,8 @@ public class UtilAnnotations {
 				} else {
 					path.add(value);
 				}
+			} else {
+				throw new FileStorageException("Invalid key path in " + Arrays.toString(keys), null);
 			}
 		});
 		log.info("keys: {}", path);
