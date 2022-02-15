@@ -129,7 +129,8 @@ public class FileStorageImpl implements IFileStorage {
 		FileRepo entity = AnnotationUtils.findAnnotation(type, FileRepo.class);
 		log.debug("entity: {}", entity);
 		if (entity == null) {
-			throw new FileStorageException("Entity is not annotated with @" + FileRepo.class.getSimpleName() + ".",
+			throw new FileStorageException(
+					"Entity '" + type.getName() + "' is not annotated with @" + FileRepo.class.getSimpleName() + ".",
 					null);
 		}
 		return new File(dir, "@" + entity.value().replace("/", "/@"));
@@ -303,11 +304,25 @@ public class FileStorageImpl implements IFileStorage {
 		T old = null;
 		if (exists(dir, type, keys)) {
 			old = read(dir, type, keys);
-			File file = entityDir(dir, type, keys);
+			File file = entityFile(dir, type, keys);
 			try {
-				FileUtils.delete(file); // remove all resources also
+				FileUtils.delete(file);
 			} catch (IOException e) {
-				throw new FileStorageException("Entity not deleted. File:" + file, e);
+				throw new FileStorageException("Could not delete file: " + file, e);
+			}
+			File root = entityDir(dir, type, keys);
+			File resources = resourceDir(root, type);
+			try {
+				FileUtils.delete(resources);
+			} catch (IOException e) {
+				throw new FileStorageException("Could not delete resources: " + resources, e);
+			}
+			if (root.listFiles().length == 0) {
+				try {
+					FileUtils.delete(root);
+				} catch (IOException e) {
+					throw new FileStorageException("Could not delete root: " + root, e);
+				}
 			}
 			idManager.unbind(entityRoot(dir, type), old);
 		}

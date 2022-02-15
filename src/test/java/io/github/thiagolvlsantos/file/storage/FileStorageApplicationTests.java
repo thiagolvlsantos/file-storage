@@ -57,19 +57,22 @@ class FileStorageApplicationTests {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			Template k8sApp = Template.builder().name("k8s-app").build();
+			String nameApp = "k8s-app";
+			String nameJob = "k8s-job";
+
+			Template k8sApp = Template.builder().name(nameApp).build();
 			storage.write(dir, k8sApp);
 
 			TemplateAuthorization tAppAuth = TemplateAuthorization.builder()
-					.template(TemplateAlias.builder().name("k8s-app").build()).build();
+					.template(TemplateAlias.builder().name(nameApp).build()).build();
 
 			storage.write(dir, tAppAuth);
 
-			Template k8sJob = Template.builder().name("k8s-job").build();
+			Template k8sJob = Template.builder().name(nameJob).build();
 			storage.write(dir, k8sJob);
 
 			TemplateAuthorization tJobAuth = TemplateAuthorization.builder()
-					.template(TemplateAlias.builder().name("k8s-job").build()).build();
+					.template(TemplateAlias.builder().name(nameJob).build()).build();
 
 			storage.write(dir, tJobAuth);
 
@@ -80,19 +83,19 @@ class FileStorageApplicationTests {
 			storage.write(dir, pro);
 
 			TemplateTargetAuthorization taDev = TemplateTargetAuthorization.builder()
-					.template(TemplateAlias.builder().name("k8s-app").build())
+					.template(TemplateAlias.builder().name(nameApp).build())
 					.target(TargetAlias.builder().name("dev").build()).build();
 
 			storage.write(dir, taDev);
 
 			TemplateTargetAuthorization taPro = TemplateTargetAuthorization.builder()
-					.template(TemplateAlias.builder().name("k8s-app").build())
+					.template(TemplateAlias.builder().name(nameApp).build())
 					.target(TargetAlias.builder().name("pro").build()).build();
 
 			storage.write(dir, taPro);
 
 			TemplateTargetAuthorization taDevJob = TemplateTargetAuthorization.builder()
-					.template(TemplateAlias.builder().name("k8s-job").build())
+					.template(TemplateAlias.builder().name(nameJob).build())
 					.target(TargetAlias.builder().name("dev").build()).build();
 
 			storage.write(dir, taDevJob);
@@ -107,12 +110,17 @@ class FileStorageApplicationTests {
 					null);
 			assertTrue(allAuthorizations.size() == 2);
 
+			storage.delete(dir, Template.class, FileParams.of(nameApp));
+			storage.delete(dir, Template.class, FileParams.of(nameJob));
+			allAuthorizations = storage.list(dir, TemplateAuthorization.class, null, null, null);
+			assertTrue(allAuthorizations.size() == 2);
+
 			List<TemplateTargetAuthorization> allTargetAuthorizations = storage.list(dir,
 					TemplateTargetAuthorization.class, null, null, null);
 			assertTrue(allTargetAuthorizations.size() == 3);
 
 			FilePredicate predicate = new FilePredicate(
-					factory.read("{\"template.name\":{\"$eq\": \"k8s-job\"}}".getBytes()));
+					factory.read(("{\"template.name\":{\"$eq\": \"" + nameJob + "\"}}").getBytes()));
 			List<TemplateTargetAuthorization> filterAuthorizations = storage.list(dir,
 					TemplateTargetAuthorization.class, predicate, null, null);
 			assertTrue(filterAuthorizations.size() == 1);
@@ -208,7 +216,8 @@ class FileStorageApplicationTests {
 			final Outlier instance = new Outlier();
 			assertThatThrownBy(() -> storage.write(dir, instance))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Entity is not annotated with @" + FileRepo.class.getSimpleName() + ".");
+					.hasMessage("Entity '" + Outlier.class.getName() + "' is not annotated with @"
+							+ FileRepo.class.getSimpleName() + ".");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -226,7 +235,8 @@ class FileStorageApplicationTests {
 			final Outlier instance = new Outlier();
 			assertThatThrownBy(() -> storage.write(dir, instance))//
 					.isExactlyInstanceOf(FileStorageException.class)//
-					.hasMessage("Entity is not annotated with @" + FileRepo.class.getSimpleName() + ".");
+					.hasMessage("Entity '" + Outlier.class.getName() + "' is not annotated with @"
+							+ FileRepo.class.getSimpleName() + ".");
 		} finally {
 			try {
 				FileUtils.delete(dir);
