@@ -5,8 +5,6 @@ import java.io.File;
 import java.lang.reflect.AnnotatedType;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +21,8 @@ import lombok.SneakyThrows;
 @Getter
 public abstract class AbstractFileRepository<T> {
 	private @Autowired IFileStorage storage;
+	private @Autowired IPredicateConverter predicateConverter;
+	private @Autowired IObjectMapper objectMapper;
 
 	private Class<T> type;
 
@@ -68,10 +68,8 @@ public abstract class AbstractFileRepository<T> {
 	}
 
 	public FilePredicate filter(String filter) {
-		return filter != null ? FilePredicate.builder().filter(toPredicate(filter)).build() : null;
+		return filter != null ? FilePredicate.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
 	}
-
-	protected abstract Predicate<Object> toPredicate(String filter);
 
 	public FilePaging paging(String paging) {
 		return paging != null ? storage.getSerializer().decode(paging.getBytes(), FilePaging.class) : null;
@@ -115,17 +113,13 @@ public abstract class AbstractFileRepository<T> {
 
 	@SneakyThrows
 	public T setResource(File dir, FileParams keys, ResourceVO resource) {
-		return storage.setResource(dir, type, keys, toResource(resource));
+		return storage.setResource(dir, type, keys, objectMapper.map(resource, Resource.class));
 	}
-
-	protected abstract Resource toResource(ResourceVO resource);
 
 	@SneakyThrows
 	public ResourceVO getResource(File dir, FileParams keys, String path) {
-		return toResourceVO(storage.getResource(dir, type, keys, path));
+		return objectMapper.map(storage.getResource(dir, type, keys, path), ResourceVO.class);
 	}
-
-	protected abstract ResourceVO toResourceVO(Resource resource);
 
 	@SneakyThrows
 	public Long countResources(File dir, FileParams keys, String filter, String paging) {
@@ -134,8 +128,9 @@ public abstract class AbstractFileRepository<T> {
 
 	@SneakyThrows
 	public List<ResourceVO> listResources(File dir, FileParams keys, String filter, String paging, String sorting) {
-		return storage.listResources(dir, type, keys, filter(filter), paging(paging), sorting(sorting)).stream()
-				.map(o -> toResourceVO(o)).collect(Collectors.toList());
+		return objectMapper.mapList(
+				storage.listResources(dir, type, keys, filter(filter), paging(paging), sorting(sorting)),
+				ResourceVO.class);
 	}
 
 	@SneakyThrows
