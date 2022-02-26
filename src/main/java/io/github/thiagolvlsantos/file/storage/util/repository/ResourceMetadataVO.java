@@ -1,5 +1,6 @@
 package io.github.thiagolvlsantos.file.storage.util.repository;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -15,7 +16,8 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-public class ResourceMetadataVO {
+@SuppressWarnings("serial")
+public class ResourceMetadataVO implements Serializable {
 	public String path;
 	public String encoding;
 	public String contentType;

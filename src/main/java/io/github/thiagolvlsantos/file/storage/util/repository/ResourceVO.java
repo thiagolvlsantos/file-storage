@@ -1,5 +1,7 @@
 package io.github.thiagolvlsantos.file.storage.util.repository;
 
+import java.io.Serializable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +15,8 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-public class ResourceVO {
+@SuppressWarnings("serial")
+public class ResourceVO implements Serializable {
 
 	private ResourceMetadataVO metadata;
 	private ResourceContentVO content;
