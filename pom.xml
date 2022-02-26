@@ -52,7 +52,7 @@
 		<commons.version>1.9.4</commons.version>
 
 		<!-- TEST DEPENDENCIES -->
-		<json-predicate.version>0.0.6</json-predicate.version>
+		<json-predicate.version>0.0.7</json-predicate.version>
 	</properties>
 
 	<scm>
