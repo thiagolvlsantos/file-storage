@@ -11,7 +11,7 @@
 
 	<groupId>io.github.thiagolvlsantos</groupId>
 	<artifactId>file-storage</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5-SNAPSHOT</version>
 
 	<name>${project.artifactId}</name>
 	<description>A file system object storage in Spring Boot.</description>
