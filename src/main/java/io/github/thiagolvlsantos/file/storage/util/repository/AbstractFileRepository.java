@@ -57,28 +57,6 @@ public abstract class AbstractFileRepository<T> {
 		return storage.delete(dir, type, keys);
 	}
 
-	@SneakyThrows
-	public Long count(File dir, String filter, String paging) {
-		return storage.count(dir, type, filter(filter), paging(paging));
-	}
-
-	@SneakyThrows
-	public List<T> list(File dir, String filter, String paging, String sorting) {
-		return storage.list(dir, type, filter(filter), paging(paging), sorting(sorting));
-	}
-
-	public FilePredicate filter(String filter) {
-		return filter != null ? FilePredicate.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
-	}
-
-	public FilePaging paging(String paging) {
-		return paging != null ? storage.getSerializer().decode(paging.getBytes(), FilePaging.class) : null;
-	}
-
-	public FileSorting sorting(String sorting) {
-		return sorting != null ? storage.getSerializer().decode(sorting.getBytes(), FileSorting.class) : null;
-	}
-
 	// +------------- PROPERTY METHODS ------------------+
 
 	@SneakyThrows
@@ -136,5 +114,35 @@ public abstract class AbstractFileRepository<T> {
 	@SneakyThrows
 	public T deleteResource(File dir, FileParams keys, String path) {
 		return storage.deleteResource(dir, type, keys, path);
+	}
+
+	// +------------- COLLECTION METHODS ------------------+
+
+	@SneakyThrows
+	public Long count(File dir, String filter, String paging) {
+		return storage.count(dir, type, filter(filter), paging(paging));
+	}
+
+	@SneakyThrows
+	public List<T> list(File dir, String filter, String paging, String sorting) {
+		return storage.list(dir, type, filter(filter), paging(paging), sorting(sorting));
+	}
+
+	@SneakyThrows
+	public Map<String, Map<String, Object>> properties(File dir, FileParams names, String filter, String paging,
+			String sorting) {
+		return storage.properties(dir, type, names, filter(filter), paging(paging), sorting(sorting));
+	}
+
+	public FilePredicate filter(String filter) {
+		return filter != null ? FilePredicate.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
+	}
+
+	public FilePaging paging(String paging) {
+		return paging != null ? storage.getSerializer().decode(paging.getBytes(), FilePaging.class) : null;
+	}
+
+	public FileSorting sorting(String sorting) {
+		return sorting != null ? storage.getSerializer().decode(sorting.getBytes(), FileSorting.class) : null;
 	}
 }

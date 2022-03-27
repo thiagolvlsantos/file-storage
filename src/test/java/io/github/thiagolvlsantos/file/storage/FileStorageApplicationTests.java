@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -338,13 +339,15 @@ class FileStorageApplicationTests {
 
 			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(),
 					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(null).build())).containsExactly(project2, project1);
+							.secondary(null).build()))
+					.containsExactly(project2, project1);
 
 			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(),
 					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
 							.secondary(Arrays.asList(
 									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
-							.build())).containsExactly(project2, project1);
+							.build()))
+					.containsExactly(project2, project1);
 
 			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(), FileSorting
 					.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
@@ -431,13 +434,14 @@ class FileStorageApplicationTests {
 
 			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(), FileSorting.builder()
 					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build()))
-							.containsExactly(project2, project1);
+					.containsExactly(project2, project1);
 
 			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(),
 					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
 							.secondary(Arrays.asList(
 									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
-							.build())).containsExactly(project2, project1);
+							.build()))
+					.containsExactly(project2, project1);
 
 			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(), FileSorting.builder()
 					.property("parent.name").sort(FileSorting.SORT_DESCENDING)
@@ -1546,6 +1550,148 @@ class FileStorageApplicationTests {
 					StandardOpenOption.TRUNCATE_EXISTING);
 
 			assertThat(storage.list(dir, Project.class, null, null, null)).containsExactly(project2);
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testCollectionPeoperties(@Autowired ApplicationContext context) throws IOException {
+		IFileStorage storage = context.getBean(IFileStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			// write
+			String name1 = "projectA";
+			Project project1 = Project.builder().name(name1).description("group a").build();
+			project1 = storage.write(dir, project1);
+
+			String name2 = "projectB";
+			Project project2 = Project.builder().name(name2).description("group b").build();
+			project2 = storage.write(dir, project2);
+
+			Map<String, Map<String, Object>> properties;
+
+			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), null, null, null);
+
+			assertThat(properties.size()).isEqualTo(2);
+
+			Map<String, Object> pa = properties.get("projectA");
+			assertThat(pa.get("name")).isEqualTo("projectA");
+			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa.get("id")).isNull();
+
+			Map<String, Object> pb = properties.get("projectB");
+			assertThat(pb.get("name")).isEqualTo("projectB");
+			assertThat(pb.get("description")).isEqualTo("group b");
+			assertThat(pb.get("id")).isNull();
+
+			FilePredicate predicate = new FilePredicate(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
+			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), predicate, null,
+					null);
+			assertThat(properties.size()).isEqualTo(1);
+
+			pa = properties.get("projectA");
+			assertThat(pa.get("name")).isEqualTo("projectA");
+			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa.get("id")).isNull();
+
+			assertThat(properties.get("projectB")).isNull();
+
+			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), null, null,
+					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(null).build());
+
+			// keys ordered according to attribute name in descending order
+			assertThat(properties.keySet().stream().collect(Collectors.toList()))
+					.isEqualTo(Arrays.asList("projectB", "projectA"));
+
+			properties = storage.properties(dir, Project.class, null, null, FilePaging.builder().skip(1).build(),
+					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(null).build());
+
+			// only the second
+			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectA"));
+
+			properties = storage.properties(dir, Project.class, null, null, FilePaging.builder().max(1).build(),
+					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(null).build());
+
+			// only the first
+			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectB"));
+
+		} finally {
+			try {
+				FileUtils.delete(dir);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void testCollectionPeopertiesTyped(@Autowired ApplicationContext context) throws IOException {
+		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
+		File dir = new File("target/data/storage_" + System.currentTimeMillis());
+		try {
+			// write
+			String name1 = "projectA";
+			Project project1 = Project.builder().name(name1).description("group a").build();
+			project1 = storage.write(dir, project1);
+
+			String name2 = "projectB";
+			Project project2 = Project.builder().name(name2).description("group b").build();
+			project2 = storage.write(dir, project2);
+
+			Map<String, Map<String, Object>> properties;
+
+			properties = storage.properties(dir, FileParams.of("name;description"), null, null, null);
+
+			assertThat(properties.size()).isEqualTo(2);
+
+			Map<String, Object> pa = properties.get("projectA");
+			assertThat(pa.get("name")).isEqualTo("projectA");
+			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa.get("id")).isNull();
+
+			Map<String, Object> pb = properties.get("projectB");
+			assertThat(pb.get("name")).isEqualTo("projectB");
+			assertThat(pb.get("description")).isEqualTo("group b");
+			assertThat(pb.get("id")).isNull();
+
+			FilePredicate predicate = new FilePredicate(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
+			properties = storage.properties(dir, FileParams.of("name;description"), predicate, null, null);
+			assertThat(properties.size()).isEqualTo(1);
+
+			pa = properties.get("projectA");
+			assertThat(pa.get("name")).isEqualTo("projectA");
+			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa.get("id")).isNull();
+
+			assertThat(properties.get("projectB")).isNull();
+
+			properties = storage.properties(dir, FileParams.of("name;description"), null, null, FileSorting.builder()
+					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build());
+
+			// keys ordered according to attribute name in descending order
+			assertThat(properties.keySet().stream().collect(Collectors.toList()))
+					.isEqualTo(Arrays.asList("projectB", "projectA"));
+
+			properties = storage.properties(dir, null, null, FilePaging.builder().skip(1).build(), FileSorting.builder()
+					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build());
+
+			// only the second
+			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectA"));
+
+			properties = storage.properties(dir, null, null, FilePaging.builder().max(1).build(), FileSorting.builder()
+					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build());
+
+			// only the first
+			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectB"));
+
 		} finally {
 			try {
 				FileUtils.delete(dir);

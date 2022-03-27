@@ -20,12 +20,10 @@ public class FilePaging {
 	private Integer max;
 
 	public Integer getStart(Integer limit) {
-		return Objects.isNull(skip) ? 0 : Math.min(skip, limit);
+		return Objects.isNull(skip) ? 0 : skip;
 	}
 
 	public Integer getEnd(Integer limit) {
-		Integer start = getStart(limit);
-		Integer gap = limit - start;
-		return Objects.isNull(max) ? gap : start + Math.min(max, gap);
+		return Objects.isNull(max) ? limit : getStart(limit) + Math.min(max, limit);
 	}
 }

@@ -329,84 +329,6 @@ public class FileStorageImpl implements IFileStorage {
 		return old;
 	}
 
-	@Override
-	public <T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
-		return list(dir, type, filter, paging, null).size();
-	}
-
-	@Override
-	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		return range(paging, filter(filter, sort(sorting, all(dir, type, null))));
-	}
-
-	@SneakyThrows
-	protected <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
-		List<T> result = new LinkedList<>();
-		File[] ids = idManager.directory(entityRoot(dir, type), type, IFileIndex.IDS).listFiles();
-		if (ids != null) {
-			for (File f : ids) {
-				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-				try {
-					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
-				} catch (Throwable e) {
-					log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.", e);
-				}
-			}
-		}
-		return range(paging, result);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
-		if (sorting != null) {
-			List<Comparator<T>> comparators = new LinkedList<>();
-			append(sorting, FileSorting::isValid, comparators);
-			List<FileSorting> secondary = sorting.getSecondary();
-			if (secondary != null) {
-				for (FileSorting s : secondary) {
-					append(s, o -> o.isValid() && !o.isSameProperty(sorting), comparators);
-				}
-			}
-			if (!comparators.isEmpty()) {
-				Collections.sort(result, new ComparatorChain(comparators));
-			}
-		}
-		return result;
-	}
-
-	protected <T> void append(FileSorting sorting, Predicate<FileSorting> test, List<Comparator<T>> list) {
-		if (test.test(sorting)) {
-			Comparator<T> tmp = comparator(sorting);
-			if (sorting.isDescending()) {
-				tmp = tmp.reversed();
-			}
-			list.add(tmp);
-		}
-	}
-
-	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
-		return new ComparatorNullSafe<>(sorting.getProperty(), sorting.isNullsFirst());
-	}
-
-	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
-		Predicate<Object> p = filter(filter);
-		if (p != null) {
-			result = result.stream().filter(p).collect(Collectors.toList());
-		}
-		return result;
-	}
-
-	protected Predicate<Object> filter(FilePredicate filter) {
-		return filter == null ? null : filter.getFilter();
-	}
-
-	protected <T> List<T> range(FilePaging paging, List<T> result) {
-		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
-		Integer start = page.getStart(result.size());
-		Integer end = page.getEnd(result.size());
-		return start < end ? result.subList(start, end) : Collections.emptyList();
-	}
-
 	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
@@ -679,6 +601,109 @@ public class FileStorageImpl implements IFileStorage {
 
 		log.info("Resource deleted: {}", path);
 
+		return result;
+	}
+
+	// +------------- COLLECTION METHODS ------------------+
+
+	@Override
+	public <T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
+		return list(dir, type, filter, paging, null).size();
+	}
+
+	@Override
+	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		return range(paging, filter(filter, sort(sorting, all(dir, type, null))));
+	}
+
+	@SneakyThrows
+	protected <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
+		List<T> result = new LinkedList<>();
+		File[] ids = idManager.directory(entityRoot(dir, type), type, IFileIndex.IDS).listFiles();
+		if (ids != null) {
+			for (File f : ids) {
+				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
+				try {
+					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
+				} catch (Throwable e) {
+					log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.", e);
+				}
+			}
+		}
+		return range(paging, result);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
+		if (sorting != null) {
+			List<Comparator<T>> comparators = new LinkedList<>();
+			append(sorting, FileSorting::isValid, comparators);
+			List<FileSorting> secondary = sorting.getSecondary();
+			if (secondary != null) {
+				for (FileSorting s : secondary) {
+					append(s, o -> o.isValid() && !o.isSameProperty(sorting), comparators);
+				}
+			}
+			if (!comparators.isEmpty()) {
+				Collections.sort(result, new ComparatorChain(comparators));
+			}
+		}
+		return result;
+	}
+
+	protected <T> void append(FileSorting sorting, Predicate<FileSorting> test, List<Comparator<T>> list) {
+		if (test.test(sorting)) {
+			Comparator<T> tmp = comparator(sorting);
+			if (sorting.isDescending()) {
+				tmp = tmp.reversed();
+			}
+			list.add(tmp);
+		}
+	}
+
+	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
+		return new ComparatorNullSafe<>(sorting.getProperty(), sorting.isNullsFirst());
+	}
+
+	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
+		Predicate<Object> p = filter(filter);
+		if (p != null) {
+			result = result.stream().filter(p).collect(Collectors.toList());
+		}
+		return result;
+	}
+
+	protected Predicate<Object> filter(FilePredicate filter) {
+		return filter == null ? null : filter.getFilter();
+	}
+
+	protected <T> List<T> range(FilePaging paging, List<T> result) {
+		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
+		Integer start = page.getStart(result.size());
+		Integer end = page.getEnd(result.size());
+		return start < end ? result.subList(start, end) : Collections.emptyList();
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names,
+			FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+		List<T> list = list(dir, type, filter, paging, sorting);
+		for (T current : list) {
+			FileParams selection = names;
+			if (selection == null) {
+				PropertyDescriptor[] pds = PropertyUtils.getPropertyDescriptors(current);
+				selection = FileParams.of(Stream.of(pds).map(PropertyDescriptor::getName).collect(Collectors.toList()));
+			}
+
+			Map<String, Object> local = new LinkedHashMap<>();
+			for (Object n : selection) {
+				String property = String.valueOf(n).trim();
+				local.put(property, tryGetProperty(current, property));
+			}
+			result.put(UtilAnnotations.getKeysChain(type, current), local);
+		}
 		return result;
 	}
 }

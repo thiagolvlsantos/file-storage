@@ -88,16 +88,6 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 		return storage.delete(dir, type, keys);
 	}
 
-	@Override
-	public long count(File dir, FilePredicate filter, FilePaging paging) {
-		return storage.count(dir, type, filter, paging);
-	}
-
-	@Override
-	public List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		return storage.list(dir, type, filter, paging, sorting);
-	}
-
 	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
@@ -151,5 +141,23 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	public List<Resource> listResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging,
 			FileSorting sorting) {
 		return storage.listResources(dir, type, keys, filter, paging, sorting);
+	}
+
+	// +------------- COLLECTION METHODS ------------------+
+
+	@Override
+	public long count(File dir, FilePredicate filter, FilePaging paging) {
+		return storage.count(dir, type, filter, paging);
+	}
+
+	@Override
+	public List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		return storage.list(dir, type, filter, paging, sorting);
+	}
+
+	@Override
+	public Map<String, Map<String, Object>> properties(File dir, FileParams names, FilePredicate filter,
+			FilePaging paging, FileSorting sorting) {
+		return storage.properties(dir, type, names, filter, paging, sorting);
 	}
 }
