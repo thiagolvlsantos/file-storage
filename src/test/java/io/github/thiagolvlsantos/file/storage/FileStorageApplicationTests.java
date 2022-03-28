@@ -1623,6 +1623,19 @@ class FileStorageApplicationTests {
 			// only the first
 			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectB"));
 
+			List<Project> projects = storage.setProperty(dir, Project.class, "description", "same text", null, null,
+					null);
+			Project first = projects.get(0);
+			assertThat(first.getDescription()).isEqualTo("same text");
+			Project second = projects.get(1);
+			assertThat(second.getDescription()).isEqualTo("same text");
+
+			projects = storage.list(dir, Project.class, null, null, null);
+			first = projects.get(0);
+			assertThat(first.getDescription()).isEqualTo("same text");
+			second = projects.get(1);
+			assertThat(second.getDescription()).isEqualTo("same text");
+
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1692,6 +1705,17 @@ class FileStorageApplicationTests {
 			// only the first
 			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectB"));
 
+			List<Project> projects = storage.setProperty(dir, "description", "same text", null, null, null);
+			Project first = projects.get(0);
+			assertThat(first.getDescription()).isEqualTo("same text");
+			Project second = projects.get(1);
+			assertThat(second.getDescription()).isEqualTo("same text");
+
+			projects = storage.list(dir, null, null, null);
+			first = projects.get(0);
+			assertThat(first.getDescription()).isEqualTo("same text");
+			second = projects.get(1);
+			assertThat(second.getDescription()).isEqualTo("same text");
 		} finally {
 			try {
 				FileUtils.delete(dir);

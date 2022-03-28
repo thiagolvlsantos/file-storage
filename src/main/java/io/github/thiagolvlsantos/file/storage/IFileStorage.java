@@ -42,13 +42,23 @@ public interface IFileStorage {
 
 	<T> T delete(File dir, Class<T> type, FileParams keys);
 
+	<T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging);
+
+	<T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting);
+
 	// +------------- PROPERTY METHODS ------------------+
 
 	<T> T setProperty(File dir, Class<T> type, FileParams keys, String property, Object data);
 
+	<T> List<T> setProperty(File dir, Class<T> type, String property, Object data, FilePredicate filter,
+			FilePaging paging, FileSorting sorting);
+
 	<T> Object getProperty(File dir, Class<T> type, FileParams keys, String property);
 
 	<T> Map<String, Object> properties(File dir, Class<T> type, FileParams keys, FileParams names);
+
+	<T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names, FilePredicate filter,
+			FilePaging paging, FileSorting sorting);
 
 	// +------------- RESOURCE METHODS ------------------+
 	<T> File locationResource(File dir, Class<T> type, FileParams keys, String path);
@@ -67,11 +77,4 @@ public interface IFileStorage {
 			FileSorting sorting);
 
 	// +------------- COLLECTION METHODS ------------------+
-
-	<T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging);
-
-	<T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting);
-
-	<T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names, FilePredicate filter,
-			FilePaging paging, FileSorting sorting);
 }

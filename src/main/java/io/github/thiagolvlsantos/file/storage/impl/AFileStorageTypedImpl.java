@@ -88,11 +88,27 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 		return storage.delete(dir, type, keys);
 	}
 
+	@Override
+	public long count(File dir, FilePredicate filter, FilePaging paging) {
+		return storage.count(dir, type, filter, paging);
+	}
+
+	@Override
+	public List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		return storage.list(dir, type, filter, paging, sorting);
+	}
+
 	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
 	public T setProperty(File dir, FileParams keys, String property, Object data) {
 		return storage.setProperty(dir, type, keys, property, data);
+	}
+
+	@Override
+	public List<T> setProperty(File dir, String property, Object data, FilePredicate filter, FilePaging paging,
+			FileSorting sorting) {
+		return storage.setProperty(dir, type, property, data, filter, paging, sorting);
 	}
 
 	@Override
@@ -105,6 +121,11 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 		return storage.properties(dir, type, keys, names);
 	}
 
+	@Override
+	public Map<String, Map<String, Object>> properties(File dir, FileParams names, FilePredicate filter,
+			FilePaging paging, FileSorting sorting) {
+		return storage.properties(dir, type, names, filter, paging, sorting);
+	}
 	// +------------- RESOURCE METHODS ------------------+
 
 	@Override
@@ -145,19 +166,4 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 
 	// +------------- COLLECTION METHODS ------------------+
 
-	@Override
-	public long count(File dir, FilePredicate filter, FilePaging paging) {
-		return storage.count(dir, type, filter, paging);
-	}
-
-	@Override
-	public List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		return storage.list(dir, type, filter, paging, sorting);
-	}
-
-	@Override
-	public Map<String, Map<String, Object>> properties(File dir, FileParams names, FilePredicate filter,
-			FilePaging paging, FileSorting sorting) {
-		return storage.properties(dir, type, names, filter, paging, sorting);
-	}
 }

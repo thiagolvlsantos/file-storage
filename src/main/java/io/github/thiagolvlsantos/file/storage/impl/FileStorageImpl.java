@@ -15,6 +15,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -329,6 +330,84 @@ public class FileStorageImpl implements IFileStorage {
 		return old;
 	}
 
+	@Override
+	public <T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
+		return list(dir, type, filter, paging, null).size();
+	}
+
+	@Override
+	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		return range(paging, filter(filter, sort(sorting, all(dir, type, null))));
+	}
+
+	@SneakyThrows
+	protected <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
+		List<T> result = new LinkedList<>();
+		File[] ids = idManager.directory(entityRoot(dir, type), type, IFileIndex.IDS).listFiles();
+		if (ids != null) {
+			for (File f : ids) {
+				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
+				try {
+					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
+				} catch (Throwable e) {
+					log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.", e);
+				}
+			}
+		}
+		return range(paging, result);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
+		if (sorting != null) {
+			List<Comparator<T>> comparators = new LinkedList<>();
+			append(sorting, FileSorting::isValid, comparators);
+			List<FileSorting> secondary = sorting.getSecondary();
+			if (secondary != null) {
+				for (FileSorting s : secondary) {
+					append(s, o -> o.isValid() && !o.isSameProperty(sorting), comparators);
+				}
+			}
+			if (!comparators.isEmpty()) {
+				Collections.sort(result, new ComparatorChain(comparators));
+			}
+		}
+		return result;
+	}
+
+	protected <T> void append(FileSorting sorting, Predicate<FileSorting> test, List<Comparator<T>> list) {
+		if (test.test(sorting)) {
+			Comparator<T> tmp = comparator(sorting);
+			if (sorting.isDescending()) {
+				tmp = tmp.reversed();
+			}
+			list.add(tmp);
+		}
+	}
+
+	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
+		return new ComparatorNullSafe<>(sorting.getProperty(), sorting.isNullsFirst());
+	}
+
+	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
+		Predicate<Object> p = filter(filter);
+		if (p != null) {
+			result = result.stream().filter(p).collect(Collectors.toList());
+		}
+		return result;
+	}
+
+	protected Predicate<Object> filter(FilePredicate filter) {
+		return filter == null ? null : filter.getFilter();
+	}
+
+	protected <T> List<T> range(FilePaging paging, List<T> result) {
+		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
+		Integer start = page.getStart(result.size());
+		Integer end = page.getEnd(result.size());
+		return start < end ? result.subList(start, end) : Collections.emptyList();
+	}
+
 	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
@@ -338,6 +417,18 @@ public class FileStorageImpl implements IFileStorage {
 
 		T current = read(dir, type, keys);
 
+		return setProperty(dir, type, property, data, current);
+	}
+
+	protected <T> void verifyExists(File dir, Class<T> type, FileParams keys) {
+		if (!exists(dir, type, keys)) {
+			throw new FileStorageNotFoundException(
+					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
+		}
+	}
+
+	protected <T> T setProperty(File dir, Class<T> type, String property, Object data, T current)
+			throws IllegalAccessException, InvocationTargetException {
 		// check unchangeable properties
 		validateProperty(FileId.class, type, property, current);
 		validateProperty(FileKey.class, type, property, current);
@@ -348,13 +439,6 @@ public class FileStorageImpl implements IFileStorage {
 		trySetProperty(current, property, data);
 
 		return write(dir, current);
-	}
-
-	protected <T> void verifyExists(File dir, Class<T> type, FileParams keys) {
-		if (!exists(dir, type, keys)) {
-			throw new FileStorageNotFoundException(
-					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
-		}
 	}
 
 	protected <A extends Annotation, T> void validateProperty(Class<A> annotation, Class<T> type, String property,
@@ -375,6 +459,21 @@ public class FileStorageImpl implements IFileStorage {
 		} catch (NoSuchMethodException e) {
 			throw new FileStoragePropertyNotFoundException(name, current, e);
 		}
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> List<T> setProperty(File dir, Class<T> type, String property, Object data, FilePredicate filter,
+			FilePaging paging, FileSorting sorting) {
+		List<T> list = list(dir, type, filter, paging, sorting);
+
+		List<T> result = new ArrayList<>(list.size());
+
+		for (T current : list) {
+			result.add(setProperty(dir, type, property, data, current));
+		}
+
+		return result;
 	}
 
 	@Override
@@ -403,6 +502,11 @@ public class FileStorageImpl implements IFileStorage {
 
 		T current = read(dir, type, keys);
 
+		return getProperties(names, current);
+	}
+
+	protected <T> Map<String, Object> getProperties(FileParams names, T current)
+			throws IllegalAccessException, InvocationTargetException {
 		FileParams selection = names;
 		if (selection == null) {
 			PropertyDescriptor[] pds = PropertyUtils.getPropertyDescriptors(current);
@@ -413,6 +517,20 @@ public class FileStorageImpl implements IFileStorage {
 		for (Object n : selection) {
 			String property = String.valueOf(n).trim();
 			result.put(property, tryGetProperty(current, property));
+		}
+		return result;
+	}
+
+	@Override
+	@SneakyThrows
+	public <T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names,
+			FilePredicate filter, FilePaging paging, FileSorting sorting) {
+		Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+
+		List<T> list = list(dir, type, filter, paging, sorting);
+
+		for (T current : list) {
+			result.put(UtilAnnotations.getKeysChain(type, current), getProperties(names, current));
 		}
 		return result;
 	}
@@ -604,106 +722,4 @@ public class FileStorageImpl implements IFileStorage {
 		return result;
 	}
 
-	// +------------- COLLECTION METHODS ------------------+
-
-	@Override
-	public <T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
-		return list(dir, type, filter, paging, null).size();
-	}
-
-	@Override
-	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		return range(paging, filter(filter, sort(sorting, all(dir, type, null))));
-	}
-
-	@SneakyThrows
-	protected <T> List<T> all(File dir, Class<T> type, FilePaging paging) {
-		List<T> result = new LinkedList<>();
-		File[] ids = idManager.directory(entityRoot(dir, type), type, IFileIndex.IDS).listFiles();
-		if (ids != null) {
-			for (File f : ids) {
-				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
-				try {
-					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
-				} catch (Throwable e) {
-					log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.", e);
-				}
-			}
-		}
-		return range(paging, result);
-	}
-
-	@SuppressWarnings("unchecked")
-	protected <T> List<T> sort(FileSorting sorting, List<T> result) {
-		if (sorting != null) {
-			List<Comparator<T>> comparators = new LinkedList<>();
-			append(sorting, FileSorting::isValid, comparators);
-			List<FileSorting> secondary = sorting.getSecondary();
-			if (secondary != null) {
-				for (FileSorting s : secondary) {
-					append(s, o -> o.isValid() && !o.isSameProperty(sorting), comparators);
-				}
-			}
-			if (!comparators.isEmpty()) {
-				Collections.sort(result, new ComparatorChain(comparators));
-			}
-		}
-		return result;
-	}
-
-	protected <T> void append(FileSorting sorting, Predicate<FileSorting> test, List<Comparator<T>> list) {
-		if (test.test(sorting)) {
-			Comparator<T> tmp = comparator(sorting);
-			if (sorting.isDescending()) {
-				tmp = tmp.reversed();
-			}
-			list.add(tmp);
-		}
-	}
-
-	protected <T> ComparatorNullSafe<T> comparator(FileSorting sorting) {
-		return new ComparatorNullSafe<>(sorting.getProperty(), sorting.isNullsFirst());
-	}
-
-	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
-		Predicate<Object> p = filter(filter);
-		if (p != null) {
-			result = result.stream().filter(p).collect(Collectors.toList());
-		}
-		return result;
-	}
-
-	protected Predicate<Object> filter(FilePredicate filter) {
-		return filter == null ? null : filter.getFilter();
-	}
-
-	protected <T> List<T> range(FilePaging paging, List<T> result) {
-		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
-		Integer start = page.getStart(result.size());
-		Integer end = page.getEnd(result.size());
-		return start < end ? result.subList(start, end) : Collections.emptyList();
-	}
-
-	@Override
-	@SneakyThrows
-	public <T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names,
-			FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		Map<String, Map<String, Object>> result = new LinkedHashMap<>();
-		List<T> list = list(dir, type, filter, paging, sorting);
-		for (T current : list) {
-			FileParams selection = names;
-			if (selection == null) {
-				PropertyDescriptor[] pds = PropertyUtils.getPropertyDescriptors(current);
-				selection = FileParams.of(Stream.of(pds).map(PropertyDescriptor::getName).collect(Collectors.toList()));
-			}
-
-			Map<String, Object> local = new LinkedHashMap<>();
-			for (Object n : selection) {
-				String property = String.valueOf(n).trim();
-				local.put(property, tryGetProperty(current, property));
-			}
-			result.put(UtilAnnotations.getKeysChain(type, current), local);
-		}
-		return result;
-	}
 }

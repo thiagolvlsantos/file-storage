@@ -3,6 +3,7 @@ package io.github.thiagolvlsantos.file.storage.util.repository;
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
@@ -57,14 +58,47 @@ public abstract class AbstractFileRepository<T> {
 		return storage.delete(dir, type, keys);
 	}
 
+	@SneakyThrows
+	public Long count(File dir, String filter, String paging) {
+		return storage.count(dir, type, filter(filter), paging(paging));
+	}
+
+	@SneakyThrows
+	public List<T> list(File dir, String filter, String paging, String sorting) {
+		return storage.list(dir, type, filter(filter), paging(paging), sorting(sorting));
+	}
+
+	public FilePredicate filter(String filter) {
+		return filter != null ? FilePredicate.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
+	}
+
+	public FilePaging paging(String paging) {
+		return paging != null ? storage.getSerializer().decode(paging.getBytes(), FilePaging.class) : null;
+	}
+
+	public FileSorting sorting(String sorting) {
+		return sorting != null ? storage.getSerializer().decode(sorting.getBytes(), FileSorting.class) : null;
+	}
+
 	// +------------- PROPERTY METHODS ------------------+
 
 	@SneakyThrows
 	public T setProperty(File dir, FileParams keys, String property, Object data) {
-		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(read(dir, keys), property);
+		return storage.setProperty(dir, type, keys, property, newValue(property, data, read(dir, keys)));
+	}
+
+	protected Object newValue(String property, Object data, Object reference)
+			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(reference, property);
 		AnnotatedType attType = pd.getReadMethod().getAnnotatedReturnType();
 		Object newValue = storage.getSerializer().decode(String.valueOf(data), attType);
-		return storage.setProperty(dir, type, keys, property, newValue);
+		return newValue;
+	}
+
+	@SneakyThrows
+	public List<T> setProperty(File dir, String property, Object data, String filter, String paging, String sorting) {
+		return storage.setProperty(dir, type, property, newValue(property, data, type.getConstructor().newInstance()),
+				filter(filter), paging(paging), sorting(sorting));
 	}
 
 	@SneakyThrows
@@ -75,6 +109,12 @@ public abstract class AbstractFileRepository<T> {
 	@SneakyThrows
 	public Map<String, Object> properties(File dir, FileParams keys, FileParams names) {
 		return storage.properties(dir, type, keys, names);
+	}
+
+	@SneakyThrows
+	public Map<String, Map<String, Object>> properties(File dir, FileParams names, String filter, String paging,
+			String sorting) {
+		return storage.properties(dir, type, names, filter(filter), paging(paging), sorting(sorting));
 	}
 
 	// +------------- RESOURCE METHODS ------------------+
@@ -116,33 +156,4 @@ public abstract class AbstractFileRepository<T> {
 		return storage.deleteResource(dir, type, keys, path);
 	}
 
-	// +------------- COLLECTION METHODS ------------------+
-
-	@SneakyThrows
-	public Long count(File dir, String filter, String paging) {
-		return storage.count(dir, type, filter(filter), paging(paging));
-	}
-
-	@SneakyThrows
-	public List<T> list(File dir, String filter, String paging, String sorting) {
-		return storage.list(dir, type, filter(filter), paging(paging), sorting(sorting));
-	}
-
-	@SneakyThrows
-	public Map<String, Map<String, Object>> properties(File dir, FileParams names, String filter, String paging,
-			String sorting) {
-		return storage.properties(dir, type, names, filter(filter), paging(paging), sorting(sorting));
-	}
-
-	public FilePredicate filter(String filter) {
-		return filter != null ? FilePredicate.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
-	}
-
-	public FilePaging paging(String paging) {
-		return paging != null ? storage.getSerializer().decode(paging.getBytes(), FilePaging.class) : null;
-	}
-
-	public FileSorting sorting(String sorting) {
-		return sorting != null ? storage.getSerializer().decode(sorting.getBytes(), FileSorting.class) : null;
-	}
 }
