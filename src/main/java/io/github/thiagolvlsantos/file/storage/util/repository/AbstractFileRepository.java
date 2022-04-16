@@ -23,7 +23,6 @@ import lombok.SneakyThrows;
 public abstract class AbstractFileRepository<T> {
 	private @Autowired IFileStorage storage;
 	private @Autowired IPredicateConverter predicateConverter;
-	private @Autowired IObjectMapper objectMapper;
 
 	private Class<T> type;
 
@@ -130,13 +129,13 @@ public abstract class AbstractFileRepository<T> {
 	}
 
 	@SneakyThrows
-	public T setResource(File dir, FileParams keys, ResourceVO resource) {
-		return storage.setResource(dir, type, keys, objectMapper.map(resource, Resource.class));
+	public T setResource(File dir, FileParams keys, Resource resource) {
+		return storage.setResource(dir, type, keys, resource);
 	}
 
 	@SneakyThrows
-	public ResourceVO getResource(File dir, FileParams keys, String path) {
-		return objectMapper.map(storage.getResource(dir, type, keys, path), ResourceVO.class);
+	public Resource getResource(File dir, FileParams keys, String path) {
+		return storage.getResource(dir, type, keys, path);
 	}
 
 	@SneakyThrows
@@ -145,10 +144,8 @@ public abstract class AbstractFileRepository<T> {
 	}
 
 	@SneakyThrows
-	public List<ResourceVO> listResources(File dir, FileParams keys, String filter, String paging, String sorting) {
-		return objectMapper.mapList(
-				storage.listResources(dir, type, keys, filter(filter), paging(paging), sorting(sorting)),
-				ResourceVO.class);
+	public List<Resource> listResources(File dir, FileParams keys, String filter, String paging, String sorting) {
+		return storage.listResources(dir, type, keys, filter(filter), paging(paging), sorting(sorting));
 	}
 
 	@SneakyThrows
