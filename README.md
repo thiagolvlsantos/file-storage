@@ -221,4 +221,4 @@ Just to be clear, I`not saying that this is a 'database' for massive data, but m
 
 ## Build
 
-Localy, from this root directory call Maven commands or `bin/<script name>` at our will.
+Localy, from this root directory call Maven commands or `bin/<script name>` at your will.
