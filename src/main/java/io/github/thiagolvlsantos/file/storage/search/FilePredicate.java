@@ -1,4 +1,4 @@
-package io.github.thiagolvlsantos.file.storage;
+package io.github.thiagolvlsantos.file.storage.search;
 
 import java.util.function.Predicate;
 

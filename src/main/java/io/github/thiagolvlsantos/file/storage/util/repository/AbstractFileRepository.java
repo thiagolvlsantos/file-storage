@@ -10,12 +10,13 @@ import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
-import io.github.thiagolvlsantos.file.storage.FilePredicate;
-import io.github.thiagolvlsantos.file.storage.FileSorting;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
+import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
+import io.github.thiagolvlsantos.file.storage.search.FilePaging;
+import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -59,12 +60,13 @@ public abstract class AbstractFileRepository<T> {
 
 	@SneakyThrows
 	public Long count(File dir, String filter, String paging) {
-		return storage.count(dir, type, filter(filter), paging(paging));
+		return storage.count(dir, type, SearchParams.builder().filter(filter(filter)).paging(paging(paging)).build());
 	}
 
 	@SneakyThrows
 	public List<T> list(File dir, String filter, String paging, String sorting) {
-		return storage.list(dir, type, filter(filter), paging(paging), sorting(sorting));
+		return storage.list(dir, type,
+				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
 	}
 
 	public FilePredicate filter(String filter) {
@@ -97,7 +99,7 @@ public abstract class AbstractFileRepository<T> {
 	@SneakyThrows
 	public List<T> setProperty(File dir, String property, Object data, String filter, String paging, String sorting) {
 		return storage.setProperty(dir, type, property, newValue(property, data, type.getConstructor().newInstance()),
-				filter(filter), paging(paging), sorting(sorting));
+				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
 	}
 
 	@SneakyThrows
@@ -113,7 +115,8 @@ public abstract class AbstractFileRepository<T> {
 	@SneakyThrows
 	public Map<String, Map<String, Object>> properties(File dir, FileParams names, String filter, String paging,
 			String sorting) {
-		return storage.properties(dir, type, names, filter(filter), paging(paging), sorting(sorting));
+		return storage.properties(dir, type, names,
+				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
 	}
 
 	// +------------- RESOURCE METHODS ------------------+
@@ -140,12 +143,14 @@ public abstract class AbstractFileRepository<T> {
 
 	@SneakyThrows
 	public Long countResources(File dir, FileParams keys, String filter, String paging) {
-		return storage.countResources(dir, type, keys, filter(filter), paging(paging));
+		return storage.countResources(dir, type, keys,
+				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).build());
 	}
 
 	@SneakyThrows
 	public List<Resource> listResources(File dir, FileParams keys, String filter, String paging, String sorting) {
-		return storage.listResources(dir, type, keys, filter(filter), paging(paging), sorting(sorting));
+		return storage.listResources(dir, type, keys,
+				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
 	}
 
 	@SneakyThrows

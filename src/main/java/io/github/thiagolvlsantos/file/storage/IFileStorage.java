@@ -42,23 +42,21 @@ public interface IFileStorage {
 
 	<T> T delete(File dir, Class<T> type, FileParams keys);
 
-	<T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging);
+	<T> long count(File dir, Class<T> type, SearchParams search);
 
-	<T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting);
+	<T> List<T> list(File dir, Class<T> type, SearchParams search);
 
 	// +------------- PROPERTY METHODS ------------------+
 
 	<T> T setProperty(File dir, Class<T> type, FileParams keys, String property, Object data);
 
-	<T> List<T> setProperty(File dir, Class<T> type, String property, Object data, FilePredicate filter,
-			FilePaging paging, FileSorting sorting);
+	<T> List<T> setProperty(File dir, Class<T> type, String property, Object data, SearchParams search);
 
 	<T> Object getProperty(File dir, Class<T> type, FileParams keys, String property);
 
 	<T> Map<String, Object> properties(File dir, Class<T> type, FileParams keys, FileParams names);
 
-	<T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names, FilePredicate filter,
-			FilePaging paging, FileSorting sorting);
+	<T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names, SearchParams search);
 
 	// +------------- RESOURCE METHODS ------------------+
 	<T> File locationResource(File dir, Class<T> type, FileParams keys, String path);
@@ -71,10 +69,7 @@ public interface IFileStorage {
 
 	<T> T deleteResource(File dir, Class<T> type, FileParams keys, String path);
 
-	<T> long countResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging);
+	<T> long countResources(File dir, Class<T> type, FileParams keys, SearchParams search);
 
-	<T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging,
-			FileSorting sorting);
-
-	// +------------- COLLECTION METHODS ------------------+
+	<T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, SearchParams search);
 }

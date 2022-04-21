@@ -44,6 +44,9 @@ import io.github.thiagolvlsantos.file.storage.objects.TemplateTargetAuthorizatio
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
+import io.github.thiagolvlsantos.file.storage.search.FilePaging;
+import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import io.github.thiagolvlsantos.json.predicate.impl.PredicateFactoryJson;
@@ -101,29 +104,28 @@ class FileStorageApplicationTests {
 
 			storage.write(dir, taDevJob);
 
-			List<Target> allTargets = storage.list(dir, Target.class, null, null, null);
+			List<Target> allTargets = storage.list(dir, Target.class, null);
 			assertTrue(allTargets.size() == 2);
 
-			List<Template> allTemplates = storage.list(dir, Template.class, null, null, null);
+			List<Template> allTemplates = storage.list(dir, Template.class, null);
 			assertTrue(allTemplates.size() == 2);
 
-			List<TemplateAuthorization> allAuthorizations = storage.list(dir, TemplateAuthorization.class, null, null,
-					null);
+			List<TemplateAuthorization> allAuthorizations = storage.list(dir, TemplateAuthorization.class, null);
 			assertTrue(allAuthorizations.size() == 2);
 
 			storage.delete(dir, Template.class, FileParams.of(nameApp));
 			storage.delete(dir, Template.class, FileParams.of(nameJob));
-			allAuthorizations = storage.list(dir, TemplateAuthorization.class, null, null, null);
+			allAuthorizations = storage.list(dir, TemplateAuthorization.class, null);
 			assertTrue(allAuthorizations.size() == 2);
 
 			List<TemplateTargetAuthorization> allTargetAuthorizations = storage.list(dir,
-					TemplateTargetAuthorization.class, null, null, null);
+					TemplateTargetAuthorization.class, null);
 			assertTrue(allTargetAuthorizations.size() == 3);
 
 			FilePredicate predicate = new FilePredicate(
 					factory.read(("{\"template.name\":{\"$eq\": \"" + nameJob + "\"}}").getBytes()));
 			List<TemplateTargetAuthorization> filterAuthorizations = storage.list(dir,
-					TemplateTargetAuthorization.class, predicate, null, null);
+					TemplateTargetAuthorization.class, SearchParams.builder().filter(predicate).build());
 			assertTrue(filterAuthorizations.size() == 1);
 		} finally {
 			try {
@@ -329,36 +331,44 @@ class FileStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.list(dir, Project.class, null, null, FileSorting.builder().property("name").build()))
+			assertThat(storage.list(dir, Project.class,
+					SearchParams.builder().sorting(FileSorting.builder().property("name").build()).build()))
 					.contains(project1, project2);
 
 			// list filtered/sorted
 			FilePredicate predicate = new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
-			assertThat(storage.list(dir, Project.class, predicate, FilePaging.builder().skip(0).build(), null))
+			assertThat(storage.list(dir, Project.class,
+					SearchParams.builder().filter(predicate).paging(FilePaging.builder().skip(0).build()).build()))
 					.contains(project1);
 
-			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(),
-					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(null).build()))
-					.containsExactly(project2, project1);
-
-			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(),
-					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(Arrays.asList(
-									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
+			assertThat(storage.list(dir, Project.class,
+					SearchParams.builder().paging(FilePaging.builder().skip(0).build())
+							.sorting(FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING)
+									.nullsFirst(true).secondary(null).build())
 							.build()))
 					.containsExactly(project2, project1);
 
-			assertThat(storage.list(dir, Project.class, null, FilePaging.builder().skip(0).build(), FileSorting
-					.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
-					.secondary(Arrays.asList(
-							FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING).build(),
-							FileSorting.builder().property("name").sort(FileSorting.SORT_ASCENDING).build(),
-							FileSorting.builder().property(null).sort(null).build()))
+			assertThat(storage.list(dir, Project.class, SearchParams.builder()
+					.paging(FilePaging.builder().skip(0).build())
+					.sorting(FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(Arrays.asList(
+									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
+							.build())
+					.build())).containsExactly(project2, project1);
+
+			assertThat(storage.list(dir, Project.class, SearchParams.builder()
+					.paging(FilePaging.builder().skip(0).build())
+					.sorting(FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
+							.secondary(Arrays.asList(
+									FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
+											.build(),
+									FileSorting.builder().property("name").sort(FileSorting.SORT_ASCENDING).build(),
+									FileSorting.builder().property(null).sort(null).build()))
+							.build())
 					.build())).containsExactly(project1, project2);
 
 			// count all
-			assertThat(storage.count(dir, Project.class, null, null)).isEqualTo(2L);
+			assertThat(storage.count(dir, Project.class, null)).isEqualTo(2L);
 
 			// exists by key
 			assertThat(storage.exists(dir, Project.class, FileParams.of(project1.getName()))).isTrue();
@@ -374,8 +384,8 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, Project.class,
-					new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes())), null, null);
+			List<Project> list = storage.list(dir, Project.class, SearchParams.builder()
+					.filter(new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -425,34 +435,44 @@ class FileStorageApplicationTests {
 			assertThat(project1.getChanged()).isAfter(changed);
 
 			// list all
-			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(),
-					FileSorting.builder().property("name").nullsFirst(true).build())).contains(project1, project2);
+			assertThat(storage.list(dir,
+					SearchParams.builder().paging(FilePaging.builder().skip(0).build())
+							.sorting(FileSorting.builder().property("name").nullsFirst(true).build()).build()))
+					.contains(project1, project2);
 
 			// list filtered/sorted
 			FilePredicate predicate = new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
-			assertThat(storage.list(dir, predicate, FilePaging.builder().skip(0).build(), null)).contains(project1);
+			assertThat(storage.list(dir,
+					SearchParams.builder().filter(predicate).paging(FilePaging.builder().skip(0).build()).build()))
+					.contains(project1);
 
-			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(), FileSorting.builder()
-					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build()))
-					.containsExactly(project2, project1);
-
-			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(),
-					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(Arrays.asList(
-									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
+			assertThat(storage.list(dir,
+					SearchParams.builder().paging(FilePaging.builder().skip(0).build())
+							.sorting(FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING)
+									.nullsFirst(true).secondary(null).build())
 							.build()))
 					.containsExactly(project2, project1);
 
-			assertThat(storage.list(dir, null, FilePaging.builder().skip(0).build(), FileSorting.builder()
-					.property("parent.name").sort(FileSorting.SORT_DESCENDING)
-					.secondary(Arrays.asList(
-							FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING).build(),
-							FileSorting.builder().property("name").sort(FileSorting.SORT_ASCENDING).build(),
-							FileSorting.builder().property(null).sort(null).build()))
+			assertThat(storage.list(dir, SearchParams.builder().paging(FilePaging.builder().skip(0).build())
+					.sorting(FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
+							.secondary(Arrays.asList(
+									FileSorting.builder().property("id").sort(FileSorting.SORT_DESCENDING).build()))
+							.build())
+					.build())).containsExactly(project2, project1);
+
+			assertThat(storage.list(dir, SearchParams.builder().paging(FilePaging.builder().skip(0).build())
+					.sorting(FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
+							.secondary(Arrays.asList(
+									FileSorting.builder().property("parent.name").sort(FileSorting.SORT_DESCENDING)
+											.build(),
+									FileSorting.builder().property("name").sort(FileSorting.SORT_ASCENDING).build(),
+									FileSorting.builder().property(null).sort(null).build()))
+							.build())
 					.build())).containsExactly(project1, project2);
 
 			// count all, skip 1
-			assertThat(storage.count(dir, null, FilePaging.builder().skip(1).max(1).build())).isEqualTo(1L);
+			assertThat(storage.count(dir,
+					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build())).isEqualTo(1L);
 
 			// exists by key
 			assertThat(storage.exists(dir, FileParams.of(project1.getName()))).isTrue();
@@ -468,8 +488,8 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir,
-					new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes())), null, null);
+			List<Project> list = storage.list(dir, SearchParams.builder()
+					.filter(new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -982,7 +1002,7 @@ class FileStorageApplicationTests {
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
 			// property full map
-			Map<String, Object> objs = storage.properties(dir, Project.class, params, null);
+			Map<String, Object> objs = storage.properties(dir, Project.class, params, (FileParams) null);
 			assertThat(objs).containsEntry("description", "newDescription");
 
 			// property map projection
@@ -1025,7 +1045,7 @@ class FileStorageApplicationTests {
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
 			// property full map
-			Map<String, Object> objs = storage.properties(dir, params, null);
+			Map<String, Object> objs = storage.properties(dir, params, (FileParams) null);
 			assertThat(objs).containsEntry("description", "newDescription");
 
 			// property map projection
@@ -1167,7 +1187,7 @@ class FileStorageApplicationTests {
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, Project.class, params, resource);
 
-			List<Resource> resources = storage.listResources(dir, Project.class, params, null, null, null);
+			List<Resource> resources = storage.listResources(dir, Project.class, params, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -1183,7 +1203,7 @@ class FileStorageApplicationTests {
 
 			// delete last resource
 			storage.deleteResource(dir, Project.class, params, "component/compB.css");
-			resources = storage.listResources(dir, Project.class, params, null, null, null);
+			resources = storage.listResources(dir, Project.class, params, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -1195,26 +1215,27 @@ class FileStorageApplicationTests {
 			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// FilePaging only 1
-			resources = storage.listResources(dir, Project.class, params, null,
-					FilePaging.builder().skip(1).max(1).build(), null);
+			resources = storage.listResources(dir, Project.class, params,
+					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, Project.class, params, null,
-					FilePaging.builder().skip(1).max(1).build())).isEqualTo(1);
+			assertThat(storage.countResources(dir, Project.class, params,
+					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, Project.class, params,
-					FilePredicate.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
-					null, null);
+					SearchParams.builder().filter(FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
+							.build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, Project.class, params,
-					FilePredicate.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
-					null)).isEqualTo(1);
+					SearchParams.builder().filter(FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
+							.build()))
+					.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -1257,7 +1278,7 @@ class FileStorageApplicationTests {
 			resource = Resource.builder().metadata(metadata).content(content).build();
 			storage.setResource(dir, params, resource);
 
-			List<Resource> resources = storage.listResources(dir, params, null, null, null);
+			List<Resource> resources = storage.listResources(dir, params, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(3);
 
@@ -1273,7 +1294,7 @@ class FileStorageApplicationTests {
 
 			// delete last resource
 			storage.deleteResource(dir, params, "component/compB.css");
-			resources = storage.listResources(dir, params, null, null, null);
+			resources = storage.listResources(dir, params, null);
 			// count resources
 			assertThat(resources.size()).isEqualTo(2);
 
@@ -1285,25 +1306,27 @@ class FileStorageApplicationTests {
 			assertThat(resource2.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// FilePaging only 1
-			resources = storage.listResources(dir, params, null, FilePaging.builder().skip(1).max(1).build(), null);
+			resources = storage.listResources(dir, params,
+					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
-			assertThat(storage.countResources(dir, params, null, FilePaging.builder().skip(1).max(1).build()))
-					.isEqualTo(1);
+			assertThat(storage.countResources(dir, params,
+					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/inner/compC.java");
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, params,
-					FilePredicate.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
-					null, null);
+					SearchParams.builder().filter(FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
+							.build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, params,
-					FilePredicate.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build(),
-					null)).isEqualTo(1);
+					SearchParams.builder().filter(FilePredicate.builder()
+							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
+							.build()))
+					.isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -1409,8 +1432,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 			FileParams params = FileParams.of(name1);
 
-			assertThat(storage.listResources(dir, Project.class, params, null, null, null)).isEmpty();
-			assertThat(storage.countResources(dir, Project.class, params, null, null)).isZero();
+			assertThat(storage.listResources(dir, Project.class, params, null)).isEmpty();
+			assertThat(storage.countResources(dir, Project.class, params, null)).isZero();
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1431,8 +1454,8 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			FileParams params = FileParams.of(name1);
-			assertThat(storage.listResources(dir, params, null, null, null)).isEmpty();
-			assertThat(storage.countResources(dir, params, null, null)).isZero();
+			assertThat(storage.listResources(dir, params, null)).isEmpty();
+			assertThat(storage.countResources(dir, params, null)).isZero();
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1549,7 +1572,7 @@ class FileStorageApplicationTests {
 					"Set invalid file!".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE,
 					StandardOpenOption.TRUNCATE_EXISTING);
 
-			assertThat(storage.list(dir, Project.class, null, null, null)).containsExactly(project2);
+			assertThat(storage.list(dir, Project.class, null)).containsExactly(project2);
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1575,7 +1598,7 @@ class FileStorageApplicationTests {
 
 			Map<String, Map<String, Object>> properties;
 
-			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), null, null, null);
+			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), (SearchParams) null);
 
 			assertThat(properties.size()).isEqualTo(2);
 
@@ -1590,8 +1613,8 @@ class FileStorageApplicationTests {
 			assertThat(pb.get("id")).isNull();
 
 			FilePredicate predicate = new FilePredicate(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
-			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), predicate, null,
-					null);
+			properties = storage.properties(dir, Project.class, FileParams.of("name;description"),
+					SearchParams.builder().filter(predicate).build());
 			assertThat(properties.size()).isEqualTo(1);
 
 			pa = properties.get("projectA");
@@ -1601,36 +1624,42 @@ class FileStorageApplicationTests {
 
 			assertThat(properties.get("projectB")).isNull();
 
-			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), null, null,
-					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(null).build());
+			properties = storage
+					.properties(dir, Project.class, FileParams.of("name;description"),
+							SearchParams
+									.builder().sorting(FileSorting.builder().property("name")
+											.sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build())
+									.build());
 
 			// keys ordered according to attribute name in descending order
 			assertThat(properties.keySet().stream().collect(Collectors.toList()))
 					.isEqualTo(Arrays.asList("projectB", "projectA"));
 
-			properties = storage.properties(dir, Project.class, null, null, FilePaging.builder().skip(1).build(),
-					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(null).build());
+			properties = storage
+					.properties(dir, Project.class, null, SearchParams.builder()
+							.paging(FilePaging.builder().skip(1).build()).sorting(FileSorting.builder().property("name")
+									.sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build())
+							.build());
 
 			// only the second
 			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectA"));
 
-			properties = storage.properties(dir, Project.class, null, null, FilePaging.builder().max(1).build(),
-					FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true)
-							.secondary(null).build());
+			properties = storage
+					.properties(dir, Project.class, null, SearchParams.builder()
+							.paging(FilePaging.builder().max(1).build()).sorting(FileSorting.builder().property("name")
+									.sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build())
+							.build());
 
 			// only the first
 			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectB"));
 
-			List<Project> projects = storage.setProperty(dir, Project.class, "description", "same text", null, null,
-					null);
+			List<Project> projects = storage.setProperty(dir, Project.class, "description", "same text", null);
 			Project first = projects.get(0);
 			assertThat(first.getDescription()).isEqualTo("same text");
 			Project second = projects.get(1);
 			assertThat(second.getDescription()).isEqualTo("same text");
 
-			projects = storage.list(dir, Project.class, null, null, null);
+			projects = storage.list(dir, Project.class, null);
 			first = projects.get(0);
 			assertThat(first.getDescription()).isEqualTo("same text");
 			second = projects.get(1);
@@ -1661,7 +1690,7 @@ class FileStorageApplicationTests {
 
 			Map<String, Map<String, Object>> properties;
 
-			properties = storage.properties(dir, FileParams.of("name;description"), null, null, null);
+			properties = storage.properties(dir, FileParams.of("name;description"), (SearchParams) null);
 
 			assertThat(properties.size()).isEqualTo(2);
 
@@ -1676,7 +1705,8 @@ class FileStorageApplicationTests {
 			assertThat(pb.get("id")).isNull();
 
 			FilePredicate predicate = new FilePredicate(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
-			properties = storage.properties(dir, FileParams.of("name;description"), predicate, null, null);
+			properties = storage.properties(dir, FileParams.of("name;description"),
+					SearchParams.builder().filter(predicate).build());
 			assertThat(properties.size()).isEqualTo(1);
 
 			pa = properties.get("projectA");
@@ -1686,32 +1716,42 @@ class FileStorageApplicationTests {
 
 			assertThat(properties.get("projectB")).isNull();
 
-			properties = storage.properties(dir, FileParams.of("name;description"), null, null, FileSorting.builder()
-					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build());
+			properties = storage
+					.properties(dir, FileParams.of("name;description"),
+							SearchParams
+									.builder().sorting(FileSorting.builder().property("name")
+											.sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build())
+									.build());
 
 			// keys ordered according to attribute name in descending order
 			assertThat(properties.keySet().stream().collect(Collectors.toList()))
 					.isEqualTo(Arrays.asList("projectB", "projectA"));
 
-			properties = storage.properties(dir, null, null, FilePaging.builder().skip(1).build(), FileSorting.builder()
-					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build());
+			properties = storage.properties(dir, null,
+					SearchParams.builder().paging(FilePaging.builder().skip(1).build())
+							.sorting(FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING)
+									.nullsFirst(true).secondary(null).build())
+							.build());
 
 			// only the second
 			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectA"));
 
-			properties = storage.properties(dir, null, null, FilePaging.builder().max(1).build(), FileSorting.builder()
-					.property("name").sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build());
+			properties = storage.properties(dir, null,
+					SearchParams.builder().paging(FilePaging.builder().max(1).build())
+							.sorting(FileSorting.builder().property("name").sort(FileSorting.SORT_DESCENDING)
+									.nullsFirst(true).secondary(null).build())
+							.build());
 
 			// only the first
 			assertThat(properties.keySet().stream().collect(Collectors.toList())).isEqualTo(Arrays.asList("projectB"));
 
-			List<Project> projects = storage.setProperty(dir, "description", "same text", null, null, null);
+			List<Project> projects = storage.setProperty(dir, "description", "same text", null);
 			Project first = projects.get(0);
 			assertThat(first.getDescription()).isEqualTo("same text");
 			Project second = projects.get(1);
 			assertThat(second.getDescription()).isEqualTo("same text");
 
-			projects = storage.list(dir, null, null, null);
+			projects = storage.list(dir, null);
 			first = projects.get(0);
 			assertThat(first.getDescription()).isEqualTo("same text");
 			second = projects.get(1);

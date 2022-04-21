@@ -6,13 +6,11 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
-import io.github.thiagolvlsantos.file.storage.FilePredicate;
-import io.github.thiagolvlsantos.file.storage.FileSorting;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
 import io.github.thiagolvlsantos.file.storage.IFileStorageTyped;
+import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import lombok.Setter;
 
@@ -89,13 +87,13 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public long count(File dir, FilePredicate filter, FilePaging paging) {
-		return storage.count(dir, type, filter, paging);
+	public long count(File dir, SearchParams search) {
+		return storage.count(dir, type, search);
 	}
 
 	@Override
-	public List<T> list(File dir, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		return storage.list(dir, type, filter, paging, sorting);
+	public List<T> list(File dir, SearchParams search) {
+		return storage.list(dir, type, search);
 	}
 
 	// +------------- PROPERTY METHODS ------------------+
@@ -106,9 +104,8 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public List<T> setProperty(File dir, String property, Object data, FilePredicate filter, FilePaging paging,
-			FileSorting sorting) {
-		return storage.setProperty(dir, type, property, data, filter, paging, sorting);
+	public List<T> setProperty(File dir, String property, Object data, SearchParams search) {
+		return storage.setProperty(dir, type, property, data, search);
 	}
 
 	@Override
@@ -122,9 +119,8 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public Map<String, Map<String, Object>> properties(File dir, FileParams names, FilePredicate filter,
-			FilePaging paging, FileSorting sorting) {
-		return storage.properties(dir, type, names, filter, paging, sorting);
+	public Map<String, Map<String, Object>> properties(File dir, FileParams names, SearchParams search) {
+		return storage.properties(dir, type, names, search);
 	}
 	// +------------- RESOURCE METHODS ------------------+
 
@@ -154,16 +150,12 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public long countResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging) {
-		return storage.countResources(dir, type, keys, filter, paging);
+	public long countResources(File dir, FileParams keys, SearchParams search) {
+		return storage.countResources(dir, type, keys, search);
 	}
 
 	@Override
-	public List<Resource> listResources(File dir, FileParams keys, FilePredicate filter, FilePaging paging,
-			FileSorting sorting) {
-		return storage.listResources(dir, type, keys, filter, paging, sorting);
+	public List<Resource> listResources(File dir, FileParams keys, SearchParams search) {
+		return storage.listResources(dir, type, keys, search);
 	}
-
-	// +------------- COLLECTION METHODS ------------------+
-
 }

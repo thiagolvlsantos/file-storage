@@ -35,13 +35,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-import io.github.thiagolvlsantos.file.storage.FilePaging;
 import io.github.thiagolvlsantos.file.storage.FileParams;
-import io.github.thiagolvlsantos.file.storage.FilePredicate;
-import io.github.thiagolvlsantos.file.storage.FileSorting;
 import io.github.thiagolvlsantos.file.storage.IFileIndex;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
+import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.annotations.FileKeep;
 import io.github.thiagolvlsantos.file.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.file.storage.annotations.UtilAnnotations;
@@ -61,6 +59,9 @@ import io.github.thiagolvlsantos.file.storage.identity.FileKey;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
+import io.github.thiagolvlsantos.file.storage.search.FilePaging;
+import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.file.storage.util.comparator.ComparatorNullSafe;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import lombok.SneakyThrows;
@@ -331,13 +332,16 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> long count(File dir, Class<T> type, FilePredicate filter, FilePaging paging) {
-		return list(dir, type, filter, paging, null).size();
+	public <T> long count(File dir, Class<T> type, SearchParams search) {
+		return list(dir, type, search).size();
 	}
 
 	@Override
-	public <T> List<T> list(File dir, Class<T> type, FilePredicate filter, FilePaging paging, FileSorting sorting) {
-		return range(paging, filter(filter, sort(sorting, all(dir, type, null))));
+	public <T> List<T> list(File dir, Class<T> type, SearchParams search) {
+		return range(search != null ? search.getPaging() : null, //
+				filter(search != null ? search.getFilter() : null, //
+						sort(search != null ? search.getSorting() : null, //
+								all(dir, type, null))));
 	}
 
 	@SneakyThrows
@@ -463,9 +467,8 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> List<T> setProperty(File dir, Class<T> type, String property, Object data, FilePredicate filter,
-			FilePaging paging, FileSorting sorting) {
-		List<T> list = list(dir, type, filter, paging, sorting);
+	public <T> List<T> setProperty(File dir, Class<T> type, String property, Object data, SearchParams search) {
+		List<T> list = list(dir, type, search);
 
 		List<T> result = new ArrayList<>(list.size());
 
@@ -524,10 +527,10 @@ public class FileStorageImpl implements IFileStorage {
 	@Override
 	@SneakyThrows
 	public <T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names,
-			FilePredicate filter, FilePaging paging, FileSorting sorting) {
+			SearchParams search) {
 		Map<String, Map<String, Object>> result = new LinkedHashMap<>();
 
-		List<T> list = list(dir, type, filter, paging, sorting);
+		List<T> list = list(dir, type, search);
 
 		for (T current : list) {
 			result.put(UtilAnnotations.getKeysChain(type, current), getProperties(names, current));
@@ -653,19 +656,18 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> long countResources(File dir, Class<T> type, FileParams keys, FilePredicate filter, FilePaging paging) {
-		return listResources(dir, type, keys, filter, paging, null).size();
+	public <T> long countResources(File dir, Class<T> type, FileParams keys, SearchParams search) {
+		return listResources(dir, type, keys, search).size();
 	}
 
 	@Override
 	@SneakyThrows
-	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, FilePredicate filter,
-			FilePaging paging, FileSorting sorting) {
+	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, SearchParams search) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
 
-		final Predicate<Object> predicate = filter(filter);
+		final Predicate<Object> predicate = filter(search != null ? search.getFilter() : null);
 
 		List<Resource> result = new LinkedList<>();
 		final String ignoreFile = "." + serializer.getFile(type);
@@ -692,10 +694,11 @@ public class FileStorageImpl implements IFileStorage {
 				return FileVisitResult.CONTINUE;
 			}
 		});
-		if (sorting == null) {
+		if (search == null || search.getSorting() == null) {
 			result.sort(new ComparatorNullSafe<>("metadata.path", false));
 		}
-		return range(paging, sort(sorting, result));
+		return range(search != null ? search.getPaging() : null,
+				sort(search != null ? search.getSorting() : null, result));
 	}
 
 	@Override
