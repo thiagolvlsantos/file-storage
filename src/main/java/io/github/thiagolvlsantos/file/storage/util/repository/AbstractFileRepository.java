@@ -15,7 +15,7 @@ import io.github.thiagolvlsantos.file.storage.IFileStorage;
 import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.search.FilePaging;
-import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileFilter;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -69,8 +69,8 @@ public abstract class AbstractFileRepository<T> {
 				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
 	}
 
-	public FilePredicate filter(String filter) {
-		return filter != null ? FilePredicate.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
+	public FileFilter filter(String filter) {
+		return filter != null ? FileFilter.builder().filter(predicateConverter.toPredicate(filter)).build() : null;
 	}
 
 	public FilePaging paging(String paging) {

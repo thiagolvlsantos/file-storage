@@ -45,7 +45,7 @@ import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
 import io.github.thiagolvlsantos.file.storage.search.FilePaging;
-import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileFilter;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
@@ -122,7 +122,7 @@ class FileStorageApplicationTests {
 					TemplateTargetAuthorization.class, null);
 			assertTrue(allTargetAuthorizations.size() == 3);
 
-			FilePredicate predicate = new FilePredicate(
+			FileFilter predicate = new FileFilter(
 					factory.read(("{\"template.name\":{\"$eq\": \"" + nameJob + "\"}}").getBytes()));
 			List<TemplateTargetAuthorization> filterAuthorizations = storage.list(dir,
 					TemplateTargetAuthorization.class, SearchParams.builder().filter(predicate).build());
@@ -336,7 +336,7 @@ class FileStorageApplicationTests {
 					.contains(project1, project2);
 
 			// list filtered/sorted
-			FilePredicate predicate = new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
 			assertThat(storage.list(dir, Project.class,
 					SearchParams.builder().filter(predicate).paging(FilePaging.builder().skip(0).build()).build()))
 					.contains(project1);
@@ -385,7 +385,7 @@ class FileStorageApplicationTests {
 
 			// search by name
 			List<Project> list = storage.list(dir, Project.class, SearchParams.builder()
-					.filter(new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
+					.filter(new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -441,7 +441,7 @@ class FileStorageApplicationTests {
 					.contains(project1, project2);
 
 			// list filtered/sorted
-			FilePredicate predicate = new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
 			assertThat(storage.list(dir,
 					SearchParams.builder().filter(predicate).paging(FilePaging.builder().skip(0).build()).build()))
 					.contains(project1);
@@ -489,7 +489,7 @@ class FileStorageApplicationTests {
 
 			// search by name
 			List<Project> list = storage.list(dir, SearchParams.builder()
-					.filter(new FilePredicate(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
+					.filter(new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -1226,13 +1226,13 @@ class FileStorageApplicationTests {
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, Project.class, params,
-					SearchParams.builder().filter(FilePredicate.builder()
+					SearchParams.builder().filter(FileFilter.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
 							.build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, Project.class, params,
-					SearchParams.builder().filter(FilePredicate.builder()
+					SearchParams.builder().filter(FileFilter.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
 							.build()))
 					.isEqualTo(1);
@@ -1317,13 +1317,13 @@ class FileStorageApplicationTests {
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, params,
-					SearchParams.builder().filter(FilePredicate.builder()
+					SearchParams.builder().filter(FileFilter.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
 							.build());
 			// count resources
 			assertThat(resources.size()).isEqualTo(1);
 			assertThat(storage.countResources(dir, params,
-					SearchParams.builder().filter(FilePredicate.builder()
+					SearchParams.builder().filter(FileFilter.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
 							.build()))
 					.isEqualTo(1);
@@ -1612,7 +1612,7 @@ class FileStorageApplicationTests {
 			assertThat(pb.get("description")).isEqualTo("group b");
 			assertThat(pb.get("id")).isNull();
 
-			FilePredicate predicate = new FilePredicate(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
 			properties = storage.properties(dir, Project.class, FileParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
 			assertThat(properties.size()).isEqualTo(1);
@@ -1704,7 +1704,7 @@ class FileStorageApplicationTests {
 			assertThat(pb.get("description")).isEqualTo("group b");
 			assertThat(pb.get("id")).isNull();
 
-			FilePredicate predicate = new FilePredicate(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
 			properties = storage.properties(dir, FileParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
 			assertThat(properties.size()).isEqualTo(1);

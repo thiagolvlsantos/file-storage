@@ -1,7 +1,7 @@
 package io.github.thiagolvlsantos.file.storage;
 
 import io.github.thiagolvlsantos.file.storage.search.FilePaging;
-import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileFilter;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +15,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class SearchParams {
-	private FilePredicate filter;
+	private FileFilter filter;
 	private FilePaging paging;
 	private FileSorting sorting;
 }

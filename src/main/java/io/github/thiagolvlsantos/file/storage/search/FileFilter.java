@@ -15,6 +15,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @ToString
 @SuperBuilder
-public class FilePredicate {
+public class FileFilter {
 	private Predicate<Object> filter;
 }

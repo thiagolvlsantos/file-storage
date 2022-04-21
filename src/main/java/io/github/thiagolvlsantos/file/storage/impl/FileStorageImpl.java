@@ -60,7 +60,7 @@ import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
 import io.github.thiagolvlsantos.file.storage.search.FilePaging;
-import io.github.thiagolvlsantos.file.storage.search.FilePredicate;
+import io.github.thiagolvlsantos.file.storage.search.FileFilter;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.file.storage.util.comparator.ComparatorNullSafe;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
@@ -393,7 +393,7 @@ public class FileStorageImpl implements IFileStorage {
 		return new ComparatorNullSafe<>(sorting.getProperty(), sorting.isNullsFirst());
 	}
 
-	protected <T> List<T> filter(FilePredicate filter, List<T> result) {
+	protected <T> List<T> filter(FileFilter filter, List<T> result) {
 		Predicate<Object> p = filter(filter);
 		if (p != null) {
 			result = result.stream().filter(p).collect(Collectors.toList());
@@ -401,7 +401,7 @@ public class FileStorageImpl implements IFileStorage {
 		return result;
 	}
 
-	protected Predicate<Object> filter(FilePredicate filter) {
+	protected Predicate<Object> filter(FileFilter filter) {
 		return filter == null ? null : filter.getFilter();
 	}
 
