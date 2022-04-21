@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import io.github.thiagolvlsantos.file.storage.FileParams;
+import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
 import io.github.thiagolvlsantos.file.storage.IFileStorageTyped;
@@ -47,7 +47,7 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public File location(File dir, FileParams keys) {
+	public File location(File dir, KeyParams keys) {
 		return storage.location(dir, type(), keys);
 	}
 
@@ -57,7 +57,7 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public boolean exists(File dir, FileParams keys) {
+	public boolean exists(File dir, KeyParams keys) {
 		return storage.exists(dir, type(), keys);
 	}
 
@@ -72,7 +72,7 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public T read(File dir, FileParams keys) {
+	public T read(File dir, KeyParams keys) {
 		return storage.read(dir, type, keys);
 	}
 
@@ -82,7 +82,7 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public T delete(File dir, FileParams keys) {
+	public T delete(File dir, KeyParams keys) {
 		return storage.delete(dir, type, keys);
 	}
 
@@ -99,7 +99,7 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	// +------------- PROPERTY METHODS ------------------+
 
 	@Override
-	public T setProperty(File dir, FileParams keys, String property, Object data) {
+	public T setProperty(File dir, KeyParams keys, String property, Object data) {
 		return storage.setProperty(dir, type, keys, property, data);
 	}
 
@@ -109,53 +109,53 @@ public abstract class AFileStorageTypedImpl<T> implements IFileStorageTyped<T> {
 	}
 
 	@Override
-	public Object getProperty(File dir, FileParams keys, String property) {
+	public Object getProperty(File dir, KeyParams keys, String property) {
 		return storage.getProperty(dir, type, keys, property);
 	}
 
 	@Override
-	public Map<String, Object> properties(File dir, FileParams keys, FileParams names) {
+	public Map<String, Object> properties(File dir, KeyParams keys, KeyParams names) {
 		return storage.properties(dir, type, keys, names);
 	}
 
 	@Override
-	public Map<String, Map<String, Object>> properties(File dir, FileParams names, SearchParams search) {
+	public Map<String, Map<String, Object>> properties(File dir, KeyParams names, SearchParams search) {
 		return storage.properties(dir, type, names, search);
 	}
 	// +------------- RESOURCE METHODS ------------------+
 
 	@Override
-	public File locationResource(File dir, FileParams keys, String path) {
+	public File locationResource(File dir, KeyParams keys, String path) {
 		return storage.locationResource(dir, type, keys, path);
 	}
 
 	@Override
-	public boolean existsResource(File dir, FileParams keys, String path) {
+	public boolean existsResource(File dir, KeyParams keys, String path) {
 		return storage.existsResource(dir, type, keys, path);
 	}
 
 	@Override
-	public T setResource(File dir, FileParams keys, Resource resource) {
+	public T setResource(File dir, KeyParams keys, Resource resource) {
 		return storage.setResource(dir, type, keys, resource);
 	}
 
 	@Override
-	public Resource getResource(File dir, FileParams keys, String path) {
+	public Resource getResource(File dir, KeyParams keys, String path) {
 		return storage.getResource(dir, type, keys, path);
 	}
 
 	@Override
-	public T deleteResource(File dir, FileParams keys, String path) {
+	public T deleteResource(File dir, KeyParams keys, String path) {
 		return storage.deleteResource(dir, type, keys, path);
 	}
 
 	@Override
-	public long countResources(File dir, FileParams keys, SearchParams search) {
+	public long countResources(File dir, KeyParams keys, SearchParams search) {
 		return storage.countResources(dir, type, keys, search);
 	}
 
 	@Override
-	public List<Resource> listResources(File dir, FileParams keys, SearchParams search) {
+	public List<Resource> listResources(File dir, KeyParams keys, SearchParams search) {
 		return storage.listResources(dir, type, keys, search);
 	}
 }

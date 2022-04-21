@@ -113,8 +113,8 @@ class FileStorageApplicationTests {
 			List<TemplateAuthorization> allAuthorizations = storage.list(dir, TemplateAuthorization.class, null);
 			assertTrue(allAuthorizations.size() == 2);
 
-			storage.delete(dir, Template.class, FileParams.of(nameApp));
-			storage.delete(dir, Template.class, FileParams.of(nameJob));
+			storage.delete(dir, Template.class, KeyParams.of(nameApp));
+			storage.delete(dir, Template.class, KeyParams.of(nameJob));
 			allAuthorizations = storage.list(dir, TemplateAuthorization.class, null);
 			assertTrue(allAuthorizations.size() == 2);
 
@@ -146,7 +146,7 @@ class FileStorageApplicationTests {
 			IFileSerializer ser = storage.getSerializer();
 			File target = new File(storage.location(dir, instance), ser.getFile(ObjectWrapped.class));
 			assertTrue(target.exists());
-			instance = storage.read(dir, ObjectWrapped.class, FileParams.of("myName"));
+			instance = storage.read(dir, ObjectWrapped.class, KeyParams.of("myName"));
 			assertEquals(instance.getName(), "myName");
 		} finally {
 			try {
@@ -371,12 +371,12 @@ class FileStorageApplicationTests {
 			assertThat(storage.count(dir, Project.class, null)).isEqualTo(2L);
 
 			// exists by key
-			assertThat(storage.exists(dir, Project.class, FileParams.of(project1.getName()))).isTrue();
+			assertThat(storage.exists(dir, Project.class, KeyParams.of(project1.getName()))).isTrue();
 			// exists by example
 			assertThat(storage.exists(dir, Project.class, project1)).isTrue();
 
 			// read by key
-			project1 = storage.read(dir, Project.class, FileParams.of(project1.getName()));
+			project1 = storage.read(dir, Project.class, KeyParams.of(project1.getName()));
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// read by example
@@ -390,8 +390,8 @@ class FileStorageApplicationTests {
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
 			// delete by key
-			storage.delete(dir, Project.class, FileParams.of(project1.getName()));
-			assertThat(storage.exists(dir, Project.class, FileParams.of(project1.getName()))).isFalse();
+			storage.delete(dir, Project.class, KeyParams.of(project1.getName()));
+			assertThat(storage.exists(dir, Project.class, KeyParams.of(project1.getName()))).isFalse();
 
 			// delete by example
 			storage.delete(dir, Project.class, project2);
@@ -475,12 +475,12 @@ class FileStorageApplicationTests {
 					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build())).isEqualTo(1L);
 
 			// exists by key
-			assertThat(storage.exists(dir, FileParams.of(project1.getName()))).isTrue();
+			assertThat(storage.exists(dir, KeyParams.of(project1.getName()))).isTrue();
 			// exists by example
 			assertThat(storage.exists(dir, project1)).isTrue();
 
 			// read by key
-			project1 = storage.read(dir, FileParams.of(project1.getName()));
+			project1 = storage.read(dir, KeyParams.of(project1.getName()));
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// read by example
@@ -494,8 +494,8 @@ class FileStorageApplicationTests {
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
 			// delete by key
-			storage.delete(dir, FileParams.of(project1.getName()));
-			assertThat(storage.exists(dir, FileParams.of(project1.getName()))).isFalse();
+			storage.delete(dir, KeyParams.of(project1.getName()));
+			assertThat(storage.exists(dir, KeyParams.of(project1.getName()))).isFalse();
 
 			// delete by example
 			storage.delete(dir, project2);
@@ -568,7 +568,7 @@ class FileStorageApplicationTests {
 
 			// update valid property
 			description = "Final version";
-			project1 = storage.setProperty(dir, Project.class, FileParams.of(name1), "description", description);
+			project1 = storage.setProperty(dir, Project.class, KeyParams.of(name1), "description", description);
 
 			// changed property
 			assertThat(project1.getDescription()).isEqualTo(description);
@@ -614,7 +614,7 @@ class FileStorageApplicationTests {
 
 			// update valid property
 			description = "Final version";
-			project1 = storage.setProperty(dir, FileParams.of(name1), "description", description);
+			project1 = storage.setProperty(dir, KeyParams.of(name1), "description", description);
 
 			// changed property
 			assertThat(project1.getDescription()).isEqualTo(description);
@@ -638,7 +638,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.setProperty(dir, Project.class, params, "title", "newDescription");
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -662,7 +662,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.setProperty(dir, params, "title", "newDescription");
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -686,7 +686,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.getProperty(dir, Project.class, params, "title");
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -710,7 +710,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.getProperty(dir, params, "title");
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -734,8 +734,8 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			FileParams params = FileParams.of(name1);
-			FileParams names = FileParams.of("title");
+			KeyParams params = KeyParams.of(name1);
+			KeyParams names = KeyParams.of("title");
 			assertThatThrownBy(() -> {
 				storage.properties(dir, Project.class, params, names);
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -759,8 +759,8 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			FileParams params = FileParams.of(name1);
-			FileParams names = FileParams.of("title");
+			KeyParams params = KeyParams.of(name1);
+			KeyParams names = KeyParams.of("title");
 			assertThatThrownBy(() -> {
 				storage.properties(dir, params, names);
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -784,7 +784,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.getResource(dir, Project.class, params, "css/example.css");
 			}).isExactlyInstanceOf(FileStorageResourceNotFoundException.class)//
@@ -808,7 +808,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.getResource(dir, params, "css/example.css");
 			}).isExactlyInstanceOf(FileStorageResourceNotFoundException.class)//
@@ -834,7 +834,7 @@ class FileStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid properties
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.setProperty(dir, Project.class, params, "id", "\"10\"");
 			}).isExactlyInstanceOf(FileStorageException.class)//
@@ -875,7 +875,7 @@ class FileStorageApplicationTests {
 			assertThat(project1.getId()).isNotNull();
 
 			// try update invalid properties
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThatThrownBy(() -> {
 				storage.setProperty(dir, params, "id", "\"10\"");
 			}).isExactlyInstanceOf(FileStorageException.class)//
@@ -909,12 +909,12 @@ class FileStorageApplicationTests {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			FileParams params = FileParams.of("doNotExist");
+			KeyParams params = KeyParams.of("doNotExist");
 			assertThatThrownBy(() -> {
 				storage.setProperty(dir, Project.class, params, "description", "10");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ FileParams.of("doNotExist") + "' not found.");
+							+ KeyParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -929,12 +929,12 @@ class FileStorageApplicationTests {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			FileParams params = FileParams.of("doNotExist");
+			KeyParams params = KeyParams.of("doNotExist");
 			assertThatThrownBy(() -> {
 				storage.setProperty(dir, params, "description", "10");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
 					.hasMessage("Object '" + Project.class.getSimpleName() + "' with keys '"
-							+ FileParams.of("doNotExist") + "' not found.");
+							+ KeyParams.of("doNotExist") + "' not found.");
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -949,7 +949,7 @@ class FileStorageApplicationTests {
 		IFileStorage storage = context.getBean(IFileStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			FileParams params = FileParams.of("doNotExist");
+			KeyParams params = KeyParams.of("doNotExist");
 			assertThatThrownBy(() -> {
 				storage.getProperty(dir, Project.class, params, "description");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
@@ -968,7 +968,7 @@ class FileStorageApplicationTests {
 		IFileStorageTyped<Project> storage = context.getBean(ProjectStorage.class);
 		File dir = new File("target/data/storage_" + System.currentTimeMillis());
 		try {
-			FileParams params = FileParams.of("doNotExist");
+			KeyParams params = KeyParams.of("doNotExist");
 			assertThatThrownBy(() -> {
 				storage.getProperty(dir, params, "description");
 			}).isExactlyInstanceOf(FileStorageNotFoundException.class)//
@@ -993,7 +993,7 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, Project.class, project1);
 
 			// property reading
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			Object property = storage.getProperty(dir, Project.class, params, "name");
 			assertThat(property).isEqualTo(name1);
 
@@ -1002,16 +1002,16 @@ class FileStorageApplicationTests {
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
 			// property full map
-			Map<String, Object> objs = storage.properties(dir, Project.class, params, (FileParams) null);
+			Map<String, Object> objs = storage.properties(dir, Project.class, params, (KeyParams) null);
 			assertThat(objs).containsEntry("description", "newDescription");
 
 			// property map projection
-			FileParams names = FileParams.of(Arrays.asList("name", "created"));
+			KeyParams names = KeyParams.of(Arrays.asList("name", "created"));
 			objs = storage.properties(dir, Project.class, params, names);
 			assertThat(objs).hasSize(2);
 
 			// invalid property
-			FileParams name = FileParams.of("title");
+			KeyParams name = KeyParams.of("title");
 			assertThatThrownBy(() -> {
 				storage.properties(dir, Project.class, params, name);
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -1036,7 +1036,7 @@ class FileStorageApplicationTests {
 			project1 = storage.write(dir, project1);
 
 			// property reading
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			Object property = storage.getProperty(dir, params, "name");
 			assertThat(property).isEqualTo(name1);
 
@@ -1045,16 +1045,16 @@ class FileStorageApplicationTests {
 			assertThat(result.getDescription()).isEqualTo("newDescription");
 
 			// property full map
-			Map<String, Object> objs = storage.properties(dir, params, (FileParams) null);
+			Map<String, Object> objs = storage.properties(dir, params, (KeyParams) null);
 			assertThat(objs).containsEntry("description", "newDescription");
 
 			// property map projection
-			FileParams names = FileParams.of(Arrays.asList("name", "created"));
+			KeyParams names = KeyParams.of(Arrays.asList("name", "created"));
 			objs = storage.properties(dir, params, names);
 			assertThat(objs).hasSize(2);
 
 			// invalid property
-			FileParams name = FileParams.of("title");
+			KeyParams name = KeyParams.of("title");
 			assertThatThrownBy(() -> {
 				storage.properties(dir, params, name);
 			}).isExactlyInstanceOf(FileStoragePropertyNotFoundException.class)//
@@ -1085,7 +1085,7 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// writing
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			Project result = storage.setResource(dir, Project.class, params, resource);
 
 			// reading
@@ -1129,7 +1129,7 @@ class FileStorageApplicationTests {
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
 
 			// writing
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			Project result = storage.setResource(dir, params, resource);
 
 			// reading
@@ -1172,7 +1172,7 @@ class FileStorageApplicationTests {
 			ResourceMetadata metadata = ResourceMetadata.builder().path(path).contentType("css").build();
 			ResourceContent content = ResourceContent.builder().data(".table { width: 100%; }".getBytes()).build();
 			Resource resource = Resource.builder().metadata(metadata).content(content).build();
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			storage.setResource(dir, Project.class, params, resource);
 
 			path = "component/compA.html";
@@ -1257,7 +1257,7 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 
 			// property reading
 			String path = "component/compB.css";
@@ -1348,7 +1348,7 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 
 			// property reading
 			String path = "css/style.css";
@@ -1391,7 +1391,7 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 
 			// property reading
 			String path = "css/style.css";
@@ -1430,7 +1430,7 @@ class FileStorageApplicationTests {
 			// write
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, Project.class, project1);
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 
 			assertThat(storage.listResources(dir, Project.class, params, null)).isEmpty();
 			assertThat(storage.countResources(dir, Project.class, params, null)).isZero();
@@ -1453,7 +1453,7 @@ class FileStorageApplicationTests {
 			Project project1 = Project.builder().name(name1).build();
 			project1 = storage.write(dir, project1);
 
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 			assertThat(storage.listResources(dir, params, null)).isEmpty();
 			assertThat(storage.countResources(dir, params, null)).isZero();
 		} finally {
@@ -1473,7 +1473,7 @@ class FileStorageApplicationTests {
 		try {
 			// write
 			Project project1 = Project.builder().name(name1).build();
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 
 			File location1 = storage.location(dir, project1);
 			File location2 = storage.location(dir, Project.class, project1);
@@ -1518,7 +1518,7 @@ class FileStorageApplicationTests {
 		try {
 			// write
 			Project project1 = Project.builder().name(name1).build();
-			FileParams params = FileParams.of(name1);
+			KeyParams params = KeyParams.of(name1);
 
 			File location1 = storage.location(dir, project1);
 			File location2 = storage.location(dir, params);
@@ -1568,7 +1568,7 @@ class FileStorageApplicationTests {
 			project2 = storage.write(dir, project2);
 
 			// sabotage
-			Files.write(new File(storage.location(dir, Project.class, FileParams.of(name1)), "data.json").toPath(),
+			Files.write(new File(storage.location(dir, Project.class, KeyParams.of(name1)), "data.json").toPath(),
 					"Set invalid file!".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE,
 					StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -1598,7 +1598,7 @@ class FileStorageApplicationTests {
 
 			Map<String, Map<String, Object>> properties;
 
-			properties = storage.properties(dir, Project.class, FileParams.of("name;description"), (SearchParams) null);
+			properties = storage.properties(dir, Project.class, KeyParams.of("name;description"), (SearchParams) null);
 
 			assertThat(properties.size()).isEqualTo(2);
 
@@ -1613,7 +1613,7 @@ class FileStorageApplicationTests {
 			assertThat(pb.get("id")).isNull();
 
 			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
-			properties = storage.properties(dir, Project.class, FileParams.of("name;description"),
+			properties = storage.properties(dir, Project.class, KeyParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
 			assertThat(properties.size()).isEqualTo(1);
 
@@ -1625,7 +1625,7 @@ class FileStorageApplicationTests {
 			assertThat(properties.get("projectB")).isNull();
 
 			properties = storage
-					.properties(dir, Project.class, FileParams.of("name;description"),
+					.properties(dir, Project.class, KeyParams.of("name;description"),
 							SearchParams
 									.builder().sorting(FileSorting.builder().property("name")
 											.sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build())
@@ -1690,7 +1690,7 @@ class FileStorageApplicationTests {
 
 			Map<String, Map<String, Object>> properties;
 
-			properties = storage.properties(dir, FileParams.of("name;description"), (SearchParams) null);
+			properties = storage.properties(dir, KeyParams.of("name;description"), (SearchParams) null);
 
 			assertThat(properties.size()).isEqualTo(2);
 
@@ -1705,7 +1705,7 @@ class FileStorageApplicationTests {
 			assertThat(pb.get("id")).isNull();
 
 			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
-			properties = storage.properties(dir, FileParams.of("name;description"),
+			properties = storage.properties(dir, KeyParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
 			assertThat(properties.size()).isEqualTo(1);
 
@@ -1717,7 +1717,7 @@ class FileStorageApplicationTests {
 			assertThat(properties.get("projectB")).isNull();
 
 			properties = storage
-					.properties(dir, FileParams.of("name;description"),
+					.properties(dir, KeyParams.of("name;description"),
 							SearchParams
 									.builder().sorting(FileSorting.builder().property("name")
 											.sort(FileSorting.SORT_DESCENDING).nullsFirst(true).secondary(null).build())

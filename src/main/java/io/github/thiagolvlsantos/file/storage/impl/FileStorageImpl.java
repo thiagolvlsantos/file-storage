@@ -35,7 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-import io.github.thiagolvlsantos.file.storage.FileParams;
+import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.IFileIndex;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
@@ -94,11 +94,11 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> File location(File dir, Class<T> type, T example) {
-		return location(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
+		return location(dir, type, KeyParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
-	public <T> File location(File dir, Class<T> type, FileParams ref) {
+	public <T> File location(File dir, Class<T> type, KeyParams ref) {
 		return entityDir(dir, type, ref);
 	}
 
@@ -110,15 +110,15 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> boolean exists(File dir, Class<T> type, T example) {
-		return exists(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
+		return exists(dir, type, KeyParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
-	public <T> boolean exists(File dir, Class<T> type, FileParams keys) {
+	public <T> boolean exists(File dir, Class<T> type, KeyParams keys) {
 		return entityFile(dir, type, keys).exists();
 	}
 
-	protected <T> File entityDir(File dir, Class<T> type, FileParams keys) {
+	protected <T> File entityDir(File dir, Class<T> type, KeyParams keys) {
 		File path = entityRoot(dir, type);
 		for (Object k : keys) {
 			path = new File(path, String.valueOf(k));
@@ -147,7 +147,7 @@ public class FileStorageImpl implements IFileStorage {
 	@Override
 	@SneakyThrows
 	public <T> T write(File dir, Class<T> type, T instance) {
-		FileParams keys = FileParams.of(UtilAnnotations.getKeys(type, instance));
+		KeyParams keys = KeyParams.of(UtilAnnotations.getKeys(type, instance));
 		File file = entityFile(dir, type, keys);
 		T old = null;
 		if (file.exists()) {
@@ -190,7 +190,7 @@ public class FileStorageImpl implements IFileStorage {
 		return instance;
 	}
 
-	protected <T> File entityFile(File dir, Class<T> type, FileParams keys) {
+	protected <T> File entityFile(File dir, Class<T> type, KeyParams keys) {
 		return new File(entityDir(dir, type, keys), serializer.getFile(type));
 	}
 
@@ -278,11 +278,11 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> T read(File dir, Class<T> type, T example) {
-		return read(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
+		return read(dir, type, KeyParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
-	public <T> T read(File dir, Class<T> type, FileParams keys) {
+	public <T> T read(File dir, Class<T> type, KeyParams keys) {
 		return read(entityFile(dir, type, keys), type);
 	}
 
@@ -298,11 +298,11 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> T delete(File dir, Class<T> type, T example) {
-		return delete(dir, type, FileParams.of(UtilAnnotations.getKeys(type, example)));
+		return delete(dir, type, KeyParams.of(UtilAnnotations.getKeys(type, example)));
 	}
 
 	@Override
-	public <T> T delete(File dir, Class<T> type, FileParams keys) {
+	public <T> T delete(File dir, Class<T> type, KeyParams keys) {
 		T old = null;
 		if (exists(dir, type, keys)) {
 			old = read(dir, type, keys);
@@ -352,7 +352,7 @@ public class FileStorageImpl implements IFileStorage {
 			for (File f : ids) {
 				Object[] keys = Files.readAllLines(f.toPath()).toArray(new Object[0]);
 				try {
-					result.add(serializer.readValue(entityFile(dir, type, FileParams.of(keys)), type));
+					result.add(serializer.readValue(entityFile(dir, type, KeyParams.of(keys)), type));
 				} catch (Throwable e) {
 					log.error("Could not read object for keys: " + Arrays.toString(keys) + ", check file system.", e);
 				}
@@ -416,7 +416,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T setProperty(File dir, Class<T> type, FileParams keys, String property, Object data) {
+	public <T> T setProperty(File dir, Class<T> type, KeyParams keys, String property, Object data) {
 		verifyExists(dir, type, keys);
 
 		T current = read(dir, type, keys);
@@ -424,7 +424,7 @@ public class FileStorageImpl implements IFileStorage {
 		return setProperty(dir, type, property, data, current);
 	}
 
-	protected <T> void verifyExists(File dir, Class<T> type, FileParams keys) {
+	protected <T> void verifyExists(File dir, Class<T> type, KeyParams keys) {
 		if (!exists(dir, type, keys)) {
 			throw new FileStorageNotFoundException(
 					"Object '" + type.getSimpleName() + "' with keys '" + keys + "' not found.", null);
@@ -481,7 +481,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Object getProperty(File dir, Class<T> type, FileParams keys, String property) {
+	public <T> Object getProperty(File dir, Class<T> type, KeyParams keys, String property) {
 		verifyExists(dir, type, keys);
 
 		T current = read(dir, type, keys);
@@ -500,7 +500,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Map<String, Object> properties(File dir, Class<T> type, FileParams keys, FileParams names) {
+	public <T> Map<String, Object> properties(File dir, Class<T> type, KeyParams keys, KeyParams names) {
 		verifyExists(dir, type, keys);
 
 		T current = read(dir, type, keys);
@@ -508,12 +508,12 @@ public class FileStorageImpl implements IFileStorage {
 		return getProperties(names, current);
 	}
 
-	protected <T> Map<String, Object> getProperties(FileParams names, T current)
+	protected <T> Map<String, Object> getProperties(KeyParams names, T current)
 			throws IllegalAccessException, InvocationTargetException {
-		FileParams selection = names;
+		KeyParams selection = names;
 		if (selection == null) {
 			PropertyDescriptor[] pds = PropertyUtils.getPropertyDescriptors(current);
-			selection = FileParams.of(Stream.of(pds).map(PropertyDescriptor::getName).collect(Collectors.toList()));
+			selection = KeyParams.of(Stream.of(pds).map(PropertyDescriptor::getName).collect(Collectors.toList()));
 		}
 
 		Map<String, Object> result = new LinkedHashMap<>();
@@ -526,7 +526,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, FileParams names,
+	public <T> Map<String, Map<String, Object>> properties(File dir, Class<T> type, KeyParams names,
 			SearchParams search) {
 		Map<String, Map<String, Object>> result = new LinkedHashMap<>();
 
@@ -540,7 +540,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	// +------------- RESOURCE METHODS ------------------+
 
-	protected <T> void initResources(File dir, Class<T> type, FileParams keys) throws IOException {
+	protected <T> void initResources(File dir, Class<T> type, KeyParams keys) throws IOException {
 		File resourceDir = resourceDir(entityDir(dir, type, keys), type);
 		if (!resourceDir.exists()) {
 			boolean created = resourceDir.mkdirs();
@@ -555,7 +555,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> File locationResource(File dir, Class<T> type, FileParams keys, String path) {
+	public <T> File locationResource(File dir, Class<T> type, KeyParams keys, String path) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys), type);
 		if (path != null) {
@@ -567,13 +567,13 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> boolean existsResource(File dir, Class<T> type, FileParams keys, String path) {
+	public <T> boolean existsResource(File dir, Class<T> type, KeyParams keys, String path) {
 		return locationResource(dir, type, keys, path).exists();
 	}
 
 	@Override
 	@SneakyThrows
-	public <T> T setResource(File dir, Class<T> type, FileParams keys, Resource resource) {
+	public <T> T setResource(File dir, Class<T> type, KeyParams keys, Resource resource) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys), type);
 
@@ -621,7 +621,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> Resource getResource(File dir, Class<T> type, FileParams keys, String path) {
+	public <T> Resource getResource(File dir, Class<T> type, KeyParams keys, String path) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
@@ -636,7 +636,7 @@ public class FileStorageImpl implements IFileStorage {
 		return Resource.builder().metadata(meta).content(content).build();
 	}
 
-	protected void verifyResources(File root, FileParams keys) {
+	protected void verifyResources(File root, KeyParams keys) {
 		if (!root.exists()) {
 			throw new FileStorageNotFoundException("Resources for " + keys + " not found.", null);
 		}
@@ -656,13 +656,13 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	@Override
-	public <T> long countResources(File dir, Class<T> type, FileParams keys, SearchParams search) {
+	public <T> long countResources(File dir, Class<T> type, KeyParams keys, SearchParams search) {
 		return listResources(dir, type, keys, search).size();
 	}
 
 	@Override
 	@SneakyThrows
-	public <T> List<Resource> listResources(File dir, Class<T> type, FileParams keys, SearchParams search) {
+	public <T> List<Resource> listResources(File dir, Class<T> type, KeyParams keys, SearchParams search) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
@@ -703,7 +703,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	@SneakyThrows
-	public <T> T deleteResource(File dir, Class<T> type, FileParams keys, String path) {
+	public <T> T deleteResource(File dir, Class<T> type, KeyParams keys, String path) {
 		verifyExists(dir, type, keys);
 		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);

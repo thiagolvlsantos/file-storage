@@ -10,7 +10,7 @@ import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import io.github.thiagolvlsantos.file.storage.FileParams;
+import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
 import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
@@ -34,7 +34,7 @@ public abstract class AbstractFileRepository<T> {
 	// +------------- ENTITY METHODS ------------------+
 
 	@SneakyThrows
-	public File location(File dir, FileParams keys) {
+	public File location(File dir, KeyParams keys) {
 		return storage.location(dir, type, keys);
 	}
 
@@ -49,12 +49,12 @@ public abstract class AbstractFileRepository<T> {
 	}
 
 	@SneakyThrows
-	public T read(File dir, FileParams keys) {
+	public T read(File dir, KeyParams keys) {
 		return storage.read(dir, type, keys);
 	}
 
 	@SneakyThrows
-	public T delete(File dir, FileParams keys) {
+	public T delete(File dir, KeyParams keys) {
 		return storage.delete(dir, type, keys);
 	}
 
@@ -84,7 +84,7 @@ public abstract class AbstractFileRepository<T> {
 	// +------------- PROPERTY METHODS ------------------+
 
 	@SneakyThrows
-	public T setProperty(File dir, FileParams keys, String property, Object data) {
+	public T setProperty(File dir, KeyParams keys, String property, Object data) {
 		return storage.setProperty(dir, type, keys, property, newValue(property, data, read(dir, keys)));
 	}
 
@@ -103,17 +103,17 @@ public abstract class AbstractFileRepository<T> {
 	}
 
 	@SneakyThrows
-	public Object getProperty(File dir, FileParams keys, String property) {
+	public Object getProperty(File dir, KeyParams keys, String property) {
 		return storage.getProperty(dir, type, keys, property);
 	}
 
 	@SneakyThrows
-	public Map<String, Object> properties(File dir, FileParams keys, FileParams names) {
+	public Map<String, Object> properties(File dir, KeyParams keys, KeyParams names) {
 		return storage.properties(dir, type, keys, names);
 	}
 
 	@SneakyThrows
-	public Map<String, Map<String, Object>> properties(File dir, FileParams names, String filter, String paging,
+	public Map<String, Map<String, Object>> properties(File dir, KeyParams names, String filter, String paging,
 			String sorting) {
 		return storage.properties(dir, type, names,
 				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
@@ -122,39 +122,39 @@ public abstract class AbstractFileRepository<T> {
 	// +------------- RESOURCE METHODS ------------------+
 
 	@SneakyThrows
-	public File locationResources(File dir, FileParams keys, String path) {
+	public File locationResources(File dir, KeyParams keys, String path) {
 		return storage.locationResource(dir, type, keys, path);
 	}
 
 	@SneakyThrows
-	public boolean existsResources(File dir, FileParams keys, String path) {
+	public boolean existsResources(File dir, KeyParams keys, String path) {
 		return storage.existsResource(dir, type, keys, path);
 	}
 
 	@SneakyThrows
-	public T setResource(File dir, FileParams keys, Resource resource) {
+	public T setResource(File dir, KeyParams keys, Resource resource) {
 		return storage.setResource(dir, type, keys, resource);
 	}
 
 	@SneakyThrows
-	public Resource getResource(File dir, FileParams keys, String path) {
+	public Resource getResource(File dir, KeyParams keys, String path) {
 		return storage.getResource(dir, type, keys, path);
 	}
 
 	@SneakyThrows
-	public Long countResources(File dir, FileParams keys, String filter, String paging) {
+	public Long countResources(File dir, KeyParams keys, String filter, String paging) {
 		return storage.countResources(dir, type, keys,
 				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).build());
 	}
 
 	@SneakyThrows
-	public List<Resource> listResources(File dir, FileParams keys, String filter, String paging, String sorting) {
+	public List<Resource> listResources(File dir, KeyParams keys, String filter, String paging, String sorting) {
 		return storage.listResources(dir, type, keys,
 				SearchParams.builder().filter(filter(filter)).paging(paging(paging)).sorting(sorting(sorting)).build());
 	}
 
 	@SneakyThrows
-	public T deleteResource(File dir, FileParams keys, String path) {
+	public T deleteResource(File dir, KeyParams keys, String path) {
 		return storage.deleteResource(dir, type, keys, path);
 	}
 

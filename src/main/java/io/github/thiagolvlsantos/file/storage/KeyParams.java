@@ -15,38 +15,38 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FileParams implements Iterable<Object> {
+public class KeyParams implements Iterable<Object> {
 
 	public static final String SEPARATOR = ";";
 
 	private Object[] keys;
 
-	public static FileParams of(String parts) {
+	public static KeyParams of(String parts) {
 		if (parts == null) {
 			return null;
 		}
 		return of(parts, SEPARATOR);
 	}
 
-	public static FileParams of(String parts, String separator) {
+	public static KeyParams of(String parts, String separator) {
 		if (parts == null) {
 			return null;
 		}
 		return of((Object[]) parts.split(separator));
 	}
 
-	public static FileParams of(List<?> objs) {
+	public static KeyParams of(List<?> objs) {
 		if (objs == null) {
 			return null;
 		}
 		return of(objs.toArray());
 	}
 
-	public static FileParams of(Object... objs) {
+	public static KeyParams of(Object... objs) {
 		if (objs == null) {
 			return null;
 		}
-		return new FileParams(objs);
+		return new KeyParams(objs);
 	}
 
 	@Override

@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 
-import io.github.thiagolvlsantos.file.storage.FileParams;
+import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.entity.FileAliasFor;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.identity.FileId;
@@ -99,7 +99,7 @@ public class UtilAnnotations {
 
 	public static String getKeysChain(Class<?> type, Object instance) {
 		return Arrays.stream(UtilAnnotations.getKeys(type, instance)).map(o -> String.valueOf(o))
-				.collect(Collectors.joining(FileParams.SEPARATOR));
+				.collect(Collectors.joining(KeyParams.SEPARATOR));
 	}
 
 	public static Object[] getIds(Class<?> type, Object instance) {

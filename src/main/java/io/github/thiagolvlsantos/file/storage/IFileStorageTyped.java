@@ -18,21 +18,21 @@ public interface IFileStorageTyped<T> {
 
 	File location(File dir, T example);
 
-	File location(File dir, FileParams keys);
+	File location(File dir, KeyParams keys);
 
 	boolean exists(File dir, T example);
 
-	boolean exists(File dir, FileParams keys);
+	boolean exists(File dir, KeyParams keys);
 
 	T write(File dir, T instance);
 
 	T read(File dir, T example);
 
-	T read(File dir, FileParams keys);
+	T read(File dir, KeyParams keys);
 
 	T delete(File dir, T example);
 
-	T delete(File dir, FileParams keys);
+	T delete(File dir, KeyParams keys);
 
 	long count(File dir, SearchParams search);
 
@@ -40,29 +40,29 @@ public interface IFileStorageTyped<T> {
 
 	// +------------- PROPERTY METHODS ------------------+
 
-	T setProperty(File dir, FileParams keys, String property, Object data);
+	T setProperty(File dir, KeyParams keys, String property, Object data);
 
 	List<T> setProperty(File dir, String property, Object data, SearchParams search);
 
-	Object getProperty(File dir, FileParams keys, String property);
+	Object getProperty(File dir, KeyParams keys, String property);
 
-	Map<String, Object> properties(File dir, FileParams keys, FileParams names);
+	Map<String, Object> properties(File dir, KeyParams keys, KeyParams names);
 
-	Map<String, Map<String, Object>> properties(File dir, FileParams names, SearchParams search);
+	Map<String, Map<String, Object>> properties(File dir, KeyParams names, SearchParams search);
 
 	// +------------- RESOURCE METHODS ------------------+
 
-	File locationResource(File dir, FileParams keys, String path);
+	File locationResource(File dir, KeyParams keys, String path);
 
-	boolean existsResource(File dir, FileParams keys, String path);
+	boolean existsResource(File dir, KeyParams keys, String path);
 
-	T setResource(File dir, FileParams keys, Resource resource);
+	T setResource(File dir, KeyParams keys, Resource resource);
 
-	Resource getResource(File dir, FileParams keys, String path);
+	Resource getResource(File dir, KeyParams keys, String path);
 
-	T deleteResource(File dir, FileParams keys, String path);
+	T deleteResource(File dir, KeyParams keys, String path);
 
-	long countResources(File dir, FileParams keys, SearchParams search);
+	long countResources(File dir, KeyParams keys, SearchParams search);
 
-	List<Resource> listResources(File dir, FileParams keys, SearchParams search);
+	List<Resource> listResources(File dir, KeyParams keys, SearchParams search);
 }
