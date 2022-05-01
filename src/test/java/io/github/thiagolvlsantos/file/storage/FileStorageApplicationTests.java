@@ -19,7 +19,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+import io.github.thiagolvlsantos.file.storage.audit.IFileAudit;
 import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageNotFoundException;
@@ -44,17 +47,30 @@ import io.github.thiagolvlsantos.file.storage.objects.TemplateTargetAuthorizatio
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
-import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileFilter;
+import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
 import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
 import io.github.thiagolvlsantos.json.predicate.impl.PredicateFactoryJson;
 
 @SpringBootTest
+@Configuration
 class FileStorageApplicationTests {
 
 	private IPredicateFactory factory = new PredicateFactoryJson();
+
+	@Bean
+	public IFileAudit audit() {
+		return new IFileAudit() {
+			private AuthorInfo shared = new AuthorInfo("thiagolvlsantos", "email@email.com");
+
+			@Override
+			public AuthorInfo author() {
+				return shared;
+			}
+		};
+	}
 
 	@Test
 	void testTree(@Autowired ApplicationContext context) {

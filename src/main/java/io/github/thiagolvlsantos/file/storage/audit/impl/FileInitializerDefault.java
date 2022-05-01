@@ -5,7 +5,7 @@ import java.time.temporal.Temporal;
 import io.github.thiagolvlsantos.file.storage.audit.IFileInitializer;
 import io.github.thiagolvlsantos.file.storage.exceptions.FileStorageException;
 
-public class GitInitializerDefault implements IFileInitializer {
+public class FileInitializerDefault implements IFileInitializer {
 
 	@Override
 	public Object value(Object instance, String name, Class<?> type) {

@@ -32,20 +32,28 @@ import java.util.stream.Stream;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.IFileIndex;
 import io.github.thiagolvlsantos.file.storage.IFileSerializer;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
+import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.annotations.FileKeep;
 import io.github.thiagolvlsantos.file.storage.annotations.PairValue;
 import io.github.thiagolvlsantos.file.storage.annotations.UtilAnnotations;
 import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
+import io.github.thiagolvlsantos.file.storage.audit.FileChangedBy;
 import io.github.thiagolvlsantos.file.storage.audit.FileCreated;
+import io.github.thiagolvlsantos.file.storage.audit.FileCreatedBy;
+import io.github.thiagolvlsantos.file.storage.audit.IFileAudit;
 import io.github.thiagolvlsantos.file.storage.audit.IFileInitializer;
+import io.github.thiagolvlsantos.file.storage.audit.impl.FileAuditDefault;
+import io.github.thiagolvlsantos.file.storage.audit.impl.FileAuditHelper;
+import io.github.thiagolvlsantos.file.storage.audit.impl.FileInitializerDefault;
+import io.github.thiagolvlsantos.file.storage.audit.impl.FileInitializerHelper;
 import io.github.thiagolvlsantos.file.storage.concurrency.FileRevision;
 import io.github.thiagolvlsantos.file.storage.entity.FileName;
 import io.github.thiagolvlsantos.file.storage.entity.FileRepo;
@@ -59,8 +67,8 @@ import io.github.thiagolvlsantos.file.storage.identity.FileKey;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceContent;
 import io.github.thiagolvlsantos.file.storage.resource.ResourceMetadata;
-import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileFilter;
+import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.file.storage.util.comparator.ComparatorNullSafe;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
@@ -71,6 +79,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FileStorageImpl implements IFileStorage {
 
+	private @Autowired ApplicationContext context;
 	private @Autowired IFileSerializer serializer;
 	private @Autowired IFileIndex idManager;
 
@@ -158,6 +167,8 @@ public class FileStorageImpl implements IFileStorage {
 		log.info("ids: {}", Arrays.toString(idFields));
 		PairValue<FileCreated>[] createdFields = UtilAnnotations.getValues(FileCreated.class, type, instance);
 		log.info("created: {}", Arrays.toString(createdFields));
+		PairValue<FileCreatedBy>[] createdByFields = UtilAnnotations.getValues(FileCreatedBy.class, type, instance);
+		log.info("createdBy: {}", Arrays.toString(createdByFields));
 		if (!file.exists()) {
 			File parent = file.getParentFile();
 			if (!parent.exists() && !parent.mkdirs()) {
@@ -165,9 +176,11 @@ public class FileStorageImpl implements IFileStorage {
 			}
 			initIds(dir, type, idFields, instance);
 			initCreated(dir, type, createdFields, instance);
+			initCreatedBy(dir, type, createdByFields, instance);
 		} else {
 			keepValues(old, idFields, instance);
 			keepValues(old, createdFields, instance);
+			keepValues(old, createdByFields, instance);
 
 			PairValue<FileKeep>[] keepFields = UtilAnnotations.getValues(FileKeep.class, type, instance);
 			log.info("keep: {}", Arrays.toString(keepFields));
@@ -181,6 +194,10 @@ public class FileStorageImpl implements IFileStorage {
 		PairValue<FileChanged>[] changed = UtilAnnotations.getValues(FileChanged.class, type, instance);
 		log.info("changed: {}", Arrays.toString(changed));
 		prepareChanged(dir, type, changed, instance);
+
+		PairValue<FileChangedBy>[] changedBy = UtilAnnotations.getValues(FileChangedBy.class, type, instance);
+		log.info("changedBy: {}", Arrays.toString(changedBy));
+		prepareChangedBy(dir, type, changedBy, instance);
 
 		writeToFile(file, instance);
 
@@ -218,14 +235,53 @@ public class FileStorageImpl implements IFileStorage {
 
 	@SneakyThrows
 	protected Object value(Object instance, String name, Class<? extends IFileInitializer> initializer, Method m) {
-		IFileInitializer factory = initializer.getConstructor().newInstance();
+		IFileInitializer factory = initializer != FileInitializerDefault.class
+				? initializer.getConstructor().newInstance()
+				: FileInitializerHelper.initializer(context);
 		return factory.value(instance, name, m.getReturnType());
+	}
+
+	protected <T> void initCreatedBy(File dir, Class<T> type, PairValue<FileCreatedBy>[] createdBy, T instance) {
+		if (createdBy.length > 1) {
+			invalidMultipleFields(FileCreatedBy.class,
+					Arrays.stream(createdBy).map(f -> f.getName()).collect(Collectors.joining(", ")));
+		}
+		for (PairValue<FileCreatedBy> c : createdBy) {
+			Object obj = c.get(instance);
+			if (obj == null) {
+				c.set(instance, valueBy(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
+				log.info("new created by: {}", c.get(instance));
+			}
+		}
+	}
+
+	protected void invalidMultipleFields(Class<? extends Annotation> annotation, String names) {
+		throw new FileStorageException("Multiple fields with annotation @" + annotation.getSimpleName()
+				+ " are not allowed. Fields: " + names + ".", null);
+	}
+
+	@SneakyThrows
+	protected Object valueBy(Object instance, String name, Class<? extends IFileAudit> audit, Method m) {
+		IFileAudit factory = audit != FileAuditDefault.class ? audit.getConstructor().newInstance()
+				: FileAuditHelper.audit(context);
+		return factory.author();
 	}
 
 	protected <T> void prepareChanged(File dir, Class<T> type, PairValue<FileChanged>[] changed, T instance) {
 		for (PairValue<FileChanged> c : changed) {
 			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
 			log.info("new changed: {}", c.get(instance));
+		}
+	}
+
+	protected <T> void prepareChangedBy(File dir, Class<T> type, PairValue<FileChangedBy>[] changedBy, T instance) {
+		if (changedBy.length > 1) {
+			invalidMultipleFields(FileChangedBy.class,
+					Arrays.stream(changedBy).map(f -> f.getName()).collect(Collectors.joining(", ")));
+		}
+		for (PairValue<FileChangedBy> c : changedBy) {
+			c.set(instance, valueBy(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
+			log.info("new changed by: {}", c.get(instance));
 		}
 	}
 
@@ -437,6 +493,7 @@ public class FileStorageImpl implements IFileStorage {
 		validateProperty(FileId.class, type, property, current);
 		validateProperty(FileKey.class, type, property, current);
 		validateProperty(FileCreated.class, type, property, current);
+		validateProperty(FileCreatedBy.class, type, property, current);
 		validateProperty(FileRevision.class, type, property, current);
 		validateProperty(FileKeep.class, type, property, current);
 

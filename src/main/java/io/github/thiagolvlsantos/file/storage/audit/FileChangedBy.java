@@ -6,12 +6,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import io.github.thiagolvlsantos.file.storage.audit.impl.FileInitializerDefault;
+import io.github.thiagolvlsantos.file.storage.audit.impl.FileAuditDefault;
 
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface FileChanged {
+public @interface FileChangedBy {
 
-	Class<? extends IFileInitializer> value() default FileInitializerDefault.class;
+	Class<? extends IFileAudit> value() default FileAuditDefault.class;
 
 }

@@ -3,9 +3,11 @@ package io.github.thiagolvlsantos.file.storage.util.entity;
 import java.time.LocalDateTime;
 
 import io.github.thiagolvlsantos.file.storage.audit.FileChanged;
+import io.github.thiagolvlsantos.file.storage.audit.FileChangedBy;
 import io.github.thiagolvlsantos.file.storage.audit.FileCreated;
+import io.github.thiagolvlsantos.file.storage.audit.FileCreatedBy;
+import io.github.thiagolvlsantos.file.storage.audit.IFileAudit.AuthorInfo;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,10 +21,14 @@ import lombok.experimental.SuperBuilder;
 public class FileObjectVersionedAuditable extends FileObjectVersioned {
 
 	@FileCreated
-	@Builder.Default
-	private LocalDateTime created = LocalDateTime.now();
+	private LocalDateTime created;
+
+	@FileCreatedBy
+	private AuthorInfo createdBy;
 
 	@FileChanged
-	@Builder.Default
-	private LocalDateTime changed = LocalDateTime.now();
+	private LocalDateTime changed;
+
+	@FileChangedBy
+	private AuthorInfo changedBy;
 }
