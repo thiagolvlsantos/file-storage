@@ -463,7 +463,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	protected <T> List<T> range(FilePaging paging, List<T> result) {
 		FilePaging page = Optional.ofNullable(paging).orElse(FilePaging.builder().build());
-		Integer start = page.getStart(result.size());
+		Integer start = page.getStart();
 		Integer end = page.getEnd(result.size());
 		return start < end ? result.subList(start, end) : Collections.emptyList();
 	}

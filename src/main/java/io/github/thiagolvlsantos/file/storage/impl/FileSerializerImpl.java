@@ -67,10 +67,7 @@ public class FileSerializerImpl implements IFileSerializer {
 
 	@Override
 	public <T> boolean isWrapped(Class<T> type) {
-		Boolean wrap = wrapped.get(type);
-		if (wrap == null) {
-			wrapped.put(type, AnnotationUtils.findAnnotation(type, FileWrapped.class) != null);
-		}
+		wrapped.computeIfAbsent(type, k -> AnnotationUtils.findAnnotation(type, FileWrapped.class) != null);
 		return wrapped.get(type);
 	}
 

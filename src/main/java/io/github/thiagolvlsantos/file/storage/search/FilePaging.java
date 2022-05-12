@@ -19,11 +19,11 @@ public class FilePaging {
 	private Integer skip;
 	private Integer max;
 
-	public Integer getStart(Integer limit) {
+	public Integer getStart() {
 		return Objects.isNull(skip) ? 0 : skip;
 	}
 
 	public Integer getEnd(Integer limit) {
-		return Objects.isNull(max) ? limit : getStart(limit) + Math.min(max, limit);
+		return Objects.isNull(max) ? limit : getStart() + Math.min(max, limit);
 	}
 }
