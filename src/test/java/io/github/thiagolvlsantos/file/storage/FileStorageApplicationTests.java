@@ -121,28 +121,28 @@ class FileStorageApplicationTests {
 			storage.write(dir, taDevJob);
 
 			List<Target> allTargets = storage.list(dir, Target.class, null);
-			assertTrue(allTargets.size() == 2);
+			assertThat(allTargets).hasSize(2);
 
 			List<Template> allTemplates = storage.list(dir, Template.class, null);
-			assertTrue(allTemplates.size() == 2);
+			assertThat(allTemplates).hasSize(2);
 
 			List<TemplateAuthorization> allAuthorizations = storage.list(dir, TemplateAuthorization.class, null);
-			assertTrue(allAuthorizations.size() == 2);
+			assertThat(allAuthorizations).hasSize(2);
 
 			storage.delete(dir, Template.class, KeyParams.of(nameApp));
 			storage.delete(dir, Template.class, KeyParams.of(nameJob));
 			allAuthorizations = storage.list(dir, TemplateAuthorization.class, null);
-			assertTrue(allAuthorizations.size() == 2);
+			assertThat(allAuthorizations).hasSize(2);
 
 			List<TemplateTargetAuthorization> allTargetAuthorizations = storage.list(dir,
 					TemplateTargetAuthorization.class, null);
-			assertTrue(allTargetAuthorizations.size() == 3);
+			assertThat(allTargetAuthorizations).hasSize(3);
 
 			FileFilter predicate = new FileFilter(
 					factory.read(("{\"template.name\":{\"$eq\": \"" + nameJob + "\"}}").getBytes()));
 			List<TemplateTargetAuthorization> filterAuthorizations = storage.list(dir,
 					TemplateTargetAuthorization.class, SearchParams.builder().filter(predicate).build());
-			assertTrue(filterAuthorizations.size() == 1);
+			assertThat(filterAuthorizations).hasSize(1);
 		} finally {
 			try {
 				FileUtils.delete(dir);
