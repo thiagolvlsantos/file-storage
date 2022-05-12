@@ -175,8 +175,8 @@ public class FileStorageImpl implements IFileStorage {
 				throw new FileStorageException("Could not create object directory: " + parent, null);
 			}
 			initIds(dir, type, idFields, instance);
-			initCreated(dir, type, createdFields, instance);
-			initCreatedBy(dir, type, createdByFields, instance);
+			initCreated(type, createdFields, instance);
+			initCreatedBy(type, createdByFields, instance);
 		} else {
 			keepValues(old, idFields, instance);
 			keepValues(old, createdFields, instance);
@@ -193,11 +193,11 @@ public class FileStorageImpl implements IFileStorage {
 
 		PairValue<FileChanged>[] changed = UtilAnnotations.getValues(FileChanged.class, type, instance);
 		log.info("changed: {}", Arrays.toString(changed));
-		prepareChanged(dir, type, changed, instance);
+		prepareChanged(type, changed, instance);
 
 		PairValue<FileChangedBy>[] changedBy = UtilAnnotations.getValues(FileChangedBy.class, type, instance);
 		log.info("changedBy: {}", Arrays.toString(changedBy));
-		prepareChangedBy(dir, type, changedBy, instance);
+		prepareChangedBy(type, changedBy, instance);
 
 		writeToFile(file, instance);
 
@@ -223,7 +223,7 @@ public class FileStorageImpl implements IFileStorage {
 		}
 	}
 
-	protected <T> void initCreated(File dir, Class<T> type, PairValue<FileCreated>[] created, T instance) {
+	protected <T> void initCreated(Class<T> type, PairValue<FileCreated>[] created, T instance) {
 		for (PairValue<FileCreated> c : created) {
 			Object obj = c.get(instance);
 			if (obj == null) {
@@ -241,7 +241,7 @@ public class FileStorageImpl implements IFileStorage {
 		return factory.value(instance, name, m.getReturnType());
 	}
 
-	protected <T> void initCreatedBy(File dir, Class<T> type, PairValue<FileCreatedBy>[] createdBy, T instance) {
+	protected <T> void initCreatedBy(Class<T> type, PairValue<FileCreatedBy>[] createdBy, T instance) {
 		if (createdBy.length > 1) {
 			invalidMultipleFields(FileCreatedBy.class,
 					Arrays.stream(createdBy).map(f -> f.getName()).collect(Collectors.joining(", ")));
@@ -267,14 +267,14 @@ public class FileStorageImpl implements IFileStorage {
 		return factory.author();
 	}
 
-	protected <T> void prepareChanged(File dir, Class<T> type, PairValue<FileChanged>[] changed, T instance) {
+	protected <T> void prepareChanged(Class<T> type, PairValue<FileChanged>[] changed, T instance) {
 		for (PairValue<FileChanged> c : changed) {
 			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
 			log.info("new changed: {}", c.get(instance));
 		}
 	}
 
-	protected <T> void prepareChangedBy(File dir, Class<T> type, PairValue<FileChangedBy>[] changedBy, T instance) {
+	protected <T> void prepareChangedBy(Class<T> type, PairValue<FileChangedBy>[] changedBy, T instance) {
 		if (changedBy.length > 1) {
 			invalidMultipleFields(FileChangedBy.class,
 					Arrays.stream(changedBy).map(f -> f.getName()).collect(Collectors.joining(", ")));
@@ -394,9 +394,9 @@ public class FileStorageImpl implements IFileStorage {
 
 	@Override
 	public <T> List<T> list(File dir, Class<T> type, SearchParams search) {
-		return range(search != null ? search.getPaging() : null, //
-				filter(search != null ? search.getFilter() : null, //
-						sort(search != null ? search.getSorting() : null, //
+		return range(safePaging(search), //
+				filter(safeFilter(search), //
+						sort(safeSort(search), //
 								all(dir, type, null))));
 	}
 
@@ -724,7 +724,7 @@ public class FileStorageImpl implements IFileStorage {
 		File root = resourceDir(entityDir(dir, type, keys), type);
 		verifyResources(root, keys);
 
-		final Predicate<Object> predicate = filter(search != null ? search.getFilter() : null);
+		final Predicate<Object> predicate = filter(safeFilter(search));
 
 		List<Resource> result = new LinkedList<>();
 		final String ignoreFile = "." + serializer.getFile(type);
@@ -754,8 +754,19 @@ public class FileStorageImpl implements IFileStorage {
 		if (search == null || search.getSorting() == null) {
 			result.sort(new ComparatorNullSafe<>("metadata.path", false));
 		}
-		return range(search != null ? search.getPaging() : null,
-				sort(search != null ? search.getSorting() : null, result));
+		return range(safePaging(search), sort(safeSort(search), result));
+	}
+
+	protected FileFilter safeFilter(SearchParams search) {
+		return search != null ? search.getFilter() : null;
+	}
+
+	protected FilePaging safePaging(SearchParams search) {
+		return search != null ? search.getPaging() : null;
+	}
+
+	protected FileSorting safeSort(SearchParams search) {
+		return search != null ? search.getSorting() : null;
 	}
 
 	@Override
