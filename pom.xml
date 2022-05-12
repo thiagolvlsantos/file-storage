@@ -48,8 +48,10 @@
 		<sonar.coverage.exclusions>**/*Print.java,**/*Web.java,**/*Constants.java,**/*Test.java</sonar.coverage.exclusions>
 
 		<!-- DEPENDENCIES -->
-		<git-commons.version>1.0.29</git-commons.version>
 		<commons.version>1.9.4</commons.version>
+		
+		<!-- PERSONAL -->
+		<git-commons.version>1.0.31-SNAPSHOT</git-commons.version>
 
 		<!-- TEST DEPENDENCIES -->
 		<json-predicate.version>0.0.7</json-predicate.version>
