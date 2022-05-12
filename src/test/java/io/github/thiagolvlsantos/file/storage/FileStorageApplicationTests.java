@@ -163,7 +163,7 @@ class FileStorageApplicationTests {
 			File target = new File(storage.location(dir, instance), ser.getFile(ObjectWrapped.class));
 			assertTrue(target.exists());
 			instance = storage.read(dir, ObjectWrapped.class, KeyParams.of("myName"));
-			assertEquals(instance.getName(), "myName");
+			assertEquals("myName", instance.getName());
 		} finally {
 			try {
 				FileUtils.delete(dir);
@@ -1205,7 +1205,7 @@ class FileStorageApplicationTests {
 
 			List<Resource> resources = storage.listResources(dir, Project.class, params, null);
 			// count resources
-			assertThat(resources.size()).isEqualTo(3);
+			assertThat(resources).hasSize(3);
 
 			// sorted by path in the origin
 			Resource resource1 = resources.get(0);
@@ -1221,7 +1221,7 @@ class FileStorageApplicationTests {
 			storage.deleteResource(dir, Project.class, params, "component/compB.css");
 			resources = storage.listResources(dir, Project.class, params, null);
 			// count resources
-			assertThat(resources.size()).isEqualTo(2);
+			assertThat(resources).hasSize(2);
 
 			// sorted by path in the origin
 			resource1 = resources.get(0);
@@ -1234,7 +1234,7 @@ class FileStorageApplicationTests {
 			resources = storage.listResources(dir, Project.class, params,
 					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build());
 			// count resources
-			assertThat(resources.size()).isEqualTo(1);
+			assertThat(resources).hasSize(1);
 			assertThat(storage.countResources(dir, Project.class, params,
 					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build())).isEqualTo(1);
 			resource1 = resources.get(0);
@@ -1246,7 +1246,7 @@ class FileStorageApplicationTests {
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
 							.build());
 			// count resources
-			assertThat(resources.size()).isEqualTo(1);
+			assertThat(resources).hasSize(1);
 			assertThat(storage.countResources(dir, Project.class, params,
 					SearchParams.builder().filter(FileFilter.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())

@@ -10,12 +10,12 @@ import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.IFileStorage;
+import io.github.thiagolvlsantos.file.storage.KeyParams;
 import io.github.thiagolvlsantos.file.storage.SearchParams;
 import io.github.thiagolvlsantos.file.storage.resource.Resource;
-import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileFilter;
+import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -27,7 +27,7 @@ public abstract class AbstractFileRepository<T> {
 
 	private Class<T> type;
 
-	public AbstractFileRepository(Class<T> type) {
+	protected AbstractFileRepository(Class<T> type) {
 		this.type = type;
 	}
 
@@ -92,8 +92,7 @@ public abstract class AbstractFileRepository<T> {
 			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(reference, property);
 		AnnotatedType attType = pd.getReadMethod().getAnnotatedReturnType();
-		Object newValue = storage.getSerializer().decode(String.valueOf(data), attType);
-		return newValue;
+		return storage.getSerializer().decode(String.valueOf(data), attType);
 	}
 
 	@SneakyThrows
