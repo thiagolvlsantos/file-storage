@@ -98,7 +98,7 @@ public class UtilAnnotations {
 	}
 
 	public static String getKeysChain(Class<?> type, Object instance) {
-		return Arrays.stream(UtilAnnotations.getKeys(type, instance)).map(o -> String.valueOf(o))
+		return Arrays.stream(UtilAnnotations.getKeys(type, instance)).map(String::valueOf)
 				.collect(Collectors.joining(KeyParams.SEPARATOR));
 	}
 
