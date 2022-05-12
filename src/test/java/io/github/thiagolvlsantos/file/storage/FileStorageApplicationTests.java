@@ -1296,7 +1296,7 @@ class FileStorageApplicationTests {
 
 			List<Resource> resources = storage.listResources(dir, params, null);
 			// count resources
-			assertThat(resources.size()).isEqualTo(3);
+			assertThat(resources).hasSize(3);
 
 			// sorted by path in the origin
 			Resource resource1 = resources.get(0);
@@ -1312,7 +1312,7 @@ class FileStorageApplicationTests {
 			storage.deleteResource(dir, params, "component/compB.css");
 			resources = storage.listResources(dir, params, null);
 			// count resources
-			assertThat(resources.size()).isEqualTo(2);
+			assertThat(resources).hasSize(2);
 
 			// sorted by path in the origin
 			resource1 = resources.get(0);
@@ -1325,7 +1325,7 @@ class FileStorageApplicationTests {
 			resources = storage.listResources(dir, params,
 					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build());
 			// count resources
-			assertThat(resources.size()).isEqualTo(1);
+			assertThat(resources).hasSize(1);
 			assertThat(storage.countResources(dir, params,
 					SearchParams.builder().paging(FilePaging.builder().skip(1).max(1).build()).build())).isEqualTo(1);
 			resource1 = resources.get(0);
@@ -1337,7 +1337,7 @@ class FileStorageApplicationTests {
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
 							.build());
 			// count resources
-			assertThat(resources.size()).isEqualTo(1);
+			assertThat(resources).hasSize(1);
 			assertThat(storage.countResources(dir, params,
 					SearchParams.builder().filter(FileFilter.builder()
 							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
@@ -1616,26 +1616,26 @@ class FileStorageApplicationTests {
 
 			properties = storage.properties(dir, Project.class, KeyParams.of("name;description"), (SearchParams) null);
 
-			assertThat(properties.size()).isEqualTo(2);
+			assertThat(properties).hasSize(2);
 
 			Map<String, Object> pa = properties.get("projectA");
-			assertThat(pa.get("name")).isEqualTo("projectA");
-			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa).containsEntry("name", "projectA");
+			assertThat(pa).containsEntry("description", "group a");
 			assertThat(pa.get("id")).isNull();
 
 			Map<String, Object> pb = properties.get("projectB");
-			assertThat(pb.get("name")).isEqualTo("projectB");
-			assertThat(pb.get("description")).isEqualTo("group b");
+			assertThat(pb).containsEntry("name", "projectB");
+			assertThat(pb).containsEntry("description", "group b");
 			assertThat(pb.get("id")).isNull();
 
 			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
 			properties = storage.properties(dir, Project.class, KeyParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
-			assertThat(properties.size()).isEqualTo(1);
+			assertThat(properties).hasSize(1);
 
 			pa = properties.get("projectA");
-			assertThat(pa.get("name")).isEqualTo("projectA");
-			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa).containsEntry("name", "projectA");
+			assertThat(pa).containsEntry("description", "group a");
 			assertThat(pa.get("id")).isNull();
 
 			assertThat(properties.get("projectB")).isNull();
@@ -1708,26 +1708,26 @@ class FileStorageApplicationTests {
 
 			properties = storage.properties(dir, KeyParams.of("name;description"), (SearchParams) null);
 
-			assertThat(properties.size()).isEqualTo(2);
+			assertThat(properties).hasSize(2);
 
 			Map<String, Object> pa = properties.get("projectA");
-			assertThat(pa.get("name")).isEqualTo("projectA");
-			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa).containsEntry("name", "projectA");
+			assertThat(pa).containsEntry("description", "group a");
 			assertThat(pa.get("id")).isNull();
 
 			Map<String, Object> pb = properties.get("projectB");
-			assertThat(pb.get("name")).isEqualTo("projectB");
-			assertThat(pb.get("description")).isEqualTo("group b");
+			assertThat(pb).containsEntry("name", "projectB");
+			assertThat(pb).containsEntry("description", "group b");
 			assertThat(pb.get("id")).isNull();
 
 			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
 			properties = storage.properties(dir, KeyParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
-			assertThat(properties.size()).isEqualTo(1);
+			assertThat(properties).hasSize(1);
 
 			pa = properties.get("projectA");
-			assertThat(pa.get("name")).isEqualTo("projectA");
-			assertThat(pa.get("description")).isEqualTo("group a");
+			assertThat(pa).containsEntry("name", "projectA");
+			assertThat(pa).containsEntry("description", "group a");
 			assertThat(pa.get("id")).isNull();
 
 			assertThat(properties.get("projectB")).isNull();
