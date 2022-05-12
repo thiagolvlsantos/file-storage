@@ -224,7 +224,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> void initCreated(File dir, Class<T> type, PairValue<FileCreated>[] created, T instance) {
-		log.trace("dir:{}, type:{}", dir, type);
+		log.trace("initCreated.dir:{}, type:{}", dir, type);
 		for (PairValue<FileCreated> c : created) {
 			Object obj = c.get(instance);
 			if (obj == null) {
@@ -243,7 +243,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> void initCreatedBy(File dir, Class<T> type, PairValue<FileCreatedBy>[] createdBy, T instance) {
-		log.trace("dir:{}, type:{}", dir, type);
+		log.trace("initCreatedBy.dir:{}, type:{}", dir, type);
 		if (createdBy.length > 1) {
 			invalidMultipleFields(FileCreatedBy.class,
 					Arrays.stream(createdBy).map(f -> f.getName()).collect(Collectors.joining(", ")));
@@ -270,7 +270,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> void prepareChanged(File dir, Class<T> type, PairValue<FileChanged>[] changed, T instance) {
-		log.trace("dir:{}, type:{}", dir, type);
+		log.trace("prepareChanged.dir:{}, type:{}", dir, type);
 		for (PairValue<FileChanged> c : changed) {
 			c.set(instance, value(instance, c.getName(), c.getAnnotation().value(), c.getRead()));
 			log.info("new changed: {}", c.get(instance));
@@ -278,7 +278,7 @@ public class FileStorageImpl implements IFileStorage {
 	}
 
 	protected <T> void prepareChangedBy(File dir, Class<T> type, PairValue<FileChangedBy>[] changedBy, T instance) {
-		log.trace("dir:{}, type:{}", dir, type);
+		log.trace("prepareChangedBy.dir:{}, type:{}", dir, type);
 		if (changedBy.length > 1) {
 			invalidMultipleFields(FileChangedBy.class,
 					Arrays.stream(changedBy).map(f -> f.getName()).collect(Collectors.joining(", ")));
