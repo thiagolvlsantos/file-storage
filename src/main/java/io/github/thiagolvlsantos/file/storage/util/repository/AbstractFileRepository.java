@@ -3,7 +3,6 @@ package io.github.thiagolvlsantos.file.storage.util.repository;
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
@@ -26,9 +25,12 @@ public abstract class AbstractFileRepository<T> {
 	private @Autowired IPredicateConverter predicateConverter;
 
 	private Class<T> type;
+	private T reference;
 
+	@SneakyThrows
 	protected AbstractFileRepository(Class<T> type) {
 		this.type = type;
+		this.reference = type.getConstructor().newInstance();
 	}
 
 	// +------------- ENTITY METHODS ------------------+
@@ -88,8 +90,8 @@ public abstract class AbstractFileRepository<T> {
 		return storage.setProperty(dir, type, keys, property, newValue(property, data, read(dir, keys)));
 	}
 
-	protected Object newValue(String property, Object data, Object reference)
-			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	@SneakyThrows
+	public Object newValue(String property, Object data, Object reference) {
 		PropertyDescriptor pd = PropertyUtils.getPropertyDescriptor(reference, property);
 		AnnotatedType attType = pd.getReadMethod().getAnnotatedReturnType();
 		return storage.getSerializer().decode(String.valueOf(data), attType);
