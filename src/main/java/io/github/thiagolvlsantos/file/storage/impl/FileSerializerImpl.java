@@ -5,8 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 
@@ -35,7 +35,7 @@ public class FileSerializerImpl implements IFileSerializer {
 
 	private ObjectMapper mapper;
 	private ObjectMapper mapperWrapped;
-	private Map<Class<?>, Boolean> wrapped = new HashMap<>();
+	private Map<Class<?>, Boolean> wrapped = new ConcurrentHashMap<>();
 
 	@PostConstruct
 	public void configure() {
