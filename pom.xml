@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.5</version>
+		<version>2.7.9</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
@@ -35,10 +35,10 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- LOMBOK -->
-		<lombok.version>1.18.20</lombok.version>
+		<lombok.version>1.18.26</lombok.version>
 
 		<!-- JUNIT -->
-		<junit.version>4.12</junit.version>
+		<junit.version>4.13.2</junit.version>
 
 		<!-- SONARCLOUD -->
 		<sonar.user>thiagolvlsantos</sonar.user>
@@ -54,7 +54,7 @@
 		<git-commons.version>1.0.31-SNAPSHOT</git-commons.version>
 
 		<!-- TEST DEPENDENCIES -->
-		<json-predicate.version>0.0.7</json-predicate.version>
+		<json-predicate.version>0.0.8-SNAPSHOT</json-predicate.version>
 	</properties>
 
 	<scm>
