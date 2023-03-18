@@ -138,7 +138,7 @@ public class FileStorageImpl implements IFileStorage {
 
 	protected <T> File entityRoot(File dir, Class<T> type) {
 		FileRepo entity = AnnotationUtils.findAnnotation(type, FileRepo.class);
-		log.debug("entity: {}", entity);
+		log.debug("entity: {}", entity != null ? entity.value() : null);
 		if (entity == null) {
 			throw new FileStorageException(
 					"Entity '" + type.getName() + "' is not annotated with @" + FileRepo.class.getSimpleName() + ".",
