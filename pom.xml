@@ -51,10 +51,10 @@
 		<commons.version>1.9.4</commons.version>
 		
 		<!-- PERSONAL -->
-		<git-commons.version>1.0.31-SNAPSHOT</git-commons.version>
+		<git-commons.version>1.0.31</git-commons.version>
 
 		<!-- TEST DEPENDENCIES -->
-		<json-predicate.version>0.0.8-SNAPSHOT</json-predicate.version>
+		
 	</properties>
 
 	<scm>
@@ -127,12 +127,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.github.thiagolvlsantos</groupId>
-			<artifactId>json-predicate</artifactId>
-			<version>${json-predicate.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -51,14 +52,10 @@ import io.github.thiagolvlsantos.file.storage.search.FileFilter;
 import io.github.thiagolvlsantos.file.storage.search.FilePaging;
 import io.github.thiagolvlsantos.file.storage.search.FileSorting;
 import io.github.thiagolvlsantos.git.commons.file.FileUtils;
-import io.github.thiagolvlsantos.json.predicate.IPredicateFactory;
-import io.github.thiagolvlsantos.json.predicate.impl.PredicateFactoryJson;
 
 @SpringBootTest
 @Configuration
 class FileStorageApplicationTests {
-
-	private IPredicateFactory factory = new PredicateFactoryJson();
 
 	@Bean
 	public IFileAudit audit() {
@@ -138,8 +135,13 @@ class FileStorageApplicationTests {
 					TemplateTargetAuthorization.class, null);
 			assertThat(allTargetAuthorizations).hasSize(3);
 
-			FileFilter predicate = new FileFilter(
-					factory.read(("{\"template.name\":{\"$eq\": \"" + nameJob + "\"}}").getBytes()));
+			FileFilter predicate = new FileFilter(new Predicate<Object>() {
+				@Override
+				public boolean test(Object t) {
+					TemplateTargetAuthorization obj = (TemplateTargetAuthorization) t;
+					return obj.getTemplate().getName().equals(nameJob);
+				}
+			});
 			List<TemplateTargetAuthorization> filterAuthorizations = storage.list(dir,
 					TemplateTargetAuthorization.class, SearchParams.builder().filter(predicate).build());
 			assertThat(filterAuthorizations).hasSize(1);
@@ -352,7 +354,15 @@ class FileStorageApplicationTests {
 					.contains(project1, project2);
 
 			// list filtered/sorted
-			FileFilter predicate = new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(new Predicate<Object>() {
+				@Override
+				public boolean test(Object t) {
+					Project obj = (Project) t;
+					return obj.getName().equals("projectA");
+				}
+			}
+			// factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes())
+			);
 			assertThat(storage.list(dir, Project.class,
 					SearchParams.builder().filter(predicate).paging(FilePaging.builder().skip(0).build()).build()))
 					.contains(project1);
@@ -400,8 +410,16 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, Project.class, SearchParams.builder()
-					.filter(new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
+			List<Project> list = storage.list(dir, Project.class,
+					SearchParams.builder().filter(new FileFilter(new Predicate<Object>() {
+						@Override
+						public boolean test(Object t) {
+							Project obj = (Project) t;
+							return obj.getName().equals("projectB");
+						}
+					}
+					// factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()
+					)).build());
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -457,7 +475,15 @@ class FileStorageApplicationTests {
 					.contains(project1, project2);
 
 			// list filtered/sorted
-			FileFilter predicate = new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(new Predicate<Object>() {
+				@Override
+				public boolean test(Object t) {
+					Project obj = (Project) t;
+					return obj.getName().equals("projectA");
+				}
+			}
+			// factory.read("{\"name\":{\"$eq\": \"projectA\"}}".getBytes())
+			);
 			assertThat(storage.list(dir,
 					SearchParams.builder().filter(predicate).paging(FilePaging.builder().skip(0).build()).build()))
 					.contains(project1);
@@ -504,8 +530,16 @@ class FileStorageApplicationTests {
 			assertThat(project1.getName()).isEqualTo("projectA");
 
 			// search by name
-			List<Project> list = storage.list(dir, SearchParams.builder()
-					.filter(new FileFilter(factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes()))).build());
+			List<Project> list = storage.list(dir,
+					SearchParams.builder().filter(new FileFilter(new Predicate<Object>() {
+						@Override
+						public boolean test(Object t) {
+							Project obj = (Project) t;
+							return obj.getName().equals("projectB");
+						}
+					}
+					// factory.read("{\"name\":{\"$eq\": \"projectB\"}}".getBytes())
+					)).build());
 			assertThat(list).hasSize(1);
 			assertThat(list.get(0).getName()).isEqualTo("projectB");
 
@@ -1242,16 +1276,27 @@ class FileStorageApplicationTests {
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, Project.class, params,
-					SearchParams.builder().filter(FileFilter.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
-							.build());
+					SearchParams.builder().filter(FileFilter.builder().filter(new Predicate<Object>() {
+						@Override
+						public boolean test(Object t) {
+							Resource obj = (Resource) t;
+							return obj.getMetadata().getContentType().equals("html");
+						}
+					}
+					// factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())
+					).build()).build());
 			// count resources
 			assertThat(resources).hasSize(1);
 			assertThat(storage.countResources(dir, Project.class, params,
-					SearchParams.builder().filter(FileFilter.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
-							.build()))
-					.isEqualTo(1);
+					SearchParams.builder().filter(FileFilter.builder().filter(new Predicate<Object>() {
+						@Override
+						public boolean test(Object t) {
+							Resource obj = (Resource) t;
+							return obj.getMetadata().getContentType().equals("html");
+						}
+					}
+					// factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())
+					).build()).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -1333,16 +1378,27 @@ class FileStorageApplicationTests {
 
 			// GitFilterfilter contentType with 'html'
 			resources = storage.listResources(dir, params,
-					SearchParams.builder().filter(FileFilter.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
-							.build());
+					SearchParams.builder().filter(FileFilter.builder().filter(new Predicate<Object>() {
+						@Override
+						public boolean test(Object t) {
+							Resource obj = (Resource) t;
+							return obj.getMetadata().getContentType().equals("html");
+						}
+					}
+					// factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())
+					).build()).build());
 			// count resources
 			assertThat(resources).hasSize(1);
 			assertThat(storage.countResources(dir, params,
-					SearchParams.builder().filter(FileFilter.builder()
-							.filter(factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())).build())
-							.build()))
-					.isEqualTo(1);
+					SearchParams.builder().filter(FileFilter.builder().filter(new Predicate<Object>() {
+						@Override
+						public boolean test(Object t) {
+							Resource obj = (Resource) t;
+							return obj.getMetadata().getContentType().equals("html");
+						}
+					}
+					// factory.read("{\"metadata.contentType\": {\"$eq\": \"html\"}}".getBytes())
+					).build()).build())).isEqualTo(1);
 			resource1 = resources.get(0);
 			assertThat(resource1.getMetadata().getPath()).isEqualTo("component/compA.html");
 			assertThat(resource1.getMetadata().getContentType()).isEqualTo("html");
@@ -1628,7 +1684,15 @@ class FileStorageApplicationTests {
 			assertThat(pb).containsEntry("description", "group b");
 			assertThat(pb.get("id")).isNull();
 
-			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(new Predicate<Object>() {
+				@Override
+				public boolean test(Object t) {
+					Project obj = (Project) t;
+					return obj.getDescription().contains("a");
+				}
+			}
+			// factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes())
+			);
 			properties = storage.properties(dir, Project.class, KeyParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
 			assertThat(properties).hasSize(1);
@@ -1720,7 +1784,15 @@ class FileStorageApplicationTests {
 			assertThat(pb).containsEntry("description", "group b");
 			assertThat(pb.get("id")).isNull();
 
-			FileFilter predicate = new FileFilter(factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes()));
+			FileFilter predicate = new FileFilter(new Predicate<Object>() {
+				@Override
+				public boolean test(Object t) {
+					Project obj = (Project) t;
+					return obj.getDescription().contains("a");
+				}
+			}
+			// factory.read("{\"description\":{\"$c\": \"a\"}}".getBytes())
+			);
 			properties = storage.properties(dir, KeyParams.of("name;description"),
 					SearchParams.builder().filter(predicate).build());
 			assertThat(properties).hasSize(1);
