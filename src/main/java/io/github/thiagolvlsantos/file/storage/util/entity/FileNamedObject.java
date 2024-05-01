@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(builderMethodName = "builderFineNamedObject")
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class FileNamedObject extends FileObjectVersionedAuditable {
 
